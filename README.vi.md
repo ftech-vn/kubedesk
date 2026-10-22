@@ -4,7 +4,8 @@
 
 **Ứng dụng desktop quản lý Kubernetes, nhanh và gọn, cho người làm việc với nhiều cluster.**
 
-[Tải cho macOS](https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg) ·
+[Website](https://kubedesk.cloud/) ·
+[Tải cho macOS](https://github.com/ftech-vn/kubedesk/releases/latest) ·
 [Lịch sử phát hành](RELEASE_NOTES.md) ·
 [English](README.md)
 

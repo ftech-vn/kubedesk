@@ -8,7 +8,8 @@ Browse, debug and operate every cluster in your kubeconfig, and the ones you
 paste in, from one small app. Switch clusters in a keystroke, watch resources
 change live, tail logs, open a shell, edit YAML.
 
-[Download for macOS](https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg) ·
+[Website](https://kubedesk.cloud/) ·
+[Download for macOS](https://github.com/ftech-vn/kubedesk/releases/latest) ·
 [Features](#features) ·
 [Screenshots](#screenshots) ·
 [Build from source](#build-from-source) ·
