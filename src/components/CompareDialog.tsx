@@ -9,7 +9,8 @@ import { ClusterTile } from "./ClusterRail";
 
 /** CompareDialog lines up an object across clusters, and what differs. */
 export function CompareDialog({ gvr, kind, namespace, name, onClose }: { gvr: GVR; kind: string; namespace: string; name: string; onClose(): void }) {
-  const all = useApp((s) => s.clusters.filter((c) => !c.hidden));
+  const clusters = useApp((s) => s.clusters);
+  const all = useMemo(() => clusters.filter((c) => !c.hidden), [clusters]);
   const status = useApp((s) => s.status);
   const active = useApp((s) => s.active);
   const [chosen, setChosen] = useState<string[]>(() => all.filter((c) => c.id === active || status[c.id]?.ok).map((c) => c.id));

@@ -9,6 +9,7 @@ biết.
 
 | Bản | Ngày | Điểm chính | Tải về (delta) |
 |---|---|---|---|
+| [0.4.1](#041--22102026) | 22/10/2026 | Sửa lỗi màn hình trắng khi mở AI agents hoặc so sánh giữa các cluster | xem trang Releases |
 | [0.4.0](#040--22102026) | 22/10/2026 | AI agents qua MCP (có duyệt từng thay đổi), tìm kiếm mọi cluster, so sánh giữa các cluster | xem trang Releases |
 | [0.3.0](#030--22102026) | 22/10/2026 | Timeline thay đổi, xem trước ảnh hưởng, báo cáo sự cố | 15.5 MB (từ 0.2: 2.5 MB · từ 0.1: 5.0 MB) |
 | [0.2.0](#020--22102026) | 22/10/2026 | Watchlist và thông báo, log gộp, bảo vệ production, cột CPU/RAM | 15.4 MB (từ 0.1: 4.9 MB) |
@@ -18,6 +19,18 @@ Tải bản mới nhất:
 <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg>
 (macOS 12 trở lên, Apple silicon). App đã cài sẽ tự cập nhật. Thường app chỉ
 tải phần thay đổi (delta), như ở cột cuối bảng trên.
+
+---
+
+## 0.4.1 · 22/10/2026
+
+### Lỗi đã sửa
+- Bấm icon **AI agents** (hoặc mở "Compare across clusters") làm cửa sổ trắng
+  trơn. Nguyên nhân: hai hộp thoại này đọc danh sách cluster theo cách tạo ra
+  một mảng mới mỗi lần đọc store; zustand coi đó là state đã đổi nên render
+  lại không dừng, và React gỡ cả giao diện. Đã sửa ở cả hai hộp thoại.
+- Từ nay, nếu một hộp thoại bị lỗi, app hiện thông báo lỗi kèm nút **Close**
+  thay vì trắng cả màn hình.
 
 ---
 

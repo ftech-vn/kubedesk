@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Bot, Copy, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { Agents, events, type AgentAccess, type AgentActivity, type AgentInfo } from "../mygo";
 import { toast, useApp } from "../lib/store";
@@ -36,7 +36,10 @@ const clientHelp: Record<Client, string> = {
 
 /** AgentsDialog sets up the MCP server through which AI agents reach clusters. */
 export function AgentsDialog({ onClose }: { onClose(): void }) {
-  const clusters = useApp((s) => s.clusters.filter((c) => !c.hidden));
+  // Select the store's own array: a filtered one is new on every read,
+  // which zustand takes for a change, and renders again without end.
+  const allClusters = useApp((s) => s.clusters);
+  const clusters = useMemo(() => allClusters.filter((c) => !c.hidden), [allClusters]);
   const refresh = useApp((s) => s.refresh);
   const [info, setInfo] = useState<AgentInfo | null>(null);
   const [busy, setBusy] = useState(false);

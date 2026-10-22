@@ -2,7 +2,7 @@ import { Component, type ReactNode } from "react";
 import { ErrorBox, Button } from "./ui";
 
 /** ErrorBoundary keeps a crash in one part of the page from blanking the app. */
-export class ErrorBoundary extends Component<{ children: ReactNode; resetKey?: string }, { error: Error | null; key?: string }> {
+export class ErrorBoundary extends Component<{ children: ReactNode; resetKey?: string; fallback?: (error: Error, reset: () => void) => ReactNode }, { error: Error | null; key?: string }> {
   state: { error: Error | null; key?: string } = { error: null };
 
   static getDerivedStateFromError(error: Error) {
@@ -16,6 +16,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode; resetKey?: s
 
   render() {
     if (!this.state.error) return this.props.children;
+    if (this.props.fallback) return this.props.fallback(this.state.error, () => this.setState({ error: null }));
     return (
       <ErrorBox
         title="This view crashed"

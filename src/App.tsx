@@ -71,11 +71,48 @@ export function App() {
           )}
         </main>
       </div>
-      <Dialogs />
-      <AskDialog />
-      <ApprovalDialog />
+      <OverlayBoundary>
+        <Dialogs />
+      </OverlayBoundary>
+      <OverlayBoundary>
+        <AskDialog />
+      </OverlayBoundary>
+      <OverlayBoundary>
+        <ApprovalDialog />
+      </OverlayBoundary>
       <Toasts />
     </div>
+  );
+}
+
+/** OverlayBoundary keeps a dialog that crashes from blanking the app: it
+ * shows the error, and closing it brings the app back. */
+function OverlayBoundary({ children }: { children: React.ReactNode }) {
+  const dialog = useApp((s) => s.dialog);
+  return (
+    <ErrorBoundary
+      resetKey={JSON.stringify(dialog)}
+      fallback={(error, reset) => (
+        <div className="modal-backdrop">
+          <div className="modal" style={{ width: 560 }}>
+            <ErrorBox title="This dialog crashed" message={error.stack ?? error.message} />
+            <div className="modal-footer">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  useApp.getState().openDialog(null);
+                  reset();
+                }}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    >
+      {children}
+    </ErrorBoundary>
   );
 }
 

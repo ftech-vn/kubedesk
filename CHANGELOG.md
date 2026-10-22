@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1
+
+- Opening AI agents, or comparing across clusters, no longer leaves the window blank.
+- A dialog that fails now shows its error, with a button to close it, instead of blanking the app.
+
 ## 0.4.0
 
 **AI agents, with you approving every change.** Kube Desk is now an MCP server, so that Claude Code, Cursor, Codex, Claude Desktop and other MCP clients can work with your clusters. Turn it on under AI agents (the robot in the title bar, or ⌘K), copy the command for your client, and choose for each cluster what agents may do: nothing, read, or propose changes. Agents can list and read resources, read logs and events, see what changed and who changed it, get incident reports, search and compare clusters, and preview what a change would affect. When an agent wants to apply YAML, delete, scale or restart, Kube Desk shows you the change, a diff of each object, what it affects and the agent's reason, and makes it only if you approve. Production clusters ask you to type their name, read-only clusters refuse, and changes carry the agent's name, so the timeline shows who made them. Secret values never reach agents, and tokens and passwords in logs are masked. The server listens on this Mac only, behind a token.
