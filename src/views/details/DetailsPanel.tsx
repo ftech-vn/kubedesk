@@ -4,8 +4,8 @@ import { Kube } from "../../mygo";
 import { age, errorMessage, selectorOf, type KObj } from "../../lib/k8s";
 import { eventTime } from "../../lib/resources";
 import { objectActions } from "../../lib/objectActions";
-import { confirmChange } from "../../lib/actions";
-import { toast, useActiveView, useApp, type DetailRef } from "../../lib/store";
+import { readOnly as readOnlyCluster, typeToConfirm } from "../../lib/actions";
+import { ask, toast, useActiveView, useApp, type DetailRef } from "../../lib/store";
 import { useNow, useWatch } from "../../lib/watch";
 import { Badge, Button, Empty, ErrorBox, IconButton, Spinner, Tabs } from "../../components/ui";
 import { ContextMenu } from "../../components/Menu";
@@ -220,7 +220,23 @@ function YamlTab({ cluster, detail, obj, readOnly }: { cluster: string; detail: 
 
   const save = async () => {
     if (!dirty || saving || readOnly) return;
-    if (!(await confirmChange(cluster, `Save ${detail.kind} ${detail.name}?`, "The object is replaced with the YAML you edited."))) return;
+    if (readOnlyCluster(cluster)) return;
+    let diffs;
+    try {
+      diffs = await Kube.planApply(cluster, text, detail.namespace);
+    } catch (e) {
+      toast.error("Could not check the YAML", e);
+      return;
+    }
+    if (diffs.every((d) => d.action === "unchanged")) return toast.info("Nothing to save", "The YAML matches the object in the cluster.");
+    const ok = await ask({
+      title: `Save ${detail.kind} ${detail.name}?`,
+      message: "These are the changes the cluster will get.",
+      confirmLabel: "Save",
+      diffs,
+      typeToConfirm: typeToConfirm(cluster),
+    });
+    if (!ok.ok) return;
     setSaving(true);
     try {
       const res = await Kube.apply(cluster, text, detail.namespace);

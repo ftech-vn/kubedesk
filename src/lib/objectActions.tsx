@@ -1,4 +1,4 @@
-import { FileText, CirclePause, CirclePlay, FileCode2, Maximize2, Play, RotateCw, ScrollText, ShieldOff, ShieldCheck, SquareTerminal, Trash2, Wind } from "lucide-react";
+import { FileText, GitCompareArrows, CirclePause, CirclePlay, FileCode2, Maximize2, Play, RotateCw, ScrollText, ShieldOff, ShieldCheck, SquareTerminal, Trash2, Wind } from "lucide-react";
 import type { GVR } from "../mygo";
 import type { MenuItem } from "../components/Menu";
 import { cordon, deleteObjects, drain, openPodTab, restart, scale, suspendCronJob, triggerCronJob } from "./actions";
@@ -7,6 +7,7 @@ import { useApp } from "./store";
 
 const scalable = new Set(["Deployment", "StatefulSet", "ReplicaSet"]);
 const restartable = new Set(["Deployment", "StatefulSet", "DaemonSet"]);
+const comparable = new Set(["Deployment", "StatefulSet", "DaemonSet", "Service", "ConfigMap", "Secret", "Ingress", "CronJob", "HorizontalPodAutoscaler"]);
 const reportable = new Set(["Pod", "Deployment", "StatefulSet", "DaemonSet", "ReplicaSet", "Job"]);
 
 /** objectActions are what can be done to an object, for menus and toolbars. */
@@ -26,6 +27,13 @@ export function objectActions(cluster: string, gvr: GVR, kind: string, o: KObj, 
     if (!ro) items.push({ label: "Shell", icon: <SquareTerminal size={s} />, run: () => openPodTab(o, "terminal") });
   }
   if (report) items.push(report);
+  if (comparable.has(kind) && useApp.getState().clusters.filter((c) => !c.hidden).length > 1) {
+    items.push({
+      label: "Compare across clusters",
+      icon: <GitCompareArrows size={s} />,
+      run: () => useApp.getState().openDialog({ kind: "compare", gvr, object: kind, namespace: o.metadata.namespace ?? "", name: o.metadata.name }),
+    });
+  }
   if (ro) {
     if (!opts.inDetails) {
       items.push({

@@ -12,6 +12,7 @@ import { AskDialog, Dialogs, Toasts } from "./components/Overlays";
 import { Button, Empty, ErrorBox, Spinner } from "./components/ui";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useAlerts } from "./lib/alerts";
+import { ApprovalDialog, useApprovals } from "./components/ApprovalDialog";
 import { ClustersHome } from "./views/ClustersHome";
 import { ClusterOverview } from "./views/ClusterOverview";
 import { ChangesView } from "./views/ChangesView";
@@ -24,7 +25,10 @@ export function App() {
 
   useEffect(() => {
     load()
-      .then(() => useAlerts.getState().init())
+      .then(() => {
+        useAlerts.getState().init();
+        useApprovals.getState().init();
+      })
       .catch((e) => setError(errorMessage(e)));
   }, [load]);
 
@@ -69,6 +73,7 @@ export function App() {
       </div>
       <Dialogs />
       <AskDialog />
+      <ApprovalDialog />
       <Toasts />
     </div>
   );
@@ -179,6 +184,11 @@ function useHotkeys() {
     const onKey = (e: KeyboardEvent) => {
       const s = useApp.getState();
       const modKey = e.metaKey || e.ctrlKey;
+      if (modKey && e.shiftKey && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        s.openDialog({ kind: "search" });
+        return;
+      }
       if (modKey && e.key.toLowerCase() === "k") {
         e.preventDefault();
         s.openDialog(s.dialog?.kind === "palette" ? null : { kind: "palette" });

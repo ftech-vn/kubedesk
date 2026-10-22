@@ -59,6 +59,11 @@ và [Lens](https://k8slens.dev), rồi lấy việc chuyển cluster làm trọn
   mất, pod nào không còn chỗ chạy.
 - **Báo cáo sự cố**: một click gom trạng thái, events, logs (cả log trước khi
   restart), node và thay đổi gần đây thành Markdown, đã che token/mật khẩu.
+- **AI agents (MCP)**: Claude Code, Cursor, Codex… đọc được cluster bạn cho
+  phép; mọi thay đổi agent đề xuất phải được bạn duyệt trong app, kèm diff và
+  phân tích ảnh hưởng. Giá trị Secret không bao giờ được gửi cho agent.
+- **Tìm kiếm mọi cluster** (⇧⌘F) và **so sánh giữa các cluster** (tô màu chỗ
+  khác nhau, diff YAML).
 - **App**: sáng/tối/theo hệ thống, tự cập nhật (bản phát hành được ký, delta
   update).
 

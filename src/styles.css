@@ -2460,3 +2460,231 @@ h2:hover .copy-btn {
   border-radius: 8px;
   padding: 12px 14px;
 }
+
+/* ---- Agents, approvals, search, compare ---- */
+
+.agents {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 6px;
+}
+.agents-intro {
+  margin: 0;
+  line-height: 1.5;
+}
+.agents section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.snippet {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--code-bg);
+}
+.snippet pre {
+  margin: 0;
+  padding: 10px 70px 10px 12px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.snippet-actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 2px;
+}
+.access-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.access-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.access-row:last-child {
+  border-bottom: none;
+}
+.access-name {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  gap: 1px;
+  border-radius: 7px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+}
+.segmented button {
+  padding: 3px 9px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.segmented button.on {
+  background: var(--panel);
+  color: var(--fg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+.segmented button:disabled {
+  opacity: 0.4;
+}
+.activity {
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.activity-row {
+  display: grid;
+  grid-template-columns: 54px 90px 120px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.activity-detail {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.agents-button.waiting {
+  color: var(--accent);
+}
+.approval-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.approval-what {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.approval-summary {
+  font-weight: 600;
+  font-size: 14px;
+}
+.approval-reason {
+  margin: 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--accent);
+  background: var(--panel-2);
+  border-radius: 0 8px 8px 0;
+}
+.approval-diff {
+  margin-bottom: 8px;
+}
+.approval-diff-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.search-everywhere {
+  width: min(760px, calc(100vw - 40px));
+}
+.search-help {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.search-help .chip {
+  cursor: default;
+}
+.search-kind {
+  font-size: 10.5px;
+  color: var(--muted);
+  width: 82px;
+  flex-shrink: 0;
+}
+.search-detail {
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.compare-modal .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.compare-clusters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.compare-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.compare-cluster.on {
+  color: var(--fg);
+  border-color: var(--accent);
+}
+.compare-table {
+  display: grid;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: auto;
+  max-height: 55vh;
+}
+.ct-head {
+  position: sticky;
+  top: 0;
+  background: var(--panel-2);
+  padding: 7px 10px;
+  font-weight: 600;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.ct-field,
+.ct-cell {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.ct-field {
+  color: var(--muted);
+}
+.ct-row.differs > .ct-cell {
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+}
+.ct-row.differs > .ct-field {
+  color: var(--fg);
+  font-weight: 600;
+}
+.ct-empty {
+  padding: 14px;
+}

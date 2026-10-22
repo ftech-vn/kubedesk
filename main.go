@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"runtime"
 	"sync"
 
@@ -39,12 +40,19 @@ func showMainWindow() {
 }
 
 func main() {
+	// "mcp" runs the stdio bridge to the running app, for MCP clients.
+	if len(os.Args) > 1 && os.Args[1] == "mcp" {
+		os.Exit(runBridge(os.Args[2:]))
+	}
 	clusters := newClusters()
 	timeline := newTimeline()
 	alerts := newAlerts(clusters, timeline, showMainWindow)
+	kube := &Kube{clusters: clusters, timeline: timeline}
+	agents := newAgents(kube, clusters, showMainWindow)
 	mygo.Bind(clusters)
-	mygo.Bind(&Kube{clusters: clusters, timeline: timeline})
+	mygo.Bind(kube)
 	mygo.Bind(alerts)
+	mygo.Bind(agents)
 	setupUpdates()
 
 	// The watchlist keeps working with the window closed, from the menu bar.
@@ -68,6 +76,7 @@ func main() {
 		go loadShellEnv()
 		showMainWindow()
 		alerts.start()
+		agents.start()
 	})
 	if err := mygo.App.Run(); err != nil {
 		log.Fatal(err)

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Bell, Box, Download, History, Gauge, Home, Layers, LayoutGrid, Monitor, Moon, Plus, Search, Settings2, Sun, Waypoints } from "lucide-react";
+import { Bell, Bot, Box, Download, History, Globe, Gauge, Home, Layers, LayoutGrid, Monitor, Moon, Plus, Search, Settings2, Sun, Waypoints } from "lucide-react";
 import { AppInfo } from "../mygo";
 import { isWatched, toggleWatch, useAlerts } from "../lib/alerts";
 import { byKey, resources } from "../lib/resources";
@@ -64,6 +64,7 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
     );
     out.push({ id: "home", group: "Clusters", label: "All clusters", icon: <Home size={16} />, run: () => s.activate(null) });
     out.push({ id: "add", group: "Clusters", label: "Add a cluster…", icon: <Plus size={16} />, run: () => s.openDialog({ kind: "add" }) });
+    out.push({ id: "agents", group: "App", label: "AI agents (MCP)…", keywords: "mcp claude codex cursor ai agent", icon: <Bot size={16} />, run: () => s.openDialog({ kind: "agents" }) });
     out.push({ id: "updates", group: "App", label: "Check for updates…", keywords: "update version upgrade", icon: <Download size={16} />, run: () => AppInfo.checkForUpdates() });
     out.push({ id: "theme:light", group: "Appearance", label: "Light mode", keywords: "theme", hint: s.theme === "light" ? "current" : undefined, icon: <Sun size={16} />, run: () => s.setTheme("light") });
     out.push({ id: "theme:dark", group: "Appearance", label: "Dark mode", keywords: "theme", hint: s.theme === "dark" ? "current" : undefined, icon: <Moon size={16} />, run: () => s.setTheme("dark") });
@@ -110,7 +111,15 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
 
   const query = q.trim().toLowerCase();
   const results = useMemo(() => {
-    if (!query) return items.filter((i) => i.group !== "Objects" && i.group !== "Namespaces" && i.group !== "Appearance" && i.group !== "App").slice(0, 60);
+    const everywhere: Item = {
+      id: "search-all",
+      group: "Search",
+      label: query ? `Search every cluster for “${q.trim()}”` : "Search every cluster…",
+      hint: "⇧⌘F",
+      icon: <Globe size={16} />,
+      run: () => s.openDialog({ kind: "search", query: q.trim() }),
+    };
+    if (!query) return [...items.filter((i) => i.group !== "Objects" && i.group !== "Namespaces" && i.group !== "Appearance" && i.group !== "App").slice(0, 60), everywhere];
     return items
       .map((i) => {
         const label = score(i.label, query);
@@ -122,8 +131,9 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
       .filter((x) => x.s >= 0)
       .sort((a, b) => b.s - a.s)
       .slice(0, 60)
-      .map((x) => x.i);
-  }, [items, query]);
+      .map((x) => x.i)
+      .concat(everywhere);
+  }, [items, query, q, s]);
 
   useEffect(() => setSel(0), [query]);
   useEffect(() => {

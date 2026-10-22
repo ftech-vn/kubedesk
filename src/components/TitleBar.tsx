@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRightLeft, Bell, BellOff, BellRing, Check, ChevronDown, Eye, ExternalLink, LayoutGrid, Monitor, Moon, Search, Square, Sun } from "lucide-react";
+import { ArrowRightLeft, Bot, Bell, BellOff, BellRing, Check, ChevronDown, Eye, ExternalLink, LayoutGrid, Monitor, Moon, Search, Square, Sun } from "lucide-react";
 import { Alerts, type Alert } from "../mygo";
 import { isWatched, openRequest, toggleWatch, useAlerts } from "../lib/alerts";
+import { useApprovals } from "./ApprovalDialog";
 import { age } from "../lib/k8s";
 import type { Theme } from "../mygo";
 import { Kube } from "../mygo";
@@ -44,6 +45,7 @@ export function TitleBar() {
       </button>
       <div className="titlebar-right">
         <PortForwardsButton />
+        <AgentsButton />
         <AlertsButton />
         <ThemeSwitch />
       </div>
@@ -275,5 +277,16 @@ function AlertsButton() {
         </Popover>
       )}
     </>
+  );
+}
+
+function AgentsButton() {
+  const waiting = useApprovals((s) => s.pending.length);
+  const openDialog = useApp((s) => s.openDialog);
+  return (
+    <button className={`crumb agents-button ${waiting ? "waiting" : ""}`} onClick={() => openDialog({ kind: "agents" })} title={waiting ? `${waiting} change${waiting === 1 ? "" : "s"} waiting for your approval` : "AI agents (MCP)"}>
+      <Bot size={14} />
+      {waiting > 0 && <span className="alerts-count">{waiting}</span>}
+    </button>
   );
 }

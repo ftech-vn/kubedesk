@@ -61,6 +61,8 @@ type Cluster struct {
 	Production bool `json:"production"`
 	// ReadOnly refuses every change to the cluster, in the app.
 	ReadOnly bool `json:"readOnly"`
+	// Agent is what AI agents may do with the cluster, through the app.
+	Agent AgentAccess `json:"agent"`
 	// Current marks the current context of the default kubeconfig.
 	Current bool `json:"current"`
 }
@@ -82,8 +84,9 @@ type ClusterPrefs struct {
 	Alias      string `json:"alias,omitempty"`
 	Color      string `json:"color,omitempty"`
 	Hidden     bool   `json:"hidden,omitempty"`
-	Production bool   `json:"production,omitempty"`
-	ReadOnly   bool   `json:"readOnly,omitempty"`
+	Production bool        `json:"production,omitempty"`
+	ReadOnly   bool        `json:"readOnly,omitempty"`
+	Agent      AgentAccess `json:"agent,omitempty"`
 }
 
 // Theme is the appearance the user chose.
@@ -139,6 +142,7 @@ type clusterStore struct {
 	Namespaces map[string]string       `json:"namespaces"`
 	Theme      Theme                   `json:"theme,omitempty"`
 	Watch      []WatchTarget           `json:"watch,omitempty"`
+	Agents     AgentSettings           `json:"agents,omitempty"`
 }
 
 // conn is a connection to a cluster, reused until its kubeconfig changes.
@@ -302,6 +306,7 @@ func (c *Clusters) list() (ClusterList, map[string]source) {
 				cl.Hidden = p.Hidden
 				cl.Production = p.Production
 				cl.ReadOnly = p.ReadOnly
+				cl.Agent = p.Agent
 			}
 			res.Clusters = append(res.Clusters, cl)
 			bySource[cl.ID] = s
@@ -705,6 +710,42 @@ func (c *Clusters) Test(ctx context.Context, id string) ClusterStatus {
 		return ClusterStatus{Error: friendlyError(err)}
 	}
 	return ClusterStatus{OK: true, Version: v}
+}
+
+func (c *Clusters) agentSettings() AgentSettings {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	s := c.store.Agents
+	if s.Port == 0 {
+		s.Port = defaultAgentPort
+	}
+	return s
+}
+
+func (c *Clusters) setAgentSettings(s AgentSettings) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.store.Agents = s
+	return c.save()
+}
+
+func (c *Clusters) agentAccess(id string) AgentAccess {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.store.Prefs[id].Agent
+}
+
+func (c *Clusters) setAgentAccess(id string, access AgentAccess) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	p := c.store.Prefs[id]
+	p.Agent = access
+	if p == (ClusterPrefs{}) {
+		delete(c.store.Prefs, id)
+	} else {
+		c.store.Prefs[id] = p
+	}
+	return c.save()
 }
 
 // watchTargets returns what the watchlist watches.

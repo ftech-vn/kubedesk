@@ -8,6 +8,10 @@ import { Button, Field, Modal, Spinner, useAutoFocus } from "./ui";
 import { YamlEditor } from "./YamlEditor";
 import { AddClusterDialog, ClusterSettingsDialog } from "./ClusterDialogs";
 import { CommandPalette } from "./CommandPalette";
+import { AgentsDialog } from "./AgentsDialog";
+import { SearchDialog } from "./SearchDialog";
+import { CompareDialog } from "./CompareDialog";
+import { DiffView } from "./DiffView";
 
 export function Dialogs() {
   const dialog = useApp((s) => s.dialog);
@@ -22,6 +26,12 @@ export function Dialogs() {
       return <CommandPalette onClose={close} />;
     case "create":
       return <CreateDialog initial={dialog.yaml ?? ""} onClose={close} />;
+    case "agents":
+      return <AgentsDialog onClose={close} />;
+    case "search":
+      return <SearchDialog initial={dialog.query} onClose={close} />;
+    case "compare":
+      return <CompareDialog gvr={dialog.gvr} kind={dialog.object} namespace={dialog.namespace} name={dialog.name} onClose={close} />;
     case "report":
       return <ReportDialog cluster={dialog.cluster} kind={dialog.object} namespace={dialog.namespace} name={dialog.name} onClose={close} />;
   }
@@ -144,6 +154,18 @@ function AskInner() {
           <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} /> {req.checkbox}
         </label>
       )}
+      {req.diffs?.map((d, i) => (
+        <div key={i} className="approval-diff">
+          <div className="approval-diff-head">
+            <span className={`badge tone-${d.action === "create" ? "ok" : d.action === "unchanged" ? "muted" : "info"}`}>{d.action}</span>
+            <span className="mono small">
+              {d.kind} {d.namespace ? `${d.namespace}/` : ""}
+              {d.name}
+            </span>
+          </div>
+          {d.action !== "unchanged" && <DiffView before={d.before} after={d.after} />}
+        </div>
+      ))}
       {req.impact && <ImpactList load={req.impact} value={value} />}
       {req.typeToConfirm && (
         <Field label={`Type ${req.typeToConfirm} to confirm`}>

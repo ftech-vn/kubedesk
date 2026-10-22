@@ -25,6 +25,21 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+type managerKey struct{}
+
+// withManager names who makes the changes of a context, as the field
+// manager the cluster records: Kube Desk, or an agent through it.
+func withManager(ctx context.Context, name string) context.Context {
+	return context.WithValue(ctx, managerKey{}, name)
+}
+
+func managerOf(ctx context.Context) string {
+	if m, ok := ctx.Value(managerKey{}).(string); ok && m != "" {
+		return m
+	}
+	return "k8s-client"
+}
+
 // Object is a Kubernetes object as the API returns it.
 type Object = map[string]any
 
@@ -293,7 +308,7 @@ func (k *Kube) Apply(ctx context.Context, cluster, manifest, namespace string) (
 		existing, err := r.Get(ctx, obj.GetName(), metav1.GetOptions{})
 		switch {
 		case apierrors.IsNotFound(err):
-			if _, err := r.Create(ctx, obj, metav1.CreateOptions{FieldManager: "k8s-client"}); err != nil {
+			if _, err := r.Create(ctx, obj, metav1.CreateOptions{FieldManager: managerOf(ctx)}); err != nil {
 				return results, fmt.Errorf("%s: %w", label, err)
 			}
 			results = append(results, label+" created")
@@ -303,7 +318,7 @@ func (k *Kube) Apply(ctx context.Context, cluster, manifest, namespace string) (
 			if obj.GetResourceVersion() == "" {
 				obj.SetResourceVersion(existing.GetResourceVersion())
 			}
-			if _, err := r.Update(ctx, obj, metav1.UpdateOptions{FieldManager: "k8s-client"}); err != nil {
+			if _, err := r.Update(ctx, obj, metav1.UpdateOptions{FieldManager: managerOf(ctx)}); err != nil {
 				return results, fmt.Errorf("%s: %w", label, err)
 			}
 			results = append(results, label+" configured")
@@ -345,7 +360,7 @@ func (k *Kube) patch(ctx context.Context, cluster string, gvr GVR, namespace, na
 	if err != nil {
 		return err
 	}
-	_, err = r.Patch(ctx, name, types.MergePatchType, b, metav1.PatchOptions{FieldManager: "k8s-client"})
+	_, err = r.Patch(ctx, name, types.MergePatchType, b, metav1.PatchOptions{FieldManager: managerOf(ctx)})
 	return err
 }
 
@@ -409,7 +424,7 @@ func (k *Kube) TriggerCronJob(ctx context.Context, cluster, namespace, name stri
 		},
 		Spec: tmpl.Spec,
 	}
-	if _, err := cn.cs.BatchV1().Jobs(namespace).Create(ctx, newJob, metav1.CreateOptions{FieldManager: "k8s-client"}); err != nil {
+	if _, err := cn.cs.BatchV1().Jobs(namespace).Create(ctx, newJob, metav1.CreateOptions{FieldManager: managerOf(ctx)}); err != nil {
 		return "", err
 	}
 	return jobName, nil
@@ -468,11 +483,19 @@ func (k *Kube) Drain(ctx context.Context, cluster, node string) ([]string, error
 // Resources returns the kinds of resources the cluster serves, in their
 // preferred versions.
 func (k *Kube) Resources(ctx context.Context, cluster string) ([]APIResource, error) {
+	return k.resources(cluster, true)
+}
+
+// resources lists the kinds a cluster serves; fresh asks the cluster again
+// rather than trusting what discovery remembers.
+func (k *Kube) resources(cluster string, fresh bool) ([]APIResource, error) {
 	cn, err := k.clusters.conn(cluster)
 	if err != nil {
 		return nil, err
 	}
-	cn.disc.Invalidate()
+	if fresh {
+		cn.disc.Invalidate()
+	}
 	lists, err := cn.disc.ServerPreferredResources()
 	if err != nil && len(lists) == 0 {
 		return nil, errors.New(friendlyError(err))

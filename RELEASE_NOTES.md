@@ -9,6 +9,7 @@ biết.
 
 | Bản | Ngày | Điểm chính | Tải về (delta) |
 |---|---|---|---|
+| [0.4.0](#040--22102026) | 22/10/2026 | AI agents qua MCP (có duyệt từng thay đổi), tìm kiếm mọi cluster, so sánh giữa các cluster | xem trang Releases |
 | [0.3.0](#030--22102026) | 22/10/2026 | Timeline thay đổi, xem trước ảnh hưởng, báo cáo sự cố | 15.5 MB (từ 0.2: 2.5 MB · từ 0.1: 5.0 MB) |
 | [0.2.0](#020--22102026) | 22/10/2026 | Watchlist và thông báo, log gộp, bảo vệ production, cột CPU/RAM | 15.4 MB (từ 0.1: 4.9 MB) |
 | [0.1.0](#010--21102026) | 21/10/2026 | Bản đầu tiên: nhiều cluster, resource realtime, logs, shell, tự cập nhật | 14.0 MB |
@@ -17,6 +18,71 @@ Tải bản mới nhất:
 <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg>
 (macOS 12 trở lên, Apple silicon). App đã cài sẽ tự cập nhật. Thường app chỉ
 tải phần thay đổi (delta), như ở cột cuối bảng trên.
+
+---
+
+## 0.4.0 · 22/10/2026
+
+Bản này giúp **AI agent làm việc với cluster một cách an toàn**, và giúp
+**nhìn nhiều cluster như một**.
+
+### Tính năng mới
+
+**AI agents qua MCP**
+- Kube Desk là một MCP server cho Claude Code, Cursor, Codex, Claude Desktop
+  và các MCP client khác. Bật trong **AI agents** (icon robot trên title bar,
+  hoặc ⌘K); app có câu lệnh copy sẵn cho từng client.
+- Kết nối qua HTTP (`http://127.0.0.1:<port>/mcp` kèm token), hoặc qua cầu nối
+  stdio: `Kube Desk mcp --config …`. Cầu nối tự mở app nếu app chưa chạy.
+- **Quyền theo từng cluster:** Off (mặc định), Read, Propose changes.
+- 14 tool:
+  - đọc: `list_clusters`, `list_resources`, `get_resource`, `get_logs`,
+    `get_events`, `get_changes`, `incident_report`, `search`, `compare`,
+    `preview_impact`;
+  - đề xuất thay đổi: `apply_manifest`, `delete_resource`, `scale`, `restart`.
+- **Mọi thay đổi chờ bạn duyệt.** Hộp thoại duyệt hiện tên agent, lý do agent
+  đưa ra, diff từng object, phần "What this affects" và thời gian còn lại
+  (5 phút). Cluster production bắt gõ tên cluster, cluster read-only từ chối
+  luôn.
+- Thay đổi do agent thực hiện ghi field manager
+  `kubedesk-agent (<tên agent>)`, nên timeline biết agent nào đã làm.
+- Nhật ký các lệnh agent đã gọi nằm trong hộp thoại AI agents.
+- **An toàn:**
+  - server chỉ nghe ở 127.0.0.1, cần token, kiểm tra header Host để chống DNS
+    rebinding;
+  - giá trị Secret luôn bị che; token và mật khẩu trong log được che trước khi
+    gửi cho agent.
+
+**Tìm kiếm trên mọi cluster**
+- Mở bằng ⇧⌘F, hoặc chọn "Search every cluster" trong ⌘K.
+- Tìm theo tên, `image:`, `label:`/`key=value`, `kind:`, `ns:`, `node:`,
+  `is:failing`, `status:`.
+- Kết quả hiện dần theo từng cluster; bấm vào là chuyển sang đúng cluster và
+  mở object đó.
+
+**So sánh giữa các cluster**
+- Mục "Compare across clusters" cho Deployment, StatefulSet, DaemonSet,
+  Service, ConfigMap, Secret, Ingress, CronJob và HPA.
+- Bảng so sánh image, replicas, resources, env, ports, volumes, key và label;
+  tô màu những trường khác nhau, có tuỳ chọn "Only differences", và xem được
+  diff YAML giữa hai cluster.
+- Secret chỉ được so bằng mã hash.
+
+**Diff trước khi Save YAML**
+- Bấm Save sẽ thấy chính xác những gì cluster sẽ nhận. Nếu YAML không khác gì
+  object hiện tại, app báo "Nothing to save".
+
+### Cần biết khi nâng cấp
+- MCP server **mặc định tắt**, và mọi cluster mặc định **Off** với agent.
+- Token và cổng được lưu trong thư mục dữ liệu của app; cầu nối stdio đọc
+  `mcp.json` ở đó. Bấm "New token" thì các agent đã cài phải thêm lại.
+
+### Giới hạn đã biết
+- Mỗi thay đổi chỉ chờ duyệt 5 phút; quá thời gian thì agent nhận lỗi và có
+  thể hỏi lại.
+- Tìm kiếm đọc các danh sách Pod, workload, Service, Ingress, ConfigMap, Node
+  và Namespace của từng cluster (cache 30 giây). Chưa tìm trong custom
+  resource.
 
 ---
 

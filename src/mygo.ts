@@ -25,6 +25,36 @@ export interface About {
   canUpdate: boolean;
 }
 
+/** AgentAccess is what AI agents may do with a cluster, through Kube Desk. */
+export type AgentAccess = "" | "read" | "write";
+
+/** AgentActivity is a call an agent made. */
+export interface AgentActivity {
+  time: string;
+  client: string;
+  tool: string;
+  cluster?: string;
+  detail?: string;
+  /** Outcome is ok, error, approved, rejected or expired. */
+  outcome: string;
+}
+
+/** AgentInfo is what the page shows about the MCP server. */
+export interface AgentInfo {
+  enabled: boolean;
+  running: boolean;
+  error?: string;
+  url: string;
+  token: string;
+  /**
+   * Command and Args run the stdio bridge, for clients that start their
+   * servers as processes.
+   */
+  command: string;
+  args: string[];
+  configPath: string;
+}
+
 /** Alert is a problem of a watched object, for as long as it lasts. */
 export interface Alert {
   id: string;
@@ -69,6 +99,27 @@ export interface AppState {
    */
   namespaces: Record<string, string>;
   theme: Theme;
+}
+
+/** ApprovalRequest is a change an agent proposes, waiting for the user. */
+export interface ApprovalRequest {
+  id: string;
+  client: string;
+  cluster: string;
+  clusterName: string;
+  production: boolean;
+  /** Action is apply, delete, scale or restart. */
+  action: string;
+  kind: string;
+  namespace: string;
+  name: string;
+  /** Summary says the change in a line; Reason is the agent's why. */
+  summary: string;
+  reason?: string;
+  diffs?: ObjectDiff[];
+  impact?: ImpactItem[];
+  created: string;
+  expires: string;
 }
 
 /** Change is something that happened in a watched namespace. */
@@ -118,6 +169,8 @@ export interface Cluster {
   production: boolean;
   /** ReadOnly refuses every change to the cluster, in the app. */
   readOnly: boolean;
+  /** Agent is what AI agents may do with the cluster, through the app. */
+  agent: AgentAccess;
   /** Current marks the current context of the default kubeconfig. */
   current: boolean;
 }
@@ -141,6 +194,7 @@ export interface ClusterPrefs {
   hidden?: boolean;
   production?: boolean;
   readOnly?: boolean;
+  agent?: AgentAccess;
 }
 
 /** ClusterStatus is the outcome of connecting to a cluster. */
@@ -148,6 +202,41 @@ export interface ClusterStatus {
   ok: boolean;
   version?: string;
   error?: string;
+}
+
+/** CompareColumn is the object in one cluster. */
+export interface CompareColumn {
+  cluster: string;
+  clusterName: string;
+  found: boolean;
+  error?: string;
+  /** YAML is the object without what the cluster fills in, secrets masked. */
+  yaml?: string;
+}
+
+/**
+ * CompareRequest names an object to compare across clusters: the same
+ * kind, namespace and name in each.
+ */
+export interface CompareRequest {
+  gvr: GVR;
+  kind: string;
+  namespace: string;
+  name: string;
+  clusters: string[];
+}
+
+/** CompareResult lines up the fields of an object across clusters. */
+export interface CompareResult {
+  columns: CompareColumn[];
+  rows: CompareRow[];
+}
+
+/** CompareRow is a field of the object, with its value in each column. */
+export interface CompareRow {
+  field: string;
+  values: string[];
+  differs: boolean;
 }
 
 /** GVR names a kind of resource: its API group, version and plural name. */
@@ -226,6 +315,17 @@ export interface ManualCluster {
   namespace?: string;
 }
 
+/** ObjectDiff is what applying a document would do to one object. */
+export interface ObjectDiff {
+  kind: string;
+  namespace: string;
+  name: string;
+  /** Action is "create", "update" or "unchanged". */
+  action: string;
+  before: string;
+  after: string;
+}
+
 /** OpenRequest asks the page to show an object. */
 export interface OpenRequest {
   cluster: string;
@@ -251,6 +351,32 @@ export interface Report {
   markdown: string;
   /** Redacted counts the secrets taken out of the logs. */
   redacted: number;
+}
+
+/** SearchHit is an object that matches a search, in one cluster. */
+export interface SearchHit {
+  cluster: string;
+  clusterName: string;
+  gvr: GVR;
+  kind: string;
+  namespace: string;
+  name: string;
+  /** Detail is a short state: a pod's status, a workload's images. */
+  detail?: string;
+  /** Error is set, alone, when a cluster could not be searched. */
+  error?: string;
+}
+
+/** SearchQuery is a search across clusters. */
+export interface SearchQuery {
+  /**
+   * Text holds words that match names, and filters: image:nginx,
+   * label:app=web (or app=web), kind:pod, ns:shop, node:n1,
+   * is:failing, status:CrashLoopBackOff.
+   */
+  text: string;
+  /** Clusters to search; none is every cluster shown. */
+  clusters?: string[];
 }
 
 /** Severity says how bad an alert is. */
@@ -405,6 +531,14 @@ export const Kube = {
   apply(cluster: string, manifest: string, namespace: string): Promise<string[]> {
     return call("Kube.Apply", cluster, manifest, namespace);
   },
+  /**
+   * Compare reads an object from several clusters and lines up its fields:
+   * images, replicas, resources, environment, ports, keys of config maps and
+   * secrets (their values masked). Rows whose values differ are marked.
+   */
+  compare(req: CompareRequest): Promise<CompareResult> {
+    return call("Kube.Compare", req);
+  },
   /** Cordon marks a node unschedulable, or schedulable again. */
   cordon(cluster: string, node: string, unschedulable: boolean): Promise<void> {
     return call("Kube.Cordon", cluster, node, unschedulable);
@@ -479,6 +613,14 @@ export const Kube = {
   openURL(u: string): Promise<void> {
     return call("Kube.OpenURL", u);
   },
+  /**
+   * PlanApply works out, without changing anything, what Apply would do to
+   * each object of a document: the YAML of each object now and after.
+   * Secret values are masked.
+   */
+  planApply(cluster: string, manifest: string, namespace: string): Promise<ObjectDiff[]> {
+    return call("Kube.PlanApply", cluster, manifest, namespace);
+  },
   /** PortForwards returns the port forwards running. */
   portForwards(): Promise<PortForward[]> {
     return call("Kube.PortForwards");
@@ -516,6 +658,13 @@ export const Kube = {
   /** Scale sets the replicas of a deployment, stateful set or replica set. */
   scale(cluster: string, gvr: GVR, namespace: string, name: string, replicas: number): Promise<void> {
     return call("Kube.Scale", cluster, gvr, namespace, name, replicas);
+  },
+  /**
+   * Search looks for objects in every cluster at once, and sends the hits of
+   * each cluster as it answers.
+   */
+  search(q: SearchQuery, hits: Channel<SearchHit[]>): Promise<void> {
+    return call("Kube.Search", q, hits);
   },
   /** SetSuspended suspends or resumes a cron job. */
   setSuspended(cluster: string, namespace: string, name: string, suspend: boolean): Promise<void> {
@@ -616,6 +765,45 @@ export const Alerts = {
   },
 } as const;
 
+/**
+ * Agents is the MCP server through which AI agents, such as Claude Code,
+ * read the clusters the user lets them and propose changes, which the user
+ * approves in the app.
+ */
+export const Agents = {
+  /** Activity returns the latest calls of agents, newest first. */
+  activity(): Promise<AgentActivity[]> {
+    return call("Agents.Activity");
+  },
+  /** Decide approves or rejects a change an agent proposed. */
+  decide(id: string, approve: boolean): Promise<void> {
+    return call("Agents.Decide", id, approve);
+  },
+  /** Info returns the MCP server's state and how to connect to it. */
+  info(): Promise<AgentInfo> {
+    return call("Agents.Info");
+  },
+  /** Pending returns the changes waiting for approval, oldest first. */
+  pending(): Promise<ApprovalRequest[]> {
+    return call("Agents.Pending");
+  },
+  /**
+   * RegenerateToken replaces the token agents connect with; connected agents
+   * must be set up again.
+   */
+  regenerateToken(): Promise<AgentInfo> {
+    return call("Agents.RegenerateToken");
+  },
+  /** SetAccess sets what agents may do with a cluster. */
+  setAccess(cluster: string, access: AgentAccess): Promise<void> {
+    return call("Agents.SetAccess", cluster, access);
+  },
+  /** SetEnabled starts or stops the MCP server. */
+  setEnabled(on: boolean): Promise<AgentInfo> {
+    return call("Agents.SetEnabled", on);
+  },
+} as const;
+
 /** AppInfo tells the page about the app and checks for new versions. */
 export const AppInfo = {
   /** About returns the version of the app and whether it can update itself. */
@@ -635,6 +823,10 @@ export const AppInfo = {
 
 /** Events sent by the Go side. Subscribe with `events.name.on(listener)`. */
 export const events = {
+  /** AgentApprovals is sent when the changes waiting for approval change. */
+  agentsApprovals: event<ApprovalRequest[]>("agents:approvals"),
+  /** AgentActivityChanged is sent when an agent made a call. */
+  agentsActivity: event<AgentActivity[]>("agents:activity"),
   /** AlertsChanged is sent when the watchlist or its problems change. */
   alertsChanged: event<AlertsState>("alerts:changed"),
   /**

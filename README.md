@@ -90,6 +90,22 @@ clusters the core of the app:
   before the last restart), node and recent changes in one Markdown report,
   with tokens and passwords masked
 
+**AI agents, with you approving every change**
+- Kube Desk is an MCP server for Claude Code, Cursor, Codex, Claude Desktop
+  and other MCP clients. Choose per cluster what agents may do: nothing, read,
+  or propose changes
+- Agents read resources, logs, events, the timeline and incident reports,
+  search and compare clusters, and preview impacts
+- Every change an agent proposes (apply, delete, scale, restart) waits for
+  your approval in Kube Desk, with a diff, what it affects and the agent's
+  reason. Secret values never reach agents
+
+**Many clusters as one**
+- <kbd>⇧⌘F</kbd> searches every cluster at once: names, `image:`, `app=web`,
+  `kind:`, `ns:`, `node:`, `is:failing`
+- Compare a workload, service, config map or secret across clusters, with
+  what differs highlighted and a YAML diff
+
 **Production guardrails**
 - Mark a cluster as production: it shows in red, and every change (delete,
   scale, restart, drain, saving YAML…) asks you to type the cluster's name
@@ -152,6 +168,26 @@ The code is cross-platform (MyGo uses WebKitGTK on Linux and WebView2 on
 Windows), but releases are only built for macOS so far. You can
 [build it yourself](#build-from-source).
 
+## Use with AI agents
+
+1. In Kube Desk, open **AI agents** (the robot in the title bar, or <kbd>⌘K</kbd>)
+   and turn on the MCP server.
+2. Choose, for each cluster, what agents may do: **Off**, **Read** or
+   **Propose changes**.
+3. Copy the command for your client. For Claude Code:
+
+   ```sh
+   claude mcp add --transport http kubedesk http://127.0.0.1:47428/mcp \
+     --header "Authorization: Bearer <token from Kube Desk>"
+   ```
+
+   Clients that start servers as processes (Cursor, Claude Desktop, Codex)
+   run Kube Desk's bridge: `"/Applications/Kube Desk.app/Contents/MacOS/Kube Desk" mcp --config <path shown in the app>`.
+
+Then ask, for example, *"Why is checkout failing in production-eu?"*: the
+agent reads the incident report and recent changes. When it proposes a fix,
+Kube Desk shows you the diff and what it affects before anything changes.
+
 ## Keyboard shortcuts
 
 | Shortcut | Action |
@@ -159,6 +195,7 @@ Windows), but releases are only built for macOS so far. You can
 | <kbd>⌘K</kbd> | Command palette: clusters, pages, namespaces, objects, theme, updates |
 | <kbd>⌘1</kbd> … <kbd>⌘9</kbd> | Switch to the nth cluster |
 | <kbd>⌘0</kbd> | All clusters |
+| <kbd>⇧⌘F</kbd> | Search every cluster |
 | <kbd>⌘F</kbd> | Filter the current list |
 | <kbd>⌘S</kbd> | Apply the YAML being edited |
 | <kbd>Esc</kbd> | Close the details panel |
@@ -220,6 +257,8 @@ bunx tsc --noEmit             # type-check the frontend
 | `timeline.go`, `recorder.go` | The timeline: describing changes, storage, finding changes made while closed |
 | `impact.go` | What a delete, scale, restart or drain would affect |
 | `report.go` | Incident reports, and masking secrets in logs |
+| `agents.go`, `mcp_bridge.go` | The MCP server, its tools and approvals, and the stdio bridge |
+| `search.go`, `compare.go`, `plan.go` | Search across clusters, comparisons, diffs before applying |
 | `updates.go` | Auto-updates and the application menu |
 | `src/lib/` | Store (zustand), shared watch cache, resource definitions and columns |
 | `src/views/`, `src/components/` | The UI |
@@ -251,8 +290,10 @@ for 90 seconds after its last view closes.
 - [x] A local timeline of changes, also across restarts of the app (0.3)
 - [x] One-click incident reports (0.3)
 - [x] The impact of a change before deleting, scaling or draining (0.3)
-- [ ] Compare a workload across clusters, and search every cluster at once
-- [ ] An MCP server for AI agents, with approval of each change in the app
+- [x] Compare a workload across clusters, and search every cluster at once (0.4)
+- [x] An MCP server for AI agents, with approval of each change in the app (0.4)
+- [ ] Helm releases: values, history, diffs between revisions, rollback
+- [ ] Resource map
 - [ ] Helm releases
 - [ ] Resource diff before apply
 - [ ] Plugins

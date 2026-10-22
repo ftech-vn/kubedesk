@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Clusters, type Cluster, type ClusterStatus, type GVR, type ImpactItem, type SourceError, type Theme } from "../mygo";
+import { Clusters, type Cluster, type ClusterStatus, type GVR, type ImpactItem, type ObjectDiff, type SourceError, type Theme } from "../mygo";
 import { errorMessage } from "./k8s";
 
 /** DetailRef points at an object shown in the details panel. */
@@ -33,7 +33,10 @@ interface AppStore {
   savedNamespaces: Record<string, string>;
   status: Record<string, Status>;
   theme: Theme;
-  dialog: null | { kind: "add" } | { kind: "settings"; cluster: string } | { kind: "palette" } | { kind: "create"; yaml?: string } | { kind: "report"; cluster: string; object: string; namespace: string; name: string };
+  dialog: null | { kind: "add" } | { kind: "settings"; cluster: string } | { kind: "palette" } | { kind: "create"; yaml?: string } | { kind: "report"; cluster: string; object: string; namespace: string; name: string }
+    | { kind: "agents" }
+    | { kind: "search"; query?: string }
+    | { kind: "compare"; gvr: GVR; object: string; namespace: string; name: string };
 
   load(): Promise<void>;
   refresh(): Promise<void>;
@@ -212,6 +215,8 @@ export interface AskRequest {
   checkbox?: string;
   /** typeToConfirm is a name the user must type before confirming. */
   typeToConfirm?: string;
+  /** diffs show what applying a document changes, object by object. */
+  diffs?: ObjectDiff[];
   /** impact previews what the change does, given the input's value. */
   impact?: (value: string) => Promise<ImpactItem[]>;
   resolve(r: { ok: boolean; value: string; checked: boolean }): void;

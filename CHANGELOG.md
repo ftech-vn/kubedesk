@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0
+
+**AI agents, with you approving every change.** Kube Desk is now an MCP server, so that Claude Code, Cursor, Codex, Claude Desktop and other MCP clients can work with your clusters. Turn it on under AI agents (the robot in the title bar, or ⌘K), copy the command for your client, and choose for each cluster what agents may do: nothing, read, or propose changes. Agents can list and read resources, read logs and events, see what changed and who changed it, get incident reports, search and compare clusters, and preview what a change would affect. When an agent wants to apply YAML, delete, scale or restart, Kube Desk shows you the change, a diff of each object, what it affects and the agent's reason, and makes it only if you approve. Production clusters ask you to type their name, read-only clusters refuse, and changes carry the agent's name, so the timeline shows who made them. Secret values never reach agents, and tokens and passwords in logs are masked. The server listens on this Mac only, behind a token.
+
+**Search every cluster at once.** ⇧⌘F, or "Search every cluster" in ⌘K, finds objects across all your clusters as you type: by name, `image:nginx`, `app=web`, `kind:svc`, `ns:shop`, `node:…`, `is:failing` or `status:CrashLoopBackOff`. Results come in cluster by cluster; click one to open it there.
+
+**Compare across clusters.** "Compare across clusters" lines up a deployment, stateful set, daemon set, service, config map, secret, ingress, cron job or autoscaler in each cluster: images, replicas, resources, environment, ports, volumes, keys. Fields that differ are highlighted, and a YAML diff shows everything between two clusters. Secret values are compared by fingerprint only.
+
+**See what Save changes.** Saving YAML now shows the diff the cluster will get, and says so when nothing changed.
+
 ## 0.3.0
 
 **A timeline of what changed.** In the namespaces you watch, Kube Desk records every change while it runs and keeps it for 7 days: deployments, stateful sets, daemon sets, services, ingresses, config maps, secrets, cron jobs and autoscalers, pods restarting or becoming ready, nodes going down, and warning events. Each change says what changed in plain words ("image api: api:1 → api:2", "replicas 2 → 3", "env DATABASE_URL changed"), who changed it (kubectl, Helm, Argo CD, a controller), and shows a diff of before and after. When Kube Desk starts again, it finds what was changed, created or deleted while it was closed. Find it under Changes in the sidebar, in the History tab of each object, and on the overview. Secret values never reach the timeline: only which keys changed.
