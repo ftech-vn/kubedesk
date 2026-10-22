@@ -1,0 +1,7 @@
+.DS_Store
+/.mygo/
+/build/
+/dist/
+mygo_windows_*.syso
+node_modules/
+/release/
