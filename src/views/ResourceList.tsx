@@ -11,6 +11,7 @@ import { ContextMenu } from "../components/Menu";
 import { Button, Empty, ErrorBox, IconButton, Spinner } from "../components/ui";
 import { newResourceTemplate } from "../lib/templates";
 import { useMetricsColumns } from "../lib/metricsColumns";
+import { canDo, noAccess, useAccessUpdates } from "../lib/access";
 
 /** matches filters by words of the name and columns, and key=value labels. */
 export function matches(o: KObj, def: ResourceDef, filter: string): boolean {
@@ -42,6 +43,9 @@ export function ResourceList({ cluster, def }: { cluster: string; def: ResourceD
   const top = view.details[view.details.length - 1];
   const selectedUid = top ? items.find((o) => o.metadata.name === top.name && (o.metadata.namespace ?? "") === top.namespace && top.kind === def.kind)?.metadata.uid : undefined;
   const metrics = useMetricsColumns(cluster, def, namespace);
+  useAccessUpdates();
+  const mayCreate = canDo(cluster, "create", def.gvr, namespace);
+  const mayDelete = (o: KObj) => canDo(cluster, "delete", def.gvr, o.metadata.namespace ?? "");
   const columns = useMemo(() => {
     const cols = def.namespaced && namespace ? def.columns.filter((c) => c.id !== "namespace") : def.columns;
     if (!metrics.length) return cols;
@@ -52,9 +56,9 @@ export function ResourceList({ cluster, def }: { cluster: string; def: ResourceD
   const actions: RowAction[] = [];
   if (def.kind === "Pod") {
     actions.push({ label: "Logs", icon: <ScrollText size={14} />, run: (o) => openPodTab(o, "logs") });
-    if (!ro) actions.push({ label: "Shell", icon: <SquareTerminal size={14} />, run: (o) => openPodTab(o, "terminal"), show: (o) => o.status?.phase === "Running" });
+    if (!ro) actions.push({ label: "Shell", icon: <SquareTerminal size={14} />, run: (o) => openPodTab(o, "terminal"), show: (o) => o.status?.phase === "Running" && canDo(cluster, "create", def.gvr, o.metadata.namespace ?? "", "exec") });
   }
-  if (editable) actions.push({ label: "Delete", icon: <Trash2 size={14} />, run: (o) => deleteObjects(cluster, def.gvr, def.kind, [o]), danger: true });
+  if (editable) actions.push({ label: "Delete", icon: <Trash2 size={14} />, run: (o) => deleteObjects(cluster, def.gvr, def.kind, [o]), danger: true, show: mayDelete });
 
   const checkedObjs = filtered.filter((o) => checked.has(o.metadata.uid));
   const Icon = def.icon;
@@ -76,6 +80,8 @@ export function ResourceList({ cluster, def }: { cluster: string; def: ResourceD
                 size="sm"
                 variant="danger"
                 icon={<Trash2 size={14} />}
+                disabled={!checkedObjs.every(mayDelete)}
+                title={checkedObjs.every(mayDelete) ? undefined : noAccess}
                 onClick={async () => {
                   if (await deleteObjects(cluster, def.gvr, def.kind, checkedObjs)) setChecked(new Set());
                 }}
@@ -97,7 +103,7 @@ export function ResourceList({ cluster, def }: { cluster: string; def: ResourceD
             )}
           </div>
           {editable && (
-            <Button size="sm" icon={<Plus size={14} />} onClick={() => openDialog({ kind: "create", yaml: newResourceTemplate(def, namespace) })}>
+            <Button size="sm" icon={<Plus size={14} />} disabled={!mayCreate} title={mayCreate ? undefined : noAccess} onClick={() => openDialog({ kind: "create", yaml: newResourceTemplate(def, namespace) })}>
               Create
             </Button>
           )}

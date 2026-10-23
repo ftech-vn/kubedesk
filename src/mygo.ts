@@ -25,6 +25,22 @@ export interface About {
   canUpdate: boolean;
 }
 
+/**
+ * AccessCheck asks whether the user may do something in a cluster, as
+ * kubectl auth can-i does.
+ */
+export interface AccessCheck {
+  verb: string;
+  group: string;
+  resource: string;
+  subresource?: string;
+  /**
+   * Namespace is the namespace, or "" for all of them and for
+   * cluster-scoped resources.
+   */
+  namespace?: string;
+}
+
 /** AgentAccess is what AI agents may do with a cluster, through Kube Desk. */
 export type AgentAccess = "" | "read" | "write";
 
@@ -127,27 +143,48 @@ export interface AssistantInfo {
   settings: AssistantSettings;
   hasKey: boolean;
   configured: boolean;
+  /**
+   * Google says which Google credentials Vertex uses, or why there are
+   * none, as GoogleError.
+   */
+  google?: string;
+  googleError?: string;
 }
 
+/** AssistantProvider is the cloud the assistant reaches Claude through. */
+export type AssistantProvider = "foundry" | "vertex";
+
 /**
- * AssistantSettings is how the assistant reaches Claude in Microsoft
- * Foundry. The API key is kept in the system's credential store, apart.
+ * AssistantSettings is how the assistant reaches Claude. The Foundry API
+ * key is kept in the system's credential store, apart.
  */
 export interface AssistantSettings {
+  /** Provider is foundry (the default) or vertex. */
+  provider: AssistantProvider;
   /**
-   * Endpoint is the Foundry resource name, or its full base URL
-   * (https://<resource>.services.ai.azure.com/anthropic/).
+   * Endpoint is, for Foundry, the resource name or its full base URL
+   * (https://<resource>.services.ai.azure.com/anthropic/); for Vertex, an
+   * optional base URL, as of a Private Service Connect endpoint.
    */
   endpoint: string;
-  /** Deployment is the deployment name, which Foundry takes as the model. */
+  /**
+   * Deployment is the model: the deployment name in Foundry, which Foundry
+   * takes as the model, or the model ID in Vertex.
+   */
   deployment: string;
   /**
-   * Fallback is a deployment that answers when the main one declines a
-   * request; "" for none.
+   * Fallback is a deployment or model that answers when the main one
+   * declines a request; "" for none.
    */
   fallback: string;
   /** Effort is low, medium, high, xhigh or max. */
   effort: string;
+  /**
+   * Project and Region are where Vertex serves Claude; the project of the
+   * credentials, and the global region, by default.
+   */
+  project?: string;
+  region?: string;
 }
 
 /** Change is something that happened in a watched namespace. */
@@ -200,6 +237,13 @@ export interface ChatEvent {
 /** ChatEventType is the kind of a ChatEvent. */
 export type ChatEventType = "text" | "thinking" | "tool_start" | "tool_end" | "note" | "done";
 
+/** ChatSummary is a saved conversation, for the list of past chats. */
+export interface ChatSummary {
+  id: string;
+  title: string;
+  updated: string;
+}
+
 /** ChatView is what the user looks at in the app when they write. */
 export interface ChatView {
   cluster?: string;
@@ -230,6 +274,14 @@ export interface Cluster {
   agent: AgentAccess;
   /** Current marks the current context of the default kubeconfig. */
   current: boolean;
+}
+
+/** ClusterHealth is the health of a cluster's kubeconfig entry. */
+export interface ClusterHealth {
+  id: string;
+  issues: HealthIssue[];
+  /** LastSeen is when the app last reached the cluster, if ever. */
+  lastSeen?: string;
 }
 
 /** ClusterInfo describes a cluster's API server. */
@@ -301,6 +353,89 @@ export interface GVR {
   group: string;
   version: string;
   resource: string;
+}
+
+/**
+ * HealthIssue is something wrong, or about to be, with how the kubeconfig
+ * reaches a cluster.
+ */
+export interface HealthIssue {
+  level: HealthLevel;
+  text: string;
+  /** Fix says what to do about it, when there is something to do. */
+  fix?: string;
+}
+
+/** HealthLevel is how much a health issue matters. */
+export type HealthLevel = "bad" | "warn" | "info";
+
+/** HelmObject is an object of a release's manifest. */
+export interface HelmObject {
+  apiVersion: string;
+  kind: string;
+  namespace: string;
+  name: string;
+}
+
+/** HelmRelease is the latest revision of a Helm release. */
+export interface HelmRelease {
+  name: string;
+  namespace: string;
+  revision: number;
+  status: string;
+  chart: string;
+  chartVersion: string;
+  appVersion: string;
+  updated: string;
+  description: string;
+  icon?: string;
+}
+
+/** HelmReleaseDetail is a revision of a release with what it deployed. */
+export interface HelmReleaseDetail {
+  name: string;
+  namespace: string;
+  revision: number;
+  status: string;
+  chart: string;
+  chartVersion: string;
+  appVersion: string;
+  updated: string;
+  description: string;
+  icon?: string;
+  /**
+   * Values are the values the user gave, as YAML; AllValues adds the
+   * chart's defaults.
+   */
+  values: string;
+  allValues: string;
+  /** Manifest is what the release rendered, Secret values masked. */
+  manifest: string;
+  notes: string;
+  objects: HelmObject[];
+  history: HelmRevision[];
+}
+
+/** HelmRevision is a revision of a release, in its history. */
+export interface HelmRevision {
+  revision: number;
+  status: string;
+  chartVersion: string;
+  appVersion: string;
+  updated: string;
+  description: string;
+}
+
+/** HelmRollbackPlan is what rolling a release back would change. */
+export interface HelmRollbackPlan {
+  diffs: ObjectDiff[];
+  /**
+   * Removed are the objects of the current revision that the target
+   * revision does not have, which Helm deletes.
+   */
+  removed: string[];
+  /** HelmMissing says the helm command, which rolls back, is not installed. */
+  helmMissing: boolean;
 }
 
 /** ImpactAction is a change whose impact the app can preview. */
@@ -513,6 +648,15 @@ export const Clusters = {
   discover(): Promise<KubeconfigCandidate[]> {
     return call("Clusters.Discover");
   },
+  /**
+   * Health checks the kubeconfig entry of every cluster, without connecting:
+   * certificates and tokens that expired or soon will, credential plugins
+   * that are missing, auth providers Kubernetes removed, and clusters that are
+   * in the app twice.
+   */
+  health(): Promise<ClusterHealth[]> {
+    return call("Clusters.Health");
+  },
   /** List returns every cluster the app knows of, hidden ones included. */
   list(): Promise<ClusterList> {
     return call("Clusters.List");
@@ -587,6 +731,14 @@ export const Kube = {
    */
   apply(cluster: string, manifest: string, namespace: string): Promise<string[]> {
     return call("Kube.Apply", cluster, manifest, namespace);
+  },
+  /**
+   * Can answers access checks for the user of a cluster, in order. When the
+   * cluster cannot tell, the answer is yes: the buttons the page enables
+   * still fail with the cluster's own error.
+   */
+  can(cluster: string, checks: AccessCheck[]): Promise<boolean[]> {
+    return call("Kube.Can", cluster, checks);
   },
   /**
    * Compare reads an object from several clusters and lines up its fields:
@@ -769,6 +921,38 @@ export const Kube = {
 } as const;
 
 /**
+ * Helm reads Helm releases from the cluster, as Helm stores them, without
+ * the helm command; rolling back uses the command when it is installed.
+ */
+export const Helm = {
+  /**
+   * PlanRollback works out what rolling a release back to a revision would
+   * change, without changing anything.
+   */
+  planRollback(cluster: string, namespace: string, name: string, revision: number): Promise<HelmRollbackPlan> {
+    return call("Helm.PlanRollback", cluster, namespace, name, revision);
+  },
+  /**
+   * Release returns a revision of a release, the latest with 0, with its
+   * history.
+   */
+  release(cluster: string, namespace: string, name: string, revision: number): Promise<HelmReleaseDetail> {
+    return call("Helm.Release", cluster, namespace, name, revision);
+  },
+  /** Releases returns the Helm releases of a namespace, or of all with "". */
+  releases(cluster: string, namespace: string): Promise<HelmRelease[]> {
+    return call("Helm.Releases", cluster, namespace);
+  },
+  /**
+   * Rollback rolls a release back to a revision with the helm command, which
+   * records the rollback in the release's history as Helm does.
+   */
+  rollback(cluster: string, namespace: string, name: string, revision: number): Promise<string> {
+    return call("Helm.Rollback", cluster, namespace, name, revision);
+  },
+} as const;
+
+/**
  * Alerts watches the namespaces the user chose, in the background, and
  * tells about their problems with notifications and in the menu bar.
  */
@@ -866,6 +1050,14 @@ export const Agents = {
  * the tools of the MCP server; every change waits for the user's approval.
  */
 export const Assistant = {
+  /** Chats returns the saved conversations, the latest first. */
+  chats(): Promise<ChatSummary[]> {
+    return call("Assistant.Chats");
+  },
+  /** Delete removes a saved conversation. */
+  delete(id: string): Promise<void> {
+    return call("Assistant.Delete", id);
+  },
   /** ForgetKey removes the API key from the credential store. */
   forgetKey(): Promise<void> {
     return call("Assistant.ForgetKey");
@@ -874,7 +1066,14 @@ export const Assistant = {
   info(): Promise<AssistantInfo> {
     return call("Assistant.Info");
   },
-  /** Reset forgets a conversation. */
+  /**
+   * Open loads a saved conversation, to go on with it, and returns the
+   * page's turns.
+   */
+  open(id: string): Promise<string> {
+    return call("Assistant.Open", id);
+  },
+  /** Reset lets go of a conversation in memory; a saved one stays saved. */
   reset(chatID: string): Promise<void> {
     return call("Assistant.Reset", chatID);
   },
@@ -884,6 +1083,10 @@ export const Assistant = {
    */
   save(s: AssistantSettings, apiKey: string): Promise<AssistantInfo> {
     return call("Assistant.Save", s, apiKey);
+  },
+  /** SaveTurns saves a conversation: its history, and the page's turns. */
+  saveTurns(id: string, turns: string): Promise<void> {
+    return call("Assistant.SaveTurns", id, turns);
   },
   /**
    * Send asks the assistant something and streams its answer, tool calls

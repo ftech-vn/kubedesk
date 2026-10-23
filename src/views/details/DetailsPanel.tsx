@@ -15,6 +15,8 @@ import { TerminalView } from "../../components/TerminalView";
 import { Overview } from "./Overview";
 import { ObjectHistory } from "../ChangesView";
 import { copy } from "./parts";
+import { canDo, noAccess, useAccessUpdates } from "../../lib/access";
+import { ResourceMapView, mapKinds } from "../ResourceMap";
 
 const WIDTH_KEY = "details-width";
 
@@ -73,6 +75,8 @@ function DetailsContent({ cluster, detail, depth, watchNamespace }: { cluster: s
   const isPod = detail.kind === "Pod";
   const ro = useApp((s) => !!s.clusters.find((c) => c.id === cluster)?.readOnly);
   const [tabId, container] = (detail.tab ?? "overview").split(":") as [string, string | undefined];
+  useAccessUpdates();
+  const mayExec = canDo(cluster, "create", detail.gvr, detail.namespace, "exec");
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -87,11 +91,12 @@ function DetailsContent({ cluster, detail, depth, watchNamespace }: { cluster: s
 
   const tabs = [
     { id: "overview", label: "Overview" },
-    ...(isPod ? [{ id: "logs", label: "Logs" }, ...(ro ? [] : [{ id: "terminal", label: "Shell" }])] : []),
+    ...(isPod ? [{ id: "logs", label: "Logs" }, ...(ro || !mayExec ? [] : [{ id: "terminal", label: "Shell" }])] : []),
     ...(!isPod && obj && workloadLogSource(detail.kind, obj) ? [{ id: "logs", label: "Logs" }] : []),
     { id: "yaml", label: "YAML" },
     ...(detail.kind !== "Event" ? [{ id: "events", label: "Events" }] : []),
     ...(detail.kind !== "Event" ? [{ id: "history", label: "History" }] : []),
+    ...(mapKinds.has(detail.kind) ? [{ id: "map", label: "Map" }] : []),
   ];
 
   return (
@@ -121,7 +126,7 @@ function DetailsContent({ cluster, detail, depth, watchNamespace }: { cluster: s
               .filter((a) => !a.danger)
               .slice(0, 3)
               .map((a) => (
-                <Button key={a.label} size="sm" variant="ghost" icon={a.icon} onClick={a.run}>
+                <Button key={a.label} size="sm" variant="ghost" icon={a.icon} onClick={a.run} disabled={a.disabled} title={a.disabled ? a.hint : undefined}>
                   {a.label.replace("…", "")}
                 </Button>
               ))}
@@ -136,7 +141,7 @@ function DetailsContent({ cluster, detail, depth, watchNamespace }: { cluster: s
         </div>
       </header>
       <Tabs tabs={tabs} value={tabId} onChange={(t) => setDetailTab(t)} />
-      <div className={`details-body ${tabId === "logs" || tabId === "terminal" || tabId === "yaml" ? "fill" : ""}`}>
+      <div className={`details-body ${tabId === "logs" || tabId === "terminal" || tabId === "yaml" || tabId === "map" ? "fill" : ""}`}>
         {!obj ? (
           loading ? (
             <div className="center-pad">
@@ -155,10 +160,12 @@ function DetailsContent({ cluster, detail, depth, watchNamespace }: { cluster: s
           <LogsView cluster={cluster} pod={obj} initialContainer={container} />
         ) : tabId === "logs" && workloadLogSource(detail.kind, obj) ? (
           <LogsView cluster={cluster} source={workloadLogSource(detail.kind, obj)!} />
+        ) : tabId === "map" && mapKinds.has(detail.kind) ? (
+          <ResourceMapView cluster={cluster} namespace={detail.namespace} focus={{ kind: detail.kind, namespace: detail.namespace, name: detail.name }} />
         ) : tabId === "terminal" && isPod && !ro ? (
           <TerminalView cluster={cluster} pod={obj} initialContainer={container} />
         ) : tabId === "yaml" ? (
-          <YamlTab cluster={cluster} detail={detail} obj={obj} readOnly={ro} />
+          <YamlTab cluster={cluster} detail={detail} obj={obj} readOnly={ro} denied={!canDo(cluster, "update", detail.gvr, detail.namespace)} />
         ) : tabId === "history" ? (
           <ObjectHistory cluster={cluster} kind={detail.kind} namespace={detail.namespace} name={detail.name} />
         ) : (
@@ -186,7 +193,8 @@ function workloadLogSource(kind: string, o: KObj): LogSource | null {
   };
 }
 
-function YamlTab({ cluster, detail, obj, readOnly }: { cluster: string; detail: DetailRef; obj: KObj; readOnly: boolean }) {
+function YamlTab({ cluster, detail, obj, readOnly: roCluster, denied }: { cluster: string; detail: DetailRef; obj: KObj; readOnly: boolean; denied: boolean }) {
+  const readOnly = roCluster || denied;
   const [original, setOriginal] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
@@ -260,7 +268,7 @@ function YamlTab({ cluster, detail, obj, readOnly }: { cluster: string; detail: 
     <div className="yaml-tab">
       <div className="yaml-toolbar">
         {readOnly ? (
-          <span className="faint small">Read-only cluster: the YAML cannot be changed here</span>
+          <span className="faint small">{roCluster ? "Read-only cluster: the YAML cannot be changed here" : `${noAccess}: you can read the YAML, not change it`}</span>
         ) : stale ? (
           <span className="text-warn small">The object changed in the cluster since you started editing.</span>
         ) : (

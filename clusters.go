@@ -144,6 +144,8 @@ type clusterStore struct {
 	Watch      []WatchTarget           `json:"watch,omitempty"`
 	Agents     AgentSettings           `json:"agents,omitempty"`
 	Assistant  AssistantSettings       `json:"assistant,omitempty"`
+	// LastSeen is when each cluster was last reached, by ID.
+	LastSeen map[string]string `json:"lastSeen,omitempty"`
 }
 
 // conn is a connection to a cluster, reused until its kubeconfig changes.
@@ -710,7 +712,24 @@ func (c *Clusters) Test(ctx context.Context, id string) ClusterStatus {
 	if err != nil {
 		return ClusterStatus{Error: friendlyError(err)}
 	}
+	c.seen(id, time.Now())
 	return ClusterStatus{OK: true, Version: v}
+}
+
+// seen records that a cluster answered, at most once an hour.
+func (c *Clusters) seen(id string, now time.Time) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if last, err := time.Parse(time.RFC3339, c.store.LastSeen[id]); err == nil && now.Sub(last) < time.Hour {
+		return
+	}
+	if c.store.LastSeen == nil {
+		c.store.LastSeen = map[string]string{}
+	}
+	c.store.LastSeen[id] = now.UTC().Format(time.RFC3339)
+	if c.dir != "" {
+		_ = c.save()
+	}
 }
 
 func (c *Clusters) agentSettings() AgentSettings {
@@ -819,6 +838,7 @@ func (c *Clusters) Reconnect(id string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	delete(c.conns, id)
+	access.forget(id)
 }
 
 func serverVersion(ctx context.Context, cn *conn) (string, error) {

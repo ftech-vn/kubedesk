@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Gauge, History, Puzzle } from "lucide-react";
+import { ChevronDown, ChevronRight, Gauge, History, Network, Package, Puzzle } from "lucide-react";
 import { customResourceDef, resourceGroups, resources } from "../lib/resources";
 import { useActiveView, useApp } from "../lib/store";
 import { useWatch } from "../lib/watch";
@@ -53,6 +53,8 @@ export function Sidebar({ cluster }: { cluster: string }) {
       <div className="side-scroll">
         {item("overview", "Overview", Gauge)}
         {item("changes", "Changes", History)}
+        {item("map", "Map", Network)}
+        {item("helm", "Helm", Package)}
         {resourceGroups.map((g) => (
           <div key={g} className="side-group">
             <button className="side-group-title" onClick={() => toggle(g)}>

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.0
+
+**Helm releases.** A new Helm page lists the releases of a namespace, or of the cluster, with their chart, app version, revision and status. Open one to see its values (the ones given at install, or with the chart's defaults), what it rendered, its notes, the objects it deployed, and its history. Compare any two revisions, values or manifests, and roll back to one: Kube Desk shows first what the rollback changes and what Helm deletes, and asks you to type the name of a production cluster. Releases are read from the cluster, so reading them needs no helm command; rolling back runs helm, so that Helm records the rollback.
+
+**A map of how things connect.** The Map page draws a namespace as its apps: ingresses, the services they route to, the workloads behind them, their pods, and the config maps, secrets and claims those pods use. Each object shows its state, and an app with a problem is outlined; a service with no pods, or an ingress pointing at a service that does not exist, stands out. Point at an object to light its connections, click it to open it. Workloads, services, ingresses and pods have a Map tab of the part they belong to.
+
+**Buttons follow your access.** Kube Desk asks the cluster what your user may do, and disables what it may not: deleting, scaling, restarting, editing YAML, opening a shell, creating objects. Hover a disabled button to see why.
+
+**Kubeconfig health.** Kube Desk checks every kubeconfig entry, without connecting: client certificates, CA certificates and tokens that expired or soon will, credential plugins that are not installed (with how to install them), the removed gcp and azure auth providers, servers reached over plain HTTP or without checking their certificate, and clusters added twice. Problems show on the clusters page, in each cluster's settings, and under Kubeconfig health in ⌘K. When credentials are about to expire, Kube Desk says so at start.
+
+**The assistant**
+- It can also use Claude in Google Vertex AI, signing in with your gcloud login (`gcloud auth application-default login`). Choose Microsoft Foundry or Google Vertex AI in the assistant's settings.
+- Chats are saved: open a past one from the clock in the assistant's header, and go on with it.
+- It reads Helm releases too, as do MCP agents, through a new `helm_releases` tool.
+
 ## 0.5.0
 
 **An assistant in the app.** Press ⌘J, or Assistant in the title bar, and ask about your clusters in your own words: why a pod fails, what changed in the last hour, how a namespace is doing. The assistant is Claude in Microsoft Foundry, with your Azure resource and API key, which Kube Desk keeps in your macOS keychain. It sees every cluster in Kube Desk, starting from an overview of nodes, namespaces and their pods, and knows what you have open. It reads resources, logs, events, the timeline and incident reports, searches and compares clusters, and shows each step it takes. When it wants to change something, it proposes the change: Kube Desk shows the diff, what the change affects and the assistant's reason, and makes it only if you approve. Production clusters ask you to type their name, and read-only clusters refuse.

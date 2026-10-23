@@ -549,6 +549,9 @@ var toolDefs = []toolDef{
 	{"incident_report", "Incident report", "A Markdown report of a pod or workload: state, events, logs of each container and of their previous runs, node, recent changes and what depends on it.", toolSchema([]string{"cluster", "kind", "namespace", "name"}, map[string]any{
 		"cluster": pCluster, "kind": str("Pod, Deployment, StatefulSet, DaemonSet, ReplicaSet or Job"), "namespace": pNamespace, "name": pName,
 	}), readOnly},
+	{"helm_releases", "Helm releases", "Helm releases, read from the cluster: without a name, every release with its chart, revision and status; with a name and namespace, its history, the values the user gave (secrets masked) and the objects it deployed.", toolSchema([]string{"cluster"}, map[string]any{
+		"cluster": pCluster, "namespace": pNamespace, "name": str("Release name, for one release"),
+	}), readOnly},
 	{"search", "Search clusters", "Finds objects in every shared cluster at once. Words match names; filters: image:nginx, app=web, kind:pod, ns:shop, node:n1, is:failing, status:CrashLoopBackOff.", toolSchema([]string{"query"}, map[string]any{
 		"query": str("Search words and filters"),
 	}), readOnly},
@@ -761,7 +764,7 @@ func (a *Agents) dispatch(ctx context.Context, client, name string, args toolArg
 
 	write := name == "apply_manifest" || name == "delete_resource" || name == "scale" || name == "restart"
 	if !write {
-		if _, ok := map[string]bool{"cluster_overview": true, "list_resources": true, "get_resource": true, "get_logs": true, "get_events": true, "get_changes": true, "incident_report": true, "preview_impact": true}[name]; !ok {
+		if _, ok := map[string]bool{"cluster_overview": true, "list_resources": true, "get_resource": true, "get_logs": true, "get_events": true, "get_changes": true, "incident_report": true, "preview_impact": true, "helm_releases": true}[name]; !ok {
 			return "", "", fmt.Errorf("%w: %s", errUnknownTool, name)
 		}
 	}
@@ -781,6 +784,13 @@ func (a *Agents) dispatch(ctx context.Context, client, name string, args toolArg
 		return jsonText(ov), "", nil
 	case "list_resources":
 		return a.listResources(ctx, args)
+	case "helm_releases":
+		cn, err := a.clusters.conn(args.Cluster)
+		if err != nil {
+			return "", "", err
+		}
+		text, err := helmSummary(ctx, cn.cs, args.Namespace, args.Name)
+		return text, "", err
 	case "get_resource":
 		gvr, namespaced, err := a.resolve(args.Cluster, args.Kind)
 		if err != nil {

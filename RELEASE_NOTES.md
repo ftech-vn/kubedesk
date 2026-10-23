@@ -9,6 +9,7 @@ biết.
 
 | Bản | Ngày | Điểm chính | Tải về (delta) |
 |---|---|---|---|
+| [0.6.0](#060--24102026) | 24/10/2026 | Helm releases, Resource map, nút theo quyền RBAC, kiểm tra kubeconfig, assistant dùng được Vertex AI và lưu lịch sử chat | xem trang Releases |
 | [0.5.0](#050--23102026) | 23/10/2026 | AI assistant chat ngay trong app (Claude trên Microsoft Foundry), đề xuất thay đổi phải được duyệt | xem trang Releases |
 | [0.4.1](#041--22102026) | 22/10/2026 | Sửa lỗi màn hình trắng khi mở AI agents hoặc so sánh giữa các cluster | xem trang Releases |
 | [0.4.0](#040--22102026) | 22/10/2026 | AI agents qua MCP (có duyệt từng thay đổi), tìm kiếm mọi cluster, so sánh giữa các cluster | xem trang Releases |
@@ -20,6 +21,83 @@ Tải bản mới nhất:
 <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg>
 (macOS 12 trở lên, Apple silicon). App đã cài sẽ tự cập nhật. Thường app chỉ
 tải phần thay đổi (delta), như ở cột cuối bảng trên.
+
+---
+
+## 0.6.0 · 24/10/2026
+
+### Tính năng mới
+
+**Helm releases** (mục **Helm** ở sidebar, hoặc "Helm releases" trong ⌘K)
+- Danh sách release theo namespace hoặc cả cluster: chart, app version,
+  revision, trạng thái, lần cập nhật cuối.
+- Mở một release để xem:
+  - values: bản bạn đưa lúc install, hoặc bản đã gộp với giá trị mặc định của
+    chart;
+  - manifest đã render (giá trị Secret bị che), notes, danh sách object đã
+    tạo (bấm vào là mở object);
+  - lịch sử các revision.
+- **So sánh hai revision**: diff values hoặc manifest.
+- **Rollback về một revision**: trước khi chạy, app hiện diff những gì sẽ đổi
+  và những object Helm sẽ xoá. Cluster production bắt gõ tên, cluster
+  read-only từ chối.
+- Đọc release thẳng từ Secret mà Helm lưu trong cluster, nên không cần cài
+  helm CLI. Riêng rollback thì chạy lệnh `helm rollback`, để Helm ghi lại lần
+  rollback vào lịch sử như bình thường. Máy chưa có helm thì app báo cách cài.
+
+**Resource map** (mục **Map** ở sidebar, và tab **Map** trong chi tiết object)
+- Vẽ namespace thành từng app, traffic đi từ trái sang phải: Ingress →
+  Service → Deployment/StatefulSet/DaemonSet/CronJob → ReplicaSet/Job → Pod →
+  ConfigMap/Secret/PVC mà pod dùng.
+- Mỗi object có chấm màu theo trạng thái; app nào có vấn đề thì được viền màu
+  và xếp lên đầu.
+- Tự phát hiện các lỗi hay gặp: Service không chọn được pod nào, Ingress trỏ
+  tới Service không tồn tại, ConfigMap/PVC bị thiếu.
+- Workload nhiều pod được gộp thành một ô; bấm vào để chọn pod.
+- Rê chuột vào một object để làm nổi các kết nối của nó, bấm để mở. Có ô tìm
+  app, lọc "Problems only", bật/tắt config và storage, zoom (⌘ + cuộn chuột).
+- Map tự cập nhật theo thời gian thực vì dùng chung dữ liệu watch với các
+  danh sách.
+
+**Nút bấm theo quyền RBAC**
+- App hỏi cluster xem user của bạn được làm gì (`SelfSubjectAccessReview`,
+  như `kubectl auth can-i`). Các thao tác không được phép sẽ bị khoá: xoá,
+  scale, restart, sửa YAML, mở shell, tạo object, chạy CronJob, cordon/drain.
+- Rê chuột vào nút bị khoá để xem lý do. Kết quả được nhớ 2 phút.
+- Nếu cluster không trả lời được, nút vẫn mở như cũ; cluster vẫn là bên quyết
+  định cuối cùng.
+
+**Kiểm tra sức khoẻ kubeconfig** ("Kubeconfig health" trong ⌘K)
+- Kiểm tra mọi cluster mà không cần kết nối:
+  - client certificate, CA certificate và token đã hết hạn hoặc sắp hết hạn;
+  - credential plugin chưa cài (gke-gcloud-auth-plugin, kubelogin, aws…),
+    kèm lệnh cài;
+  - auth provider `gcp`/`azure` đã bị Kubernetes bỏ, kèm cách chuyển sang
+    plugin;
+  - server dùng HTTP thường hoặc không kiểm tra certificate;
+  - file certificate hay token bị thiếu;
+  - cluster bị thêm hai lần (cùng server, cùng user, cùng namespace).
+- Vấn đề hiện trên trang Clusters (thanh cảnh báo và nhãn trên từng thẻ),
+  trong cài đặt của cluster, và trong hộp thoại Kubeconfig health; hộp thoại
+  này còn ghi lần cuối app kết nối được tới cluster.
+- Khi mở app, nếu có credential sắp hết hạn, app báo ngay.
+
+**AI assistant**
+- **Thêm Claude trên Google Vertex AI**: chọn "Google Vertex AI" trong
+  Assistant settings, nhập project và region (mặc định `global`). App đăng
+  nhập bằng gcloud của bạn: chạy `gcloud auth application-default login` một
+  lần, không cần API key.
+- **Lưu lịch sử chat**: mở lại cuộc chat cũ từ nút đồng hồ trên khung
+  assistant và hỏi tiếp; xoá được từng cuộc. App giữ 100 cuộc gần nhất.
+- Assistant (và agent qua MCP) đọc được Helm release nhờ tool mới
+  `helm_releases`; values có mật khẩu/token đều bị che.
+
+### Giới hạn đã biết
+- Resource map vẽ các loại object có sẵn trong Kubernetes; Gateway API và
+  custom resource chưa có trên map.
+- Kiểm tra RBAC dựa trên câu trả lời của cluster cho user hiện tại; với cluster
+  không hỗ trợ `SelfSubjectAccessReview`, các nút vẫn mở như trước.
+- Chưa test Vertex AI với tài khoản Google thật, mới test với server giả lập.
 
 ---
 

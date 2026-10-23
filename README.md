@@ -90,13 +90,28 @@ clusters the core of the app:
   before the last restart), node and recent changes in one Markdown report,
   with tokens and passwords masked
 
+**Helm releases**
+- Every release with its chart, app version, revision and status, read from
+  the cluster: no helm command needed to look
+- Values (given, or with the chart's defaults), the rendered manifest, notes,
+  the objects deployed, and the history
+- Diff two revisions; roll back, with what changes and what Helm deletes
+  shown first
+
+**A map of how things connect**
+- Each app of a namespace, left to right: ingresses, services, workloads,
+  pods, and the config maps, secrets and claims they use, with their state
+- Services with no pods, ingresses pointing nowhere and missing config stand
+  out; each workload has a Map tab of the part it belongs to
+
 **An assistant in the app**
-- <kbd>⌘J</kbd> opens a chat with Claude in Microsoft Foundry, with your Azure
-  resource and API key (kept in the macOS keychain)
+- <kbd>⌘J</kbd> opens a chat with Claude in Microsoft Foundry (your Azure API
+  key, kept in the macOS keychain) or in Google Vertex AI (your gcloud login)
 - It sees every cluster in Kube Desk and what you have open, reads resources,
   logs, events, the timeline and incident reports, and shows each step
 - Changes it proposes wait for your approval, with a diff, their impact and
   its reason
+- Chats are saved, to go on with them later
 
 **AI agents, with you approving every change**
 - Kube Desk is an MCP server for Claude Code, Cursor, Codex, Claude Desktop
@@ -113,6 +128,12 @@ clusters the core of the app:
   `kind:`, `ns:`, `node:`, `is:failing`
 - Compare a workload, service, config map or secret across clusters, with
   what differs highlighted and a YAML diff
+
+**Access and credentials**
+- Buttons follow your RBAC: what your user may not do is disabled, with why
+- Kubeconfig health: certificates and tokens that expired or soon will,
+  missing credential plugins (with how to install them), removed auth
+  providers, clusters added twice
 
 **Production guardrails**
 - Mark a cluster as production: it shows in red, and every change (delete,
@@ -178,11 +199,17 @@ Windows), but releases are only built for macOS so far. You can
 
 ## The assistant
 
-1. Deploy a Claude model in [Microsoft Foundry](https://ai.azure.com/)
-   (for example `claude-opus-5-5`, and `claude-opus-4-8` as a fallback).
-2. In Kube Desk, open **Assistant settings** (<kbd>⌘K</kbd>) and enter the
-   resource name or the deployment's Target URI, the API key, and the
-   deployment name. **Save and test** checks the connection.
+1. Make Claude available to you, in either cloud:
+   - **Microsoft Foundry**: deploy a Claude model in
+     [Foundry](https://ai.azure.com/), for example `claude-opus-5-5`, and
+     `claude-opus-4-8` as a fallback.
+   - **Google Vertex AI**: enable the Claude model in
+     [Model Garden](https://console.cloud.google.com/vertex-ai/model-garden),
+     and run `gcloud auth application-default login` once.
+2. In Kube Desk, open **Assistant settings** (<kbd>⌘K</kbd>). For Foundry,
+   enter the resource name or the deployment's Target URI, the API key, and
+   the deployment name; for Vertex AI, the project and the region.
+   **Save and test** checks the connection.
 3. Press <kbd>⌘J</kbd> and ask, for example *"Which pods are failing in
    this cluster, and why?"*
 
@@ -276,7 +303,10 @@ bunx tsc --noEmit             # type-check the frontend
 | `timeline.go`, `recorder.go` | The timeline: describing changes, storage, finding changes made while closed |
 | `impact.go` | What a delete, scale, restart or drain would affect |
 | `report.go` | Incident reports, and masking secrets in logs |
-| `assistant.go`, `overview.go` | The assistant: Claude in Microsoft Foundry, its tool loop, the cluster overview |
+| `assistant.go`, `overview.go` | The assistant: Claude in Microsoft Foundry or Google Vertex AI, its tool loop, saved chats, the cluster overview |
+| `helm.go` | Helm releases, read from the Secrets Helm keeps; rollbacks through the helm command |
+| `access.go`, `health.go` | What the user may do (SelfSubjectAccessReview), and kubeconfig health checks |
+| `src/lib/graph.ts`, `src/views/ResourceMap.tsx` | The resource map: how objects connect, and its layout |
 | `agents.go`, `mcp_bridge.go` | The MCP server, its tools and approvals, and the stdio bridge |
 | `search.go`, `compare.go`, `plan.go` | Search across clusters, comparisons, diffs before applying |
 | `updates.go` | Auto-updates and the application menu |
@@ -293,10 +323,14 @@ for 90 seconds after its last view closes.
 ## Privacy and security
 
 - Kube Desk only talks to the API servers in your kubeconfigs and to the
-  update server. There is no telemetry.
+  update server, and, when you use the assistant, to the Foundry resource or
+  Vertex AI project you set. There is no telemetry.
 - It never writes to your kubeconfig files. Pasted kubeconfigs and tokens are
   stored with `0600` permissions in
   `~/Library/Application Support/Kube Desk/kubeconfigs/`.
+- The assistant's chats are kept on your Mac only, with `0600` permissions, in
+  `~/Library/Application Support/Kube Desk/assistant/`; Secret values never
+  reach the assistant.
 - Updates are signed with Ed25519, and the app verifies the signature before
   installing.
 
@@ -312,10 +346,14 @@ for 90 seconds after its last view closes.
 - [x] The impact of a change before deleting, scaling or draining (0.3)
 - [x] Compare a workload across clusters, and search every cluster at once (0.4)
 - [x] An MCP server for AI agents, with approval of each change in the app (0.4)
-- [ ] Helm releases: values, history, diffs between revisions, rollback
-- [ ] Resource map
-- [ ] Helm releases
-- [ ] Resource diff before apply
+- [x] An assistant in the app, with approval of each change (0.5)
+- [x] Helm releases: values, history, diffs between revisions, rollback (0.6)
+- [x] A resource map, buttons that follow RBAC, kubeconfig health (0.6)
+- [x] Diffs before applying YAML (0.4)
+- [ ] Namespace snapshots that open without access to the cluster
+- [ ] Promote objects from one cluster to another, with a diff
+- [ ] Cost estimates per namespace and app
+- [ ] Runbooks attached to workloads
 - [ ] Plugins
 
 ## Contributing

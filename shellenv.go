@@ -14,7 +14,8 @@ import (
 
 var shellEnvOnce sync.Once
 
-// loadShellEnv copies PATH and KUBECONFIG from the user's login shell.
+// loadShellEnv copies PATH, KUBECONFIG and the Google Cloud credentials
+// settings from the user's login shell.
 //
 // Apps started from the Finder or the Dock get launchd's minimal PATH, so
 // exec credential plugins of kubeconfigs (gke-gcloud-auth-plugin, aws,
@@ -32,14 +33,20 @@ func loadShellEnv() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		const marker = "__K8S_CLIENT_ENV__"
-		script := `printf '` + marker + `%s` + marker + `%s` + marker + `' "$PATH" "$KUBECONFIG"`
+		vars := []string{"KUBECONFIG", "GOOGLE_APPLICATION_CREDENTIALS", "CLOUDSDK_CONFIG"}
+		script := `printf '` + marker + `%s` + marker + `' "$PATH"`
+		for _, v := range vars {
+			script += `; printf '%s` + marker + `' "$` + v + `"`
+		}
 		out, err := exec.CommandContext(ctx, shell, "-ilc", script).Output()
 		if err == nil {
 			parts := strings.Split(string(out), marker)
-			if len(parts) >= 4 {
+			if len(parts) >= len(vars)+3 {
 				mergePath(parts[1])
-				if os.Getenv("KUBECONFIG") == "" && parts[2] != "" {
-					os.Setenv("KUBECONFIG", parts[2])
+				for i, v := range vars {
+					if os.Getenv(v) == "" && parts[i+2] != "" {
+						os.Setenv(v, parts[i+2])
+					}
 				}
 			}
 		}

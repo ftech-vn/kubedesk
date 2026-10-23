@@ -14,10 +14,13 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useAlerts } from "./lib/alerts";
 import { ApprovalDialog, useApprovals } from "./components/ApprovalDialog";
 import { AssistantPanel } from "./components/AssistantPanel";
+import { useHealth } from "./components/HealthDialog";
 import { useAssistant } from "./lib/assistant";
 import { ClustersHome } from "./views/ClustersHome";
 import { ClusterOverview } from "./views/ClusterOverview";
 import { ChangesView } from "./views/ChangesView";
+import { ResourceMapPage } from "./views/ResourceMap";
+import { HelmView } from "./views/HelmView";
 import { ResourceList } from "./views/ResourceList";
 import { DetailsPanel } from "./views/details/DetailsPanel";
 
@@ -30,6 +33,7 @@ export function App() {
       .then(() => {
         useAlerts.getState().init();
         useApprovals.getState().init();
+        useHealth.getState().load();
       })
       .catch((e) => setError(errorMessage(e)));
   }, [load]);
@@ -201,6 +205,8 @@ function ProductionHint({ cluster }: { cluster: Cluster }) {
 function Section({ cluster, section }: { cluster: string; section: string }) {
   if (section === "overview") return <ClusterOverview cluster={cluster} />;
   if (section === "changes") return <ChangesView cluster={cluster} />;
+  if (section === "map") return <ResourceMapPage cluster={cluster} />;
+  if (section === "helm") return <HelmView cluster={cluster} />;
   const def = byKey.get(section);
   if (def) return <ResourceList key={def.key} cluster={cluster} def={def} />;
   if (section.startsWith("cr:")) return <CustomResourceSection cluster={cluster} section={section} />;

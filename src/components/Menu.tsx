@@ -6,6 +6,8 @@ export interface MenuItem {
   run(): void;
   danger?: boolean;
   disabled?: boolean;
+  /** hint explains a disabled item. */
+  hint?: string;
   separatorBefore?: boolean;
 }
 
@@ -38,6 +40,7 @@ export function ContextMenu({ x, y, items, onClose }: { x: number; y: number; it
           <button
             className={`menu-item ${it.danger ? "danger" : ""}`}
             disabled={it.disabled}
+            title={it.disabled ? it.hint : undefined}
             role="menuitem"
             onClick={() => {
               onClose();

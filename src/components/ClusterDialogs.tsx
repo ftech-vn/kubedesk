@@ -5,6 +5,7 @@ import { errorMessage } from "../lib/k8s";
 import { toast, useApp } from "../lib/store";
 import { clusterColor, palette, sourceLabel } from "../lib/clusterLook";
 import { Button, Field, Modal, Tabs, useAutoFocus } from "./ui";
+import { IssueList, issuesOf, useHealth } from "./HealthDialog";
 import { ClusterTile, reconnect, removeCluster } from "./ClusterRail";
 
 type Mode = "file" | "paste" | "token";
@@ -157,6 +158,8 @@ export function ClusterSettingsDialog({ id, onClose }: { id: string; onClose(): 
   const [production, setProduction] = useState(c?.production ?? false);
   const [readOnly, setReadOnly] = useState(c?.readOnly ?? false);
   const [busy, setBusy] = useState(false);
+  const health = useHealth((s) => s.list);
+  const issues = issuesOf(health, id);
   if (!c) return null;
 
   const save = async () => {
@@ -224,6 +227,12 @@ export function ClusterSettingsDialog({ id, onClose }: { id: string; onClose(): 
             </span>
           </label>
         </div>
+        {issues.length > 0 && (
+          <div>
+            <div className="section-title">Kubeconfig</div>
+            <IssueList issues={issues} />
+          </div>
+        )}
         <dl className="kv compact">
           <div className="kv-row">
             <dt>Context</dt>

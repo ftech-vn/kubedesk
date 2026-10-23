@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,9 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 // sse writes a Messages stream: a message whose blocks are given as
@@ -233,5 +237,104 @@ func TestAssistantDropsARejectedFallback(t *testing.T) {
 	}
 	if len(betas) != 2 || !strings.Contains(betas[0], "fallback") || strings.Contains(betas[1], "fallback") {
 		t.Errorf("beta headers: %q", betas)
+	}
+}
+
+func TestAssistantVertex(t *testing.T) {
+	var path, auth, version string
+	var body map[string]any
+	as, _ := newTestAssistant(t, func(w http.ResponseWriter, r *http.Request) {
+		path, auth = r.URL.Path, r.Header.Get("Authorization")
+		b, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(b, &body)
+		version, _ = body["anthropic_version"].(string)
+		sse(w, "end_turn", [2]string{`{"type":"text","text":""}`, `{"type":"text_delta","text":"from vertex"}`})
+	})
+	base := strings.TrimSuffix(as.settings().Endpoint, "/anthropic/v1/messages")
+	as.google = func(context.Context) (*google.Credentials, error) {
+		return &google.Credentials{ProjectID: "my-project", TokenSource: oauth2.StaticTokenSource(&oauth2.Token{AccessToken: "gtoken"}), JSON: []byte(`{"type":"authorized_user"}`)}, nil
+	}
+	if err := as.clusters.setAssistantSettings(AssistantSettings{Provider: ProviderVertex, Endpoint: base, Deployment: "claude-opus-5-5"}); err != nil {
+		t.Fatal(err)
+	}
+	info := as.Info(context.Background())
+	if !info.Configured || info.Settings.Project != "my-project" || info.Settings.Region != "global" || !strings.Contains(info.Google, "gcloud login") {
+		t.Fatalf("info: %+v", info)
+	}
+	var text string
+	err := as.send(context.Background(), "v", "hi", ChatView{}, func(e ChatEvent) error {
+		if e.Type == ChatText {
+			text += e.Text
+		}
+		return nil
+	})
+	if err != nil || text != "from vertex" {
+		t.Fatalf("err %v text %q", err, text)
+	}
+	if path != "/v1/projects/my-project/locations/global/publishers/anthropic/models/claude-opus-5-5:streamRawPredict" || auth != "Bearer gtoken" || version == "" || body["model"] != nil {
+		t.Errorf("path %s auth %q version %q model %v", path, auth, version, body["model"])
+	}
+
+	as.google = func(context.Context) (*google.Credentials, error) { return nil, errors.New("none") }
+	if info := as.Info(context.Background()); info.Configured || !strings.Contains(info.GoogleError, "application-default login") {
+		t.Errorf("without credentials: %+v", info)
+	}
+}
+
+func TestAssistantSavesChats(t *testing.T) {
+	var bodies []map[string]any
+	as, _ := newTestAssistant(t, func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		var body map[string]any
+		_ = json.Unmarshal(b, &body)
+		bodies = append(bodies, body)
+		sse(w, "end_turn",
+			[2]string{`{"type":"thinking","thinking":"","signature":""}`, `{"type":"thinking_delta","thinking":"hmm"}`},
+			[2]string{`{"type":"text","text":""}`, `{"type":"text_delta","text":"answer"}`})
+	})
+	ctx := context.Background()
+	if err := as.send(ctx, "chat-1", "Why does  the shop\npod crash?", ChatView{}, func(ChatEvent) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if err := as.SaveTurns("chat-1", `[{"role":"user","text":"Why"}]`); err != nil {
+		t.Fatal(err)
+	}
+	if err := as.SaveTurns("../evil", `[]`); err == nil {
+		t.Error("a chat ID with a path was saved")
+	}
+	list := as.Chats()
+	if len(list) != 1 || list[0].Title != "Why does the shop pod crash?" {
+		t.Fatalf("chats: %+v", list)
+	}
+
+	// After a restart, the chat goes on where it was.
+	as.Reset("chat-1")
+	turns, err := as.Open("chat-1")
+	if err != nil || turns != `[{"role":"user","text":"Why"}]` {
+		t.Fatalf("open: %v %q", err, turns)
+	}
+	if err := as.send(ctx, "chat-1", "and now?", ChatView{}, func(ChatEvent) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	msgs := bodies[1]["messages"].([]any)
+	if len(msgs) != 3 || msgs[1].(map[string]any)["content"].([]any)[0].(map[string]any)["type"] != "thinking" {
+		t.Fatalf("history after reopening: %v", msgs)
+	}
+
+	// Another model cannot read the thinking: it is dropped.
+	_ = as.clusters.setAssistantSettings(AssistantSettings{Endpoint: as.settings().Endpoint, Deployment: "other-model"})
+	if err := as.send(ctx, "chat-1", "again", ChatView{}, func(ChatEvent) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range bodies[2]["messages"].([]any) {
+		for _, b := range m.(map[string]any)["content"].([]any) {
+			if b.(map[string]any)["type"] == "thinking" {
+				t.Fatal("thinking was sent to another model")
+			}
+		}
+	}
+
+	if err := as.Delete("chat-1"); err != nil || len(as.Chats()) != 0 {
+		t.Errorf("delete: %v, %d left", err, len(as.Chats()))
 	}
 }

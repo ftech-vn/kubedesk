@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { Channel } from "mygo-runtime";
-import { Assistant, type AssistantInfo, type ChatEvent, type ChatView } from "../mygo";
+import { Assistant, type AssistantInfo, type ChatEvent, type ChatSummary, type ChatView } from "../mygo";
 import { errorMessage } from "./k8s";
 import { useApp } from "./store";
 
@@ -21,11 +21,16 @@ interface AssistantStore {
   running: boolean;
   info: AssistantInfo | null;
   channel: Channel<ChatEvent> | null;
+  /** chats are the saved conversations, the latest first. */
+  chats: ChatSummary[];
   toggle(open?: boolean): void;
   loadInfo(): Promise<void>;
+  loadChats(): Promise<void>;
   send(text: string): Promise<void>;
   stop(): void;
   reset(): void;
+  openChat(id: string): Promise<void>;
+  deleteChat(id: string): Promise<void>;
 }
 
 const newId = () => crypto.randomUUID();
@@ -49,11 +54,21 @@ export const useAssistant = create<AssistantStore>((set, get) => ({
   running: false,
   info: null,
   channel: null,
+  chats: [],
 
   toggle(open) {
     const next = open ?? !get().open;
     set({ open: next });
     if (next && !get().info) get().loadInfo();
+    if (next) get().loadChats();
+  },
+
+  async loadChats() {
+    try {
+      set({ chats: await Assistant.chats() });
+    } catch {
+      /* the list stays as it was */
+    }
   },
 
   async loadInfo() {
@@ -133,6 +148,11 @@ export const useAssistant = create<AssistantStore>((set, get) => ({
         t.parts = t.parts.map((p) => (p.kind === "tool" && p.status === "running" ? { ...p, status: "error", result: "stopped" } : p));
       });
       set({ running: false, channel: null });
+      // Keep the conversation, to come back to it later.
+      const { chatId, turns } = get();
+      Assistant.saveTurns(chatId, JSON.stringify(turns))
+        .then(() => get().loadChats())
+        .catch(() => {});
     }
   },
 
@@ -144,5 +164,23 @@ export const useAssistant = create<AssistantStore>((set, get) => ({
     get().channel?.close();
     Assistant.reset(get().chatId).catch(() => {});
     set({ chatId: newId(), turns: [], running: false, channel: null });
+  },
+
+  async openChat(id) {
+    if (get().running) get().channel?.close();
+    try {
+      const previous = get().chatId;
+      const turns = JSON.parse(await Assistant.open(id)) as Turn[];
+      if (previous !== id) Assistant.reset(previous).catch(() => {});
+      set({ chatId: id, turns: Array.isArray(turns) ? turns.map((t) => (t.role === "assistant" ? { ...t, done: true } : t)) : [], running: false, channel: null });
+    } catch (e) {
+      set({ turns: [{ role: "assistant", parts: [], done: true, error: errorMessage(e) }] });
+    }
+  },
+
+  async deleteChat(id) {
+    await Assistant.delete(id).catch(() => {});
+    if (get().chatId === id) set({ chatId: newId(), turns: [] });
+    await get().loadChats();
   },
 }));

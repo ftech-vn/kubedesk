@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
-import { ArrowUp, Brain, ChevronDown, ChevronRight, Loader2, Plus, Settings2, Sparkles, Square, Wrench, X, XCircle, CheckCircle2, ShieldQuestion } from "lucide-react";
+import { ArrowUp, Brain, ChevronDown, ChevronRight, Clock, Loader2, Plus, Settings2, Sparkles, Square, Trash2, Wrench, X, XCircle, CheckCircle2, ShieldQuestion } from "lucide-react";
 import { Kube } from "../mygo";
 import { useAssistant, type Part, type Turn } from "../lib/assistant";
 import { useApp } from "../lib/store";
+import { age } from "../lib/k8s";
 import { Button, IconButton } from "./ui";
+import { Popover } from "./Menu";
 
 const suggestions = [
   "Summarize the health of this cluster",
@@ -39,6 +41,7 @@ function Markdown({ text }: { text: string }) {
 
 const toolLabels: Record<string, string> = {
   cluster_overview: "Looked at the cluster",
+  helm_releases: "Read Helm releases",
   list_clusters: "Listed clusters",
   list_resources: "Listed",
   get_resource: "Read",
@@ -126,9 +129,10 @@ function AssistantTurn({ t, last }: { t: Extract<Turn, { role: "assistant" }>; l
 
 /** AssistantPanel is the chat with the assistant, beside the app. */
 export function AssistantPanel() {
-  const { open, turns, running, info, toggle, send, stop, reset } = useAssistant();
+  const { open, turns, running, info, chats, chatId, toggle, send, stop, reset, openChat, deleteChat } = useAssistant();
   const openDialog = useApp((s) => s.openDialog);
   const [text, setText] = useState("");
+  const [history, setHistory] = useState<HTMLElement | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
 
@@ -155,6 +159,9 @@ export function AssistantPanel() {
         <span className="assistant-title">Assistant</span>
         {info && <span className="faint small mono">{info.settings.deployment}</span>}
         <div className="spacer" />
+        <IconButton label="Past chats" onClick={(e) => setHistory(history ? null : e.currentTarget)} disabled={!chats.length}>
+          <Clock size={15} />
+        </IconButton>
         <IconButton label="New chat" onClick={reset} disabled={!turns.length}>
           <Plus size={16} />
         </IconButton>
@@ -165,13 +172,36 @@ export function AssistantPanel() {
           <X size={16} />
         </IconButton>
       </header>
+      {history && (
+        <Popover anchor={history} onClose={() => setHistory(null)} align="right" width={320}>
+          <div className="chat-history">
+            {chats.map((c) => (
+              <div key={c.id} className={`chat-history-item ${c.id === chatId ? "on" : ""}`}>
+                <button
+                  className="chat-history-open"
+                  onClick={() => {
+                    setHistory(null);
+                    openChat(c.id);
+                  }}
+                >
+                  <span className="chat-history-title">{c.title || "Untitled chat"}</span>
+                  <span className="faint small">{age(c.updated)} ago</span>
+                </button>
+                <IconButton label="Delete this chat" onClick={() => deleteChat(c.id)}>
+                  <Trash2 size={13} />
+                </IconButton>
+              </div>
+            ))}
+          </div>
+        </Popover>
+      )}
       <div className="assistant-body" ref={scroller}>
         {!configured && info ? (
           <div className="assistant-empty">
             <Sparkles size={26} className="assistant-mark" />
             <div className="empty-title">Connect the assistant to Claude</div>
             <p className="muted small">
-              The assistant uses Claude in Microsoft Foundry, with your Azure resource and API key. It reads every cluster in Kube Desk, and changes them only after you approve each change.
+              The assistant uses Claude in Microsoft Foundry, with your Azure API key, or in Google Vertex AI, with your gcloud login. It reads every cluster in Kube Desk, and changes them only after you approve each change.
             </p>
             <Button variant="primary" onClick={() => openDialog({ kind: "assistant-settings" })}>
               Set up

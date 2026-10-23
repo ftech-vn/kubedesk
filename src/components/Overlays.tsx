@@ -1,3 +1,4 @@
+import { HealthDialog } from "./HealthDialog";
 import { useEffect, useState } from "react";
 import { CheckCircle2, Info, OctagonAlert, ShieldAlert, TriangleAlert, X, XCircle } from "lucide-react";
 import { Kube, type ImpactItem, type Report } from "../mygo";
@@ -31,6 +32,8 @@ export function Dialogs() {
       return <AgentsDialog onClose={close} />;
     case "assistant-settings":
       return <AssistantSettingsDialog onClose={close} />;
+    case "health":
+      return <HealthDialog onClose={close} />;
     case "search":
       return <SearchDialog initial={dialog.query} onClose={close} />;
     case "compare":

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Eye, MoreHorizontal, Plus, RefreshCw, Search } from "lucide-react";
+import { AlertTriangle, Eye, HeartPulse, MoreHorizontal, Plus, RefreshCw, Search } from "lucide-react";
 import { AppInfo, Clusters, type About, type Cluster } from "../mygo";
 import { sourceLabel } from "../lib/clusterLook";
 import { run, useApp } from "../lib/store";
 import { Badge, Button, Empty, IconButton, Kbd, mod } from "../components/ui";
 import { ClusterTile, clusterMenu } from "../components/ClusterRail";
 import { ContextMenu } from "../components/Menu";
+import { IssueIcon, issuesOf, useHealth } from "../components/HealthDialog";
 
 export function ClustersHome() {
   const { clusters, status, sourceErrors, activate, openDialog, checkStatus, refresh } = useApp();
@@ -14,6 +15,12 @@ export function ClustersHome() {
   const f = filter.toLowerCase();
   const visible = clusters.filter((c) => !c.hidden && (!f || `${c.name} ${c.context} ${c.server}`.toLowerCase().includes(f)));
   const hidden = clusters.filter((c) => c.hidden);
+  const health = useHealth((s) => s.list);
+  const loadHealth = useHealth((s) => s.load);
+  useEffect(() => {
+    loadHealth();
+  }, [loadHealth, clusters]);
+  const troubled = clusters.filter((c) => !c.hidden && issuesOf(health, c.id).some((i) => i.level !== "info"));
 
   return (
     <div className="page home">
@@ -38,6 +45,17 @@ export function ClustersHome() {
         </div>
       </header>
 
+      {troubled.length > 0 && (
+        <div className="hint-bar">
+          <HeartPulse size={15} />
+          <span>
+            The kubeconfig of {troubled.length === 1 ? <b>{troubled[0]!.name}</b> : `${troubled.length} clusters`} has problems, such as credentials that expired or a missing plugin.
+          </span>
+          <Button size="sm" onClick={() => openDialog({ kind: "health" })}>
+            Review
+          </Button>
+        </div>
+      )}
       {sourceErrors.map((e) => (
         <div key={e.source} className="list-warning">
           <AlertTriangle size={14} /> Could not read <span className="mono">{e.source}</span>: {e.error}
@@ -107,6 +125,7 @@ export function ClustersHome() {
                   <Badge tone="muted">{sourceLabel(c)}</Badge>
                   {c.current && <Badge tone="info">current context</Badge>}
                   {c.name !== c.context && <span className="faint small mono" title="Context">{c.context}</span>}
+                  <HealthBadge id={c.id} />
                 </div>
                 {st?.error && !st.checking && (
                   <div className="cluster-card-error" title={st.error}>
@@ -153,6 +172,26 @@ export function ClustersHome() {
       <AboutFooter />
       {menu && <ContextMenu x={menu.x} y={menu.y} items={clusterMenu(menu.c)} onClose={() => setMenu(null)} />}
     </div>
+  );
+}
+
+/** HealthBadge marks a card whose kubeconfig has problems. */
+function HealthBadge({ id }: { id: string }) {
+  const issues = issuesOf(useHealth((s) => s.list), id).filter((i) => i.level !== "info");
+  const openDialog = useApp((s) => s.openDialog);
+  if (!issues.length) return null;
+  const level = issues.some((i) => i.level === "bad") ? "bad" : "warn";
+  return (
+    <button
+      className={`health-badge ${level}`}
+      title={issues.map((i) => i.text).join("\n")}
+      onClick={(e) => {
+        e.stopPropagation();
+        openDialog({ kind: "health" });
+      }}
+    >
+      <IssueIcon level={level} size={12} /> {issues.length === 1 ? issues[0]!.text : `${issues.length} kubeconfig problems`}
+    </button>
   );
 }
 

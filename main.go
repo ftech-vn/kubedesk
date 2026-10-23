@@ -51,6 +51,7 @@ func main() {
 	agents := newAgents(kube, clusters, showMainWindow)
 	mygo.Bind(clusters)
 	mygo.Bind(kube)
+	mygo.Bind(&Helm{kube: kube})
 	mygo.Bind(alerts)
 	mygo.Bind(agents)
 	mygo.Bind(newAssistant(agents, clusters))

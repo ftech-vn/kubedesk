@@ -59,9 +59,18 @@ và [Lens](https://k8slens.dev), rồi lấy việc chuyển cluster làm trọn
   mất, pod nào không còn chỗ chạy.
 - **Báo cáo sự cố**: một click gom trạng thái, events, logs (cả log trước khi
   restart), node và thay đổi gần đây thành Markdown, đã che token/mật khẩu.
+- **Helm**: danh sách release, values, manifest, lịch sử, diff giữa hai
+  revision và rollback có xem trước; đọc thẳng từ cluster, không cần helm CLI.
+- **Resource map**: sơ đồ Ingress → Service → workload → Pod → ConfigMap/
+  Secret/PVC của từng app, tô màu theo trạng thái, chỉ ra Service không có
+  pod hay Ingress trỏ vào Service không tồn tại.
+- **Nút theo quyền RBAC**: thao tác bạn không có quyền sẽ bị khoá, kèm lý do.
+- **Kiểm tra kubeconfig**: certificate/token hết hạn hoặc sắp hết hạn, thiếu
+  credential plugin, auth provider đã bị bỏ, cluster bị thêm hai lần.
 - **AI assistant trong app** (⌘J): chat với Claude trên Microsoft Foundry
-  (API key lưu trong Keychain). Assistant nắm mọi cluster, namespace và pod,
-  biết bạn đang xem gì; mọi thay đổi phải được bạn duyệt.
+  (API key lưu trong Keychain) hoặc Google Vertex AI (đăng nhập bằng gcloud).
+  Assistant nắm mọi cluster, namespace và pod, biết bạn đang xem gì; mọi thay
+  đổi phải được bạn duyệt; lịch sử chat được lưu lại.
 - **AI agents (MCP)**: Claude Code, Cursor, Codex… đọc được cluster bạn cho
   phép; mọi thay đổi agent đề xuất phải được bạn duyệt trong app, kèm diff và
   phân tích ảnh hưởng. Giá trị Secret không bao giờ được gửi cho agent.
