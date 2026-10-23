@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Download Kube Desk for macOS</title>
+    <meta name="description" content="Download Kube Desk 0.4.0 for macOS on Apple silicon. Install guide, connecting AI agents over MCP, and building from source for Linux, Windows and Intel Macs." />
+    <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)" />
+    <link rel="canonical" href="https://kubedesk.cloud/download.html" />
+    <meta property="og:title" content="Download Kube Desk" />
+    <meta property="og:description" content="A fast Kubernetes desktop client for people who juggle many clusters. Free and open source, for macOS." />
+    <meta property="og:image" content="https://kubedesk.cloud/assets/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@75..125,200..900&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="bar">
+      <div class="wrap bar__in">
+        <a class="brand" href="./" aria-label="Kube Desk home">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <defs>
+              <linearGradient id="kd-g" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#4b7bf5" />
+                <stop offset="1" stop-color="#9b5cf5" />
+              </linearGradient>
+            </defs>
+            <rect x="2" y="2" width="28" height="28" rx="7" fill="url(#kd-g)" />
+            <circle cx="16" cy="16" r="7.8" fill="none" stroke="#fff" stroke-width="3.2" />
+          </svg>
+          Kube Desk
+        </a>
+        <button class="jump" type="button" data-palette aria-label="Jump to a section or page">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+          <span class="jump__label">Jump to…</span>
+          <kbd><span data-mod>⌘</span>K</kbd>
+        </button>
+        <nav class="links" aria-label="Main">
+          <a href="./#features">Features</a>
+          <a href="./#agents">AI agents</a>
+          <a href="changelog.html">Changelog</a>
+          <a href="https://github.com/ftech-vn/kubedesk">GitHub</a>
+          <a class="only-sm" href="download.html">Download</a>
+        </nav>
+        <a class="btn btn--primary btn--sm" href="download.html" aria-current="page">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+          Download
+        </a>
+        <button class="menu-btn" type="button" aria-label="Menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" x2="20" y1="7" y2="7" /><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="17" y2="17" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="page-head">
+        <div class="wrap hero-in">
+          <h1 class="display">Download Kube Desk.</h1>
+          <p class="lede">Free and open source. Install it once; after that it keeps itself up to date.</p>
+        </div>
+      </section>
+
+      <div class="wrap">
+        <div class="dl-card reveal">
+          <img src="assets/icon.png" alt="" width="72" height="72" />
+          <div>
+            <h2>Kube Desk 0.4.0 for macOS</h2>
+            <dl>
+              <div><dt>Released</dt><dd>22 October 2026</dd></div>
+              <div><dt>Needs</dt><dd>macOS 12 or later</dd></div>
+              <div><dt>Chip</dt><dd>Apple silicon (arm64)</dd></div>
+              <div><dt>License</dt><dd>MIT</dd></div>
+            </dl>
+          </div>
+          <div class="cta">
+            <a class="btn btn--primary" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+              Download .dmg
+            </a>
+            <a class="btn btn--ghost btn--sm" href="https://github.com/ftech-vn/kubedesk/releases">All releases on GitHub</a>
+          </div>
+        </div>
+      </div>
+
+      <section class="section">
+        <div class="wrap doc">
+          <nav class="toc" aria-label="On this page">
+            <h4>On this page</h4>
+            <ul>
+              <li><a href="#install">Install</a></li>
+              <li><a href="#updates">Updates</a></li>
+              <li><a href="#agents">Connect an AI agent</a></li>
+              <li><a href="#source">Linux, Windows, Intel</a></li>
+              <li><a href="#requirements">Requirements</a></li>
+            </ul>
+          </nav>
+
+          <div class="prose">
+            <section id="install" data-palette-section="Install">
+              <h2>Install</h2>
+              <p>Three steps, about a minute.</p>
+              <ol class="steps">
+                <li>
+                  <b>Download and open the .dmg</b>
+                  <p>Drag <strong>Kube Desk</strong> to <strong>Applications</strong>.</p>
+                </li>
+                <li>
+                  <b>Open it the first time</b>
+                  <p>
+                    Releases aren’t notarized yet, so macOS asks before opening them. In Applications, right-click Kube
+                    Desk and choose <strong>Open</strong>, then <strong>Open</strong> again. Or remove the quarantine
+                    flag from Terminal:
+                  </p>
+                  <div class="code">
+                    <header><span>Terminal</span><button class="copy" type="button" data-copy="cmd-xattr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></header>
+                    <pre id="cmd-xattr"><span class="p">$ </span>xattr -dr com.apple.quarantine "/Applications/Kube Desk.app"</pre>
+                  </div>
+                </li>
+                <li>
+                  <b>Your clusters are already there</b>
+                  <p>
+                    Kube Desk reads every context in <code>~/.kube/config</code> and <code>$KUBECONFIG</code>. Add more
+                    with the <strong>+</strong> at the bottom of the cluster rail: pick a file, paste a kubeconfig, or
+                    enter a server and a token.
+                  </p>
+                </li>
+              </ol>
+              <div class="callout">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+                <p>
+                  Using GKE, EKS or AKS? Their credential plugins (<code>gke-gcloud-auth-plugin</code>,
+                  <code>aws</code>, <code>kubelogin</code>) work even when Kube Desk is opened from Finder, because it
+                  loads your login shell’s <code>PATH</code>.
+                </p>
+              </div>
+            </section>
+
+            <section id="updates">
+              <h2>Updates</h2>
+              <p>
+                Kube Desk checks for updates once a day, and you can check any time from
+                <strong>Kube Desk → Check for Updates…</strong> or <kbd>⌘K</kbd>. Updates show what’s new before you
+                install them.
+              </p>
+              <ul>
+                <li><strong>Signed.</strong> Every release is signed with Ed25519, and the app checks the signature before installing.</li>
+                <li><strong>Small.</strong> Usually only the changes are downloaded: going from 0.2 to 0.3 was 2.5 MB.</li>
+              </ul>
+            </section>
+
+            <section id="agents" data-palette-section="Connect an AI agent">
+              <h2>Connect an AI agent</h2>
+              <p>
+                Kube Desk is an MCP server for Claude Code, Cursor, Codex, Claude Desktop and other MCP clients. It is
+                off until you turn it on.
+              </p>
+              <ol class="steps">
+                <li>
+                  <b>Turn on the server</b>
+                  <p>Open <strong>AI agents</strong>, from the robot in the title bar or from <kbd>⌘K</kbd>.</p>
+                </li>
+                <li>
+                  <b>Choose what agents may do, per cluster</b>
+                  <p>
+                    <strong>Off</strong>, <strong>Read</strong> or <strong>Propose changes</strong>. Every cluster
+                    starts at Off. Proposed changes wait for your approval in Kube Desk, with a diff and what they affect.
+                  </p>
+                </li>
+                <li>
+                  <b>Add it to your client</b>
+                  <p>Kube Desk shows the command for each client, with your token filled in. For Claude Code:</p>
+                  <div class="code">
+                    <header><span>Terminal</span><button class="copy" type="button" data-copy="cmd-mcp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></header>
+                    <pre id="cmd-mcp"><span class="p">$ </span>claude mcp add --transport http kubedesk http://127.0.0.1:47428/mcp \
+    --header "Authorization: Bearer &lt;token from Kube Desk&gt;"</pre>
+                  </div>
+                  <p style="margin-top: 12px">
+                    Clients that start servers as processes (Cursor, Claude Desktop, Codex) run Kube Desk’s bridge
+                    instead. It opens Kube Desk if it isn’t running:
+                  </p>
+                  <div class="code">
+                    <header><span>MCP server command</span></header>
+                    <pre>"/Applications/Kube Desk.app/Contents/MacOS/Kube Desk" mcp --config &lt;path shown in the app&gt;</pre>
+                  </div>
+                </li>
+              </ol>
+              <p style="margin-top: 20px">
+                Then ask, for example, <em>“Why is checkout failing in production-eu?”</em>
+              </p>
+            </section>
+
+            <section id="source" data-palette-section="Build from source">
+              <h2>Linux, Windows and Intel Macs</h2>
+              <p>
+                The code is cross-platform: MyGo uses WebKitGTK on Linux and WebView2 on Windows. Releases are only
+                built for Apple silicon so far, so on other systems, build it yourself. You need
+                <a href="https://go.dev/dl/">Go</a> 1.27 or later and <a href="https://bun.sh">Bun</a>; no C toolchain.
+              </p>
+              <div class="code">
+                <header><span>Terminal</span><button class="copy" type="button" data-copy="cmd-build"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></header>
+                <pre id="cmd-build" data-text="git clone https://github.com/ftech-vn/kubedesk.git
+cd kubedesk
+bun install
+bun run build"><span class="p">$ </span>git clone https://github.com/ftech-vn/kubedesk.git
+<span class="p">$ </span>cd kubedesk
+<span class="p">$ </span>bun install
+<span class="p">$ </span>bun run build      <span class="c"># build/darwin-arm64/Kube Desk.app and a .dmg</span></pre>
+              </div>
+              <p style="margin-top: 14px">Build for other platforms, or a universal Mac app:</p>
+              <div class="code">
+                <header><span>Terminal</span></header>
+                <pre><span class="p">$ </span>bun run build -- -platform darwin/universal,linux/amd64,windows/amd64</pre>
+              </div>
+              <p style="margin-top: 14px">
+                Linux and Windows releases, and notarized macOS builds, are on the
+                <a href="https://github.com/ftech-vn/kubedesk#roadmap">roadmap</a>.
+              </p>
+            </section>
+
+            <section id="requirements">
+              <h2>Requirements</h2>
+              <dl class="reqs">
+                <div><dt>System</dt><dd>macOS 12 Monterey or later</dd></div>
+                <div><dt>Chip</dt><dd>Apple silicon. Intel: build from source</dd></div>
+                <div><dt>Clusters</dt><dd>Any Kubernetes API server your kubeconfig reaches</dd></div>
+                <div><dt>Metrics (optional)</dt><dd>metrics-server, for CPU and memory</dd></div>
+                <div><dt>Network</dt><dd>Your API servers and the update server. No telemetry</dd></div>
+                <div><dt>Disk</dt><dd>About 50 MB</dd></div>
+              </dl>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    
+
+    <script src="site.js"></script>
+  </body>
+</html>

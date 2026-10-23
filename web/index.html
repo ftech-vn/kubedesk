@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kube Desk — a Kubernetes desktop client for many clusters</title>
+    <meta
+      name="description"
+      content="Kube Desk is a fast, free Kubernetes desktop client for macOS. Every cluster in your kubeconfig in one small app: switch in a keystroke, watch resources live, tail logs, open a shell, edit YAML, and let AI agents help with you approving every change."
+    />
+    <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)" />
+    <link rel="canonical" href="https://kubedesk.cloud/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://kubedesk.cloud/" />
+    <meta property="og:title" content="Kube Desk — every cluster, one keystroke away" />
+    <meta property="og:description" content="A fast Kubernetes desktop client for people who juggle many clusters. Free and open source, for macOS." />
+    <meta property="og:image" content="https://kubedesk.cloud/assets/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@75..125,200..900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Kube Desk",
+        "operatingSystem": "macOS 12 or later",
+        "applicationCategory": "DeveloperApplication",
+        "softwareVersion": "0.4.0",
+        "license": "https://opensource.org/licenses/MIT",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "downloadUrl": "https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg"
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="bar">
+      <div class="wrap bar__in">
+        <a class="brand" href="./" aria-label="Kube Desk home">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <defs>
+              <linearGradient id="kd-g" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#4b7bf5" />
+                <stop offset="1" stop-color="#9b5cf5" />
+              </linearGradient>
+            </defs>
+            <rect x="2" y="2" width="28" height="28" rx="7" fill="url(#kd-g)" />
+            <circle cx="16" cy="16" r="7.8" fill="none" stroke="#fff" stroke-width="3.2" />
+          </svg>
+          Kube Desk
+        </a>
+        <button class="jump" type="button" data-palette aria-label="Jump to a section or page">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+          <span class="jump__label">Jump to…</span>
+          <kbd><span data-mod>⌘</span>K</kbd>
+        </button>
+        <nav class="links" aria-label="Main">
+          <a href="#features">Features</a>
+          <a href="#agents">AI agents</a>
+          <a href="changelog.html">Changelog</a>
+          <a href="https://github.com/ftech-vn/kubedesk">GitHub</a>
+          <a class="only-sm" href="download.html">Download</a>
+        </nav>
+        <a class="btn btn--primary btn--sm" href="download.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+          Download
+        </a>
+        <button class="menu-btn" type="button" aria-label="Menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" x2="20" y1="7" y2="7" /><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="17" y2="17" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ============ hero ============ -->
+      <section class="hero" id="top">
+        <div class="wrap hero__copy hero-in">
+          <a class="release-line" href="changelog.html">
+            <b>0.4.0</b> AI agents with approval, search and compare across clusters
+          </a>
+          <h1 class="display">Every cluster, <span class="soft">one keystroke</span> away.</h1>
+          <div class="hero__aside">
+            <p class="lede">
+              Kube Desk is a fast Kubernetes desktop client for people who juggle many clusters. Every context in your
+              kubeconfig, in one small app: <strong>switch in a keystroke</strong>, watch resources change live, tail
+              logs, open a shell, edit YAML.
+            </p>
+            <div class="hero__act">
+            <div class="cta">
+              <a class="btn btn--primary" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.77-3.32-1.8-1.41-.14-2.76.83-3.47.83-.72 0-1.82-.81-3-.79-1.54.02-2.96.9-3.76 2.28-1.6 2.78-.41 6.9 1.15 9.16.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.23-.02 2.01-1.12 2.77-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.67zM14.1 5.84c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.67 1.37-.58.67-1.1 1.76-.96 2.79 1.01.08 2.05-.52 2.69-1.27z" /></svg>
+                Download for macOS
+              </a>
+              <a class="btn btn--ghost" href="https://github.com/ftech-vn/kubedesk">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z" /></svg>
+                Source on GitHub
+              </a>
+            </div>
+            <p class="fine">
+              <span>Free and open source (MIT)</span><span>Apple silicon, macOS 12+</span><span>No telemetry</span>
+              <a href="download.html#source">Linux, Windows, Intel</a>
+            </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="wrap wrap--wide demo-wrap hero-rise">
+          <div class="app" id="demo" role="region" aria-label="A working preview of Kube Desk">
+            <noscript><img src="assets/screens/overview-light.webp" alt="Kube Desk showing the overview of the production-eu cluster" /></noscript>
+          </div>
+          <p class="demo-hint">
+            <span>This is a working preview. Press</span>
+            <span><kbd data-k="1">1</kbd> <kbd data-k="2">2</kbd> <kbd data-k="3">3</kbd> <kbd data-k="4">4</kbd></span>
+            <span>to switch clusters and <kbd data-k="0">0</kbd> for all of them. Open a page, switch away and come back: it’s where you left it.</span>
+          </p>
+        </div>
+      </section>
+
+      <!-- ============ why ============ -->
+      <section class="section" id="why" data-palette-section="Why Kube Desk">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <h2 class="h2">Built around switching between clusters.</h2>
+            <p class="lede">
+              Kube Desk takes the parts of Headlamp and Lens you use every day and makes moving between clusters the
+              core of the app, not an afterthought in a dropdown.
+            </p>
+          </div>
+          <div class="why">
+            <div class="points">
+              <div class="point reveal">
+                <div class="point__mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1.5" /><rect width="7" height="7" x="14" y="3" rx="1.5" /><rect width="7" height="7" x="14" y="14" rx="1.5" /><rect width="7" height="7" x="3" y="14" rx="1.5" /></svg></div>
+                <h3 class="h3">One app for every cluster</h3>
+                <p>
+                  It reads every context in <code>~/.kube/config</code> and <code>$KUBECONFIG</code>. Add more by
+                  picking a file, pasting a kubeconfig, or entering a server and a token.
+                </p>
+              </div>
+              <div class="point reveal">
+                <div class="point__mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></svg></div>
+                <h3 class="h3">Switching is instant</h3>
+                <p>
+                  Each cluster keeps its own page, namespace and open object, and its data stays live for a while after
+                  you leave. Coming back shows it as you left it.
+                </p>
+              </div>
+              <div class="point reveal">
+                <div class="point__mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.67 19a2 2 0 0 0 1.42-.59l6.15-6.17a6 6 0 0 0-8.49-8.49L5.59 9.91A2 2 0 0 0 5 11.33V18a1 1 0 0 0 1 1z" /><path d="M16 8 2 22" /><path d="M17.5 15H9" /></svg></div>
+                <h3 class="h3">Small and light</h3>
+                <p>
+                  One Go binary, about 47 MB. It uses the system’s WebView instead of bundling Chromium, and starts like a
+                  native app.
+                </p>
+              </div>
+              <div class="point reveal">
+                <div class="point__mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></div>
+                <h3 class="h3">Your kubeconfig is never modified</h3>
+                <p>
+                  Clusters you add in the app live in its own data folder. Files that <code>gcloud</code>,
+                  <code>aws</code> or <code>az</code> rewrite are read in place, so changes show up.
+                </p>
+              </div>
+            </div>
+
+            <aside class="spec reveal" aria-label="Specifications">
+              <h3>At a glance</h3>
+              <dl>
+                <dt>Version</dt><dd>0.4.0</dd>
+                <dt>Platform</dt><dd>macOS 12+, arm64</dd>
+                <dt>Size</dt><dd>~47 MB, one binary</dd>
+                <dt>Renderer</dt><dd>system WebView</dd>
+                <dt>Auth</dt><dd>GKE, EKS, AKS, OIDC</dd>
+                <dt>Writes to kubeconfig</dt><dd class="good">never</dd>
+                <dt>Telemetry</dt><dd class="good">none</dd>
+                <dt>Updates</dt><dd>signed, delta</dd>
+                <dt>License</dt><dd>MIT</dd>
+              </dl>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ features ============ -->
+      <section class="section" id="features" data-palette-section="Features">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <h2 class="h2">For the day something breaks.</h2>
+            <p class="lede">
+              Hear about a problem before anyone asks, see what changed and who changed it, and know what a fix will
+              touch before you make it.
+            </p>
+          </div>
+
+          <!-- watchlist -->
+          <article class="feature" id="watch">
+            <div class="feature__text reveal">
+              <p class="where">Watch from the title bar, <kbd>⌘K</kbd> or the menu bar</p>
+              <h2 class="h2">Hear about problems, even with the window closed.</h2>
+              <p>
+                Watch a namespace or a whole cluster. Kube Desk keeps watching in the background and tells you when
+                something goes wrong. When many things break at once, you get one notification, not forty.
+              </p>
+              <ul class="ticks">
+                <li>Crash loops, out of memory, image pull errors, pods that can’t be scheduled</li>
+                <li>Rollouts that get stuck, and nodes that go down</li>
+                <li>A menu bar icon counts the problems; click one to open it</li>
+              </ul>
+            </div>
+            <div class="watch-stage reveal" aria-hidden="true">
+              <div class="menubar">
+                <span>Wed 14:07</span>
+                <span class="tray"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="7" /></svg><i>3</i></span>
+              </div>
+              <div class="watch-pane">
+                <div>
+                  <div class="notif">
+                    <img src="assets/icon.png" alt="" width="34" height="34" />
+                    <p class="app-n"><span>Kube Desk</span><span>now</span></p>
+                    <p><b>production-eu: ledger-sync is crash looping</b></p>
+                    <p>payments · restarted 6 times in 18 minutes</p>
+                  </div>
+                  <div class="notif">
+                    <img src="assets/icon.png" alt="" width="34" height="34" />
+                    <p class="app-n"><span>Kube Desk</span><span>4m ago</span></p>
+                    <p><b>staging: 2 problems in shop</b></p>
+                    <p>api was OOMKilled · a rollout of cart is stuck</p>
+                  </div>
+                </div>
+                <div class="mock problems">
+                  <div class="mock__h">Problems <small>3</small></div>
+                  <div class="mock__b">
+                    <div class="prob"><b>ledger-sync-644d96db59-pj7lp</b><span>CrashLoopBackOff · payments · production-eu</span></div>
+                    <div class="prob"><b>api-7c9f6b8d4-r2kvz</b><span>OOMKilled · shop · staging</span></div>
+                    <div class="prob warn"><b>deployment/cart</b><span>Rollout stuck · shop · staging</span></div>
+                  </div>
+                  <footer><span>Watching 3 namespaces</span><span>Pause for 1 hour</span></footer>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- timeline -->
+          <article class="feature" id="timeline">
+            <div class="feature__text reveal">
+              <p class="where">Sidebar → Changes, and the History tab of every object</p>
+              <h2 class="h2">See what changed, and who changed it.</h2>
+              <p>
+                In the namespaces you watch, every change is kept for 7 days, in plain words, with a diff of before
+                and after. Changes made while Kube Desk was closed are found when it starts again.
+              </p>
+              <ul class="ticks">
+                <li>Who did it: kubectl, Helm, Argo CD, a controller, or an AI agent</li>
+                <li>Restarts, readiness and warning events on the same line</li>
+                <li>Secret values never reach the timeline, only which keys changed</li>
+              </ul>
+            </div>
+            <div class="mock reveal" aria-label="Example timeline of changes in the shop namespace">
+              <div class="mock__h">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                Changes in shop <small>last 24 hours</small>
+              </div>
+              <ol class="tl">
+                <li>
+                  <time>14:02</time>
+                  <span class="obj">deployment/api</span>
+                  <span class="who helm">Helm</span>
+                  <span class="what">image <code>api:1.8.2 → api:1.9.0</code></span>
+                  <div class="diff" aria-label="Diff">
+                    <div class="ctx">   containers:</div>
+                    <div class="ctx">   - name: api</div>
+                    <div class="del">-    image: registry.example.com/api:1.8.2</div>
+                    <div class="add">+    image: registry.example.com/api:1.9.0</div>
+                  </div>
+                </li>
+                <li class="problem">
+                  <time>14:03</time>
+                  <span class="obj">pod/api-6b7f8d9c5-mx2rt</span>
+                  <span class="who">kubelet</span>
+                  <span class="what">restarted · OOMKilled</span>
+                </li>
+                <li>
+                  <time>13:47</time>
+                  <span class="obj">configmap/api-config</span>
+                  <span class="who">kubectl</span>
+                  <span class="what">key <code>LOG_LEVEL</code> changed</span>
+                </li>
+                <li>
+                  <time>11:20</time>
+                  <span class="obj">deployment/checkout</span>
+                  <span class="who argo">Argo CD</span>
+                  <span class="what">replicas 1 → 2</span>
+                </li>
+                <li>
+                  <time>02:14</time>
+                  <span class="obj">secret/db-credentials</span>
+                  <span class="who">kubectl</span>
+                  <span class="what">key <code>password</code> changed <span class="closed">while closed</span></span>
+                </li>
+              </ol>
+            </div>
+          </article>
+
+          <!-- impact + guardrails -->
+          <article class="feature" id="impact">
+            <div class="feature__text reveal">
+              <p class="where">Delete, scale, restart and drain</p>
+              <h2 class="h2">Know what breaks before you click.</h2>
+              <p>
+                Every risky action shows first what else it affects. Mark a cluster as production and it shows in red,
+                and every change asks you to type its name. Read-only clusters refuse every change and shell, enforced
+                by the app itself, not just by hidden buttons.
+              </p>
+              <ul class="ticks">
+                <li>Services left without endpoints, ingress routes that stop working</li>
+                <li>Disruption budgets, data in volumes, pods that won’t fit elsewhere</li>
+                <li>Objects that Helm, Argo CD or Flux would put back</li>
+              </ul>
+            </div>
+            <form class="mock reveal" id="guard" aria-label="Example: deleting a deployment on a production cluster">
+              <div class="prod-banner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /></svg>
+                production-eu is a production cluster
+              </div>
+              <div class="mock__h">Delete deployment/checkout?</div>
+              <div class="mock__b">
+                <p style="color: var(--a-muted)">What this affects</p>
+                <ul class="impact">
+                  <li><span class="sev">Breaks</span><span>Service <code>checkout</code> is left with no endpoints</span></li>
+                  <li><span class="sev">Breaks</span><span>Ingress route <code>shop.example.com/checkout</code> stops working</span></li>
+                  <li><span class="sev warn">Warns</span><span>PodDisruptionBudget <code>checkout-pdb</code> would be broken</span></li>
+                  <li><span class="sev info">Note</span><span>Managed by Argo CD, which may create it again</span></li>
+                </ul>
+                <div class="confirm">
+                  <label for="guard-name">Type <code>production-eu</code> to confirm</label>
+                  <input id="guard-name" data-want="production-eu" autocomplete="off" spellcheck="false" placeholder="production-eu" />
+                </div>
+              </div>
+              <div class="mock__f">
+                <span class="note" aria-live="polite">Type the cluster’s name to continue</span>
+                <button type="reset" class="a-btn">Cancel</button>
+                <button type="submit" class="a-btn a-btn--danger" data-delete disabled>Delete</button>
+              </div>
+            </form>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============ agents ============ -->
+      <section class="section night" id="agents" data-palette-section="AI agents">
+        <div class="wrap">
+          <div class="agents">
+            <div class="reveal">
+              <p class="where">MCP server for Claude Code, Cursor, Codex, Claude Desktop</p>
+              <h2 class="h2">Let agents investigate. You approve every change.</h2>
+              <p class="lede" style="margin-top: 20px">
+                Ask <em>“Why is checkout failing in production-eu?”</em> and the agent reads the incident report and
+                recent changes. When it proposes a fix, Kube Desk shows you the diff and what it affects before
+                anything changes.
+              </p>
+
+              <div class="perm" id="perm">
+                <div class="perm__h"><span>What agents may do</span><span>per cluster</span></div>
+                <div class="perm__row" data-name="production-eu">
+                  <span class="chip-c" style="--cc: var(--c-pe)">production-eu</span>
+                  <span class="seg" role="group" aria-label="production-eu"><button type="button" data-level="Off" aria-pressed="false">Off</button><button type="button" data-level="Read" aria-pressed="false">Read</button><button type="button" data-level="Propose" aria-pressed="true">Propose changes</button></span>
+                </div>
+                <div class="perm__row" data-name="staging">
+                  <span class="chip-c" style="--cc: var(--c-st)">staging</span>
+                  <span class="seg" role="group" aria-label="staging"><button type="button" data-level="Off" aria-pressed="false">Off</button><button type="button" data-level="Read" aria-pressed="false">Read</button><button type="button" data-level="Propose" aria-pressed="true">Propose changes</button></span>
+                </div>
+                <div class="perm__row" data-name="qa">
+                  <span class="chip-c" style="--cc: var(--c-qa)">qa</span>
+                  <span class="seg" role="group" aria-label="qa"><button type="button" data-level="Off" aria-pressed="false">Off</button><button type="button" data-level="Read" aria-pressed="true">Read</button><button type="button" data-level="Propose" aria-pressed="false">Propose changes</button></span>
+                </div>
+                <p class="perm__note" aria-live="polite">Every cluster starts at Off. Choose what each one allows.</p>
+              </div>
+            </div>
+
+            <div class="reveal">
+              <div class="mock approve" aria-label="Example approval request from an agent">
+                <div class="mock__h">
+                  <span class="approve__who">
+                    <span class="av"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8" /><rect width="16" height="12" x="4" y="8" rx="2" /><path d="M2 14h2" /><path d="M20 14h2" /><path d="M15 13v2" /><path d="M9 13v2" /></svg></span>
+                    Claude Code wants to change <span class="chip-c" style="--cc: var(--c-pe)">production-eu</span>
+                  </span>
+                  <small>4:52 left</small>
+                </div>
+                <div class="mock__b">
+                  <p class="agent-reason">
+                    <small>Agent’s reason</small>
+                    ledger-sync crash loops because <code>LEDGER_DB_URL</code> still points at the old database host.
+                    Point it at the new one.
+                  </p>
+                  <p class="call"><code>apply_manifest</code><span>deployment/ledger-sync</span><span>payments</span></p>
+                  <div class="diff">
+                    <div class="ctx">         - name: LEDGER_DB_URL</div>
+                    <div class="del">-          value: postgres://ledger-db-old.payments:5432/ledger</div>
+                    <div class="add">+          value: postgres://ledger-db.payments:5432/ledger</div>
+                  </div>
+                  <ul class="impact">
+                    <li><span class="sev info">Note</span><span>Rolls out 1 pod; the service keeps its other endpoints</span></li>
+                  </ul>
+                </div>
+                <div class="mock__f">
+                  <span class="note">Production: you’ll type the cluster’s name</span>
+                  <button type="button" class="a-btn" tabindex="-1">Reject</button>
+                  <button type="button" class="a-btn a-btn--go" tabindex="-1">Review and approve</button>
+                </div>
+              </div>
+
+              <div class="tools">
+                <h3>Read</h3>
+                <ul>
+                  <li>list_clusters</li><li>list_resources</li><li>get_resource</li><li>get_logs</li><li>get_events</li>
+                  <li>get_changes</li><li>incident_report</li><li>search</li><li>compare</li><li>preview_impact</li>
+                </ul>
+                <h3>Propose, then wait for you</h3>
+                <ul>
+                  <li class="w">apply_manifest</li><li class="w">delete_resource</li><li class="w">scale</li><li class="w">restart</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="cmd reveal">
+            <header>
+              <span>Add Kube Desk to Claude Code. The app shows the command, with your token, for each client.</span>
+              <button class="copy" type="button" data-copy="cmd-claude">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
+                Copy
+              </button>
+            </header>
+            <pre id="cmd-claude"><span class="p">$ </span>claude mcp add --transport http kubedesk http://127.0.0.1:47428/mcp \
+    --header "Authorization: Bearer &lt;token from Kube Desk&gt;"</pre>
+          </div>
+
+          <div class="safety reveal">
+            <div>
+              <h3>Off by default</h3>
+              <p>The server is off until you turn it on, and every cluster starts at Off.</p>
+            </div>
+            <div>
+              <h3>This Mac only</h3>
+              <p>It listens on 127.0.0.1, behind a token, and checks the Host header.</p>
+            </div>
+            <div>
+              <h3>Secrets stay secret</h3>
+              <p>Secret values never reach agents. Tokens and passwords in logs are masked.</p>
+            </div>
+            <div>
+              <h3>Named in the timeline</h3>
+              <p>Changes carry the agent’s name, so the timeline shows who made them.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ across clusters ============ -->
+      <section class="section" id="across" data-palette-section="Search and compare">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <h2 class="h2">Many clusters, searched and compared as one.</h2>
+            <p class="lede">
+              Find a pod without remembering which cluster it runs in, and see at a glance why staging works and
+              production doesn’t.
+            </p>
+          </div>
+          <div class="across">
+            <div class="reveal">
+              <p class="where"><kbd>⇧</kbd><kbd>⌘</kbd><kbd>F</kbd> Search every cluster</p>
+              <div class="mock" aria-label="Example search across clusters">
+                <div class="sbox">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+                  <span><span class="q">app=checkout</span> <span class="q">ns:shop</span></span><span class="caret" aria-hidden="true"></span>
+                </div>
+                <div class="sgroup">
+                  <h5><span class="chip-c" style="--cc: var(--c-pe)">production-eu</span><span>3</span></h5>
+                  <div class="srow"><span>pod/checkout-7f9c6d5b8-2xkqp</span><small>Running</small></div>
+                  <div class="srow"><span>pod/checkout-7f9c6d5b8-h7vns</span><small>Running</small></div>
+                  <div class="srow"><span>deployment/checkout</span><small>2/2</small></div>
+                </div>
+                <div class="sgroup">
+                  <h5><span class="chip-c" style="--cc: var(--c-st)">staging</span><span>2</span></h5>
+                  <div class="srow"><span>pod/checkout-86b5d7c9f-tq2ml</span><small>Running</small></div>
+                  <div class="srow"><span>deployment/checkout</span><small>1/1</small></div>
+                </div>
+                <div class="sgroup">
+                  <h5><span class="chip-c" style="--cc: var(--c-es)">edge-singapore</span><span>unreachable</span></h5>
+                </div>
+              </div>
+              <p style="margin-top: 16px; color: var(--slate); font-size: 15px">
+                Search by name, <code>image:</code>, <code>app=web</code>, <code>kind:</code>, <code>ns:</code>,
+                <code>node:</code> or <code>is:failing</code>. Results arrive cluster by cluster.
+              </p>
+            </div>
+            <div class="reveal">
+              <p class="where">Compare across clusters, from any workload, service, config map or secret</p>
+              <div class="mock" aria-label="Example comparison of a deployment across three clusters">
+                <div class="mock__h">deployment/checkout <small>Only differences</small></div>
+                <div class="cmp-wrap">
+                  <table class="cmp">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th><span class="chip-c" style="--cc: var(--c-pe)">production-eu</span></th>
+                        <th><span class="chip-c" style="--cc: var(--c-st)">staging</span></th>
+                        <th><span class="chip-c" style="--cc: var(--c-qa)">qa</span></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="differs"><td>image</td><td><code>checkout:2.4.1</code></td><td><code>checkout:2.5.0</code></td><td><code>checkout:2.5.0</code></td></tr>
+                      <tr class="differs"><td>replicas</td><td>2</td><td>1</td><td>1</td></tr>
+                      <tr class="differs"><td>cpu request</td><td>500m</td><td>250m</td><td>250m</td></tr>
+                      <tr class="differs"><td>env NEW_CART</td><td>false</td><td>true</td><td>true</td></tr>
+                      <tr><td>port</td><td>8080/TCP</td><td>8080/TCP</td><td>8080/TCP</td></tr>
+                      <tr class="differs"><td>secret db-url</td><td><code>sha 3f9a…</code></td><td><code>sha 81c2…</code></td><td><code>sha 81c2…</code></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <p style="margin-top: 16px; color: var(--slate); font-size: 15px">
+                What differs is highlighted, with a YAML diff between any two clusters. Secrets are compared by
+                fingerprint only.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ screenshots ============ -->
+      <section class="section" id="screens" data-palette-section="Screenshots">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <h2 class="h2">And the rest of a day’s work.</h2>
+            <p class="lede">Logs, shells, YAML and the details of every kind, in the real app.</p>
+          </div>
+          <div id="gallery" class="reveal">
+            <div class="gallery__tabs" role="tablist" aria-label="Screenshots">
+              <button role="tab" aria-selected="true" tabindex="0" aria-controls="gallery-panel" data-src="assets/screens/palette.webp" data-alt="The command palette listing clusters, pages and pods" data-cap="<b>Command palette.</b> Jump to any cluster, page, namespace or pod."><kbd>⌘K</kbd> Palette</button>
+              <button role="tab" aria-selected="false" tabindex="-1" aria-controls="gallery-panel" data-src="assets/screens/logs.webp" data-alt="Live logs colored by level" data-cap="<b>Live logs</b>, colored by level, for one pod or every pod of a workload, interleaved by time.">Logs</button>
+              <button role="tab" aria-selected="false" tabindex="-1" aria-controls="gallery-panel" data-src="assets/screens/shell.webp" data-alt="A shell inside a container" data-cap="<b>Shell</b> into any container, with bash or sh.">Shell</button>
+              <button role="tab" aria-selected="false" tabindex="-1" aria-controls="gallery-panel" data-src="assets/screens/deployment.webp" data-alt="Details of a deployment with the pods it owns" data-cap="<b>Details</b> of every kind: containers, ports, probes, conditions, owned pods, events, linked objects.">Details</button>
+              <button role="tab" aria-selected="false" tabindex="-1" aria-controls="gallery-panel" data-src="assets/screens/yaml.webp" data-alt="The YAML editor" data-cap="<b>Edit YAML</b> with highlighting, folding and search. <kbd>⌘S</kbd> shows the diff, then applies.">YAML</button>
+              <button role="tab" aria-selected="false" tabindex="-1" aria-controls="gallery-panel" data-src="assets/screens/clusters.webp" data-alt="All clusters with their health and version" data-cap="<b>All your clusters</b>, with health and version. Rename, recolor, hide and reorder them.">Clusters</button>
+              <button role="tab" aria-selected="false" tabindex="-1" aria-controls="gallery-panel" data-src="assets/screens/add-cluster.webp" data-alt="Adding a cluster" data-cap="<b>Add clusters</b> from files, pasted kubeconfigs, or a server and a token.">Add a cluster</button>
+              <button role="tab" aria-selected="false" tabindex="-1" aria-controls="gallery-panel" data-src="assets/screens/overview-dark.webp" data-alt="Cluster overview in dark mode" data-cap="<b>Light, dark</b>, or follow the system.">Dark mode</button>
+            </div>
+            <div class="gallery__frame" id="gallery-panel" role="tabpanel">
+              <img src="assets/screens/palette.webp" alt="The command palette listing clusters, pages and pods" width="1600" height="1022" loading="lazy" />
+            </div>
+            <p class="gallery__cap"><b>Command palette.</b> Jump to any cluster, page, namespace or pod.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ kinds ============ -->
+      <section class="section" id="kinds" data-palette-section="Supported resources">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <h2 class="h2">Every kind, updated live.</h2>
+            <p class="lede">
+              Lists stay current through watches, so you never press refresh. Custom resources show the columns their
+              CRD declares.
+            </p>
+          </div>
+          <div class="kinds reveal">
+            <div class="kind"><h3>Cluster</h3><ul><li>Nodes</li><li>Namespaces</li><li>Events</li></ul></div>
+            <div class="kind"><h3>Workloads</h3><ul><li>Pods</li><li>Deployments</li><li>StatefulSets</li><li>DaemonSets</li><li>ReplicaSets</li><li>Jobs</li><li>CronJobs</li></ul></div>
+            <div class="kind"><h3>Network</h3><ul><li>Services</li><li>Ingresses</li><li>EndpointSlices</li><li>NetworkPolicies</li></ul></div>
+            <div class="kind"><h3>Config</h3><ul><li>ConfigMaps</li><li>Secrets</li><li>HPAs</li><li>PodDisruptionBudgets</li></ul></div>
+            <div class="kind"><h3>Storage</h3><ul><li>PersistentVolumeClaims</li><li>PersistentVolumes</li><li>StorageClasses</li></ul></div>
+            <div class="kind"><h3>Access control</h3><ul><li>ServiceAccounts</li><li>Roles</li><li>RoleBindings</li><li>ClusterRoles</li><li>ClusterRoleBindings</li></ul></div>
+            <div class="kind"><h3>Custom resources</h3><p>Every CRD in the cluster, with its <code>additionalPrinterColumns</code>.</p></div>
+            <div class="kind"><h3>Metrics</h3><p>CPU and memory of pods and nodes in their lists, with metrics-server.</p></div>
+          </div>
+
+          <div class="daily">
+            <div class="reveal">
+              <h3 class="h3">Logs of a whole workload</h3>
+              <p>Every pod of a Deployment, StatefulSet, Job or Service, interleaved by time and colored by pod. Pods that start during a rollout join in.</p>
+            </div>
+            <div class="reveal">
+              <h3 class="h3">Incident report</h3>
+              <p>A pod’s state, events, logs from before its last restart, its node and recent changes, in one Markdown report with secrets masked.</p>
+            </div>
+            <div class="reveal">
+              <h3 class="h3">Port forwarding</h3>
+              <p>From pods and services, listed in the title bar so you can see and stop what’s open.</p>
+            </div>
+            <div class="reveal">
+              <h3 class="h3">Actions, in bulk too</h3>
+              <p>Delete, scale, restart, cordon, uncordon and drain. Run a CronJob now, suspend and resume.</p>
+            </div>
+            <div class="reveal">
+              <h3 class="h3">Create from YAML</h3>
+              <p>From templates or your own YAML, several documents at once.</p>
+            </div>
+            <div class="reveal">
+              <h3 class="h3">Works with your login</h3>
+              <p>GKE, EKS, AKS/kubelogin and OIDC plugins work even when the app opens from Finder, because it loads your shell’s <code>PATH</code>.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ keys + privacy ============ -->
+      <section class="section" id="keys" data-palette-section="Keyboard shortcuts and privacy">
+        <div class="wrap two">
+          <div class="reveal">
+            <h2 class="h2">Keyboard first.</h2>
+            <table class="keys">
+              <tbody>
+                <tr><td><kbd>⌘K</kbd></td><td>Command palette: clusters, pages, namespaces, objects</td></tr>
+                <tr><td><kbd>⌘1</kbd> … <kbd>⌘9</kbd></td><td>Switch to the nth cluster</td></tr>
+                <tr><td><kbd>⌘0</kbd></td><td>All clusters</td></tr>
+                <tr><td><kbd>⇧⌘F</kbd></td><td>Search every cluster</td></tr>
+                <tr><td><kbd>⌘F</kbd></td><td>Filter the current list, by text or <code>label=value</code></td></tr>
+                <tr><td><kbd>⌘S</kbd></td><td>Apply the YAML you’re editing</td></tr>
+                <tr><td><kbd>Esc</kbd></td><td>Close the details panel</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="reveal">
+            <h2 class="h2">Private by design.</h2>
+            <ul class="privacy">
+              <li><b>No telemetry.</b> Kube Desk only talks to the API servers in your kubeconfigs and to the update server.</li>
+              <li><b>Your files stay yours.</b> It never writes to your kubeconfig. Pasted kubeconfigs and tokens are stored with <code>0600</code> permissions in the app’s own folder.</li>
+              <li><b>Signed updates.</b> Releases are signed with Ed25519, and the app checks the signature before installing.</li>
+              <li><b>Open source.</b> Read every line on GitHub, under the MIT license.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ download ============ -->
+      <section class="final" id="download" data-palette-section="Download">
+        <div class="wrap reveal">
+          <img src="assets/icon.png" alt="" width="88" height="88" />
+          <h2 class="display">Bring every cluster<br />into one window.</h2>
+          <p class="lede">Free and open source. Updates itself after the first install.</p>
+          <div class="cta">
+            <a class="btn btn--primary" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+              Download Kube Desk 0.4.0
+            </a>
+            <a class="btn btn--ghost" href="download.html">Install guide</a>
+          </div>
+          <p class="fine">
+            <span>macOS 12 or later, Apple silicon</span>
+            <span>Not notarized yet: the first time, right-click the app and choose Open</span>
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <div class="foot__in">
+          <div>
+            <a class="brand" href="./"><img src="assets/icon.png" alt="" width="28" height="28" /> Kube Desk</a>
+            <p>A Kubernetes desktop client for people who juggle many clusters.</p>
+          </div>
+          <div>
+            <h4>Product</h4>
+            <ul>
+              <li><a href="download.html">Download</a></li>
+              <li><a href="changelog.html">Changelog</a></li>
+              <li><a href="#features">Features</a></li>
+              <li><a href="#agents">AI agents</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Get started</h4>
+            <ul>
+              <li><a href="download.html#install">Install</a></li>
+              <li><a href="download.html#agents">Connect an agent</a></li>
+              <li><a href="download.html#source">Build from source</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Project</h4>
+            <ul>
+              <li><a href="https://github.com/ftech-vn/kubedesk">GitHub</a></li>
+              <li><a href="https://github.com/ftech-vn/kubedesk/releases">Releases</a></li>
+              <li><a href="https://github.com/ftech-vn/kubedesk/issues">Issues</a></li>
+              <li><a href="https://github.com/ftech-vn/kubedesk/blob/main/CONTRIBUTING.md">Contributing</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="foot__legal">
+          <span>MIT License. Built with <a href="https://github.com/egoist/mygo">MyGo</a>, inspired by Headlamp and Lens.</span>
+          <span>Kubernetes is a registered trademark of the Linux Foundation.</span>
+        </div>
+      </div>
+    </footer>
+
+    <script src="site.js"></script>
+    <script src="home.js"></script>
+  </body>
+</html>
