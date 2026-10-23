@@ -21,6 +21,7 @@
   const items = [
     { label: "Download Kube Desk for macOS", hint: ".dmg · Apple silicon", href: DMG, icon: I.download },
     { label: "Install guide", hint: "Download", href: "download.html#install", icon: I.page },
+    { label: "Set up the assistant", hint: "Microsoft Foundry or Google Vertex AI", href: "download.html#assistant", icon: I.page },
     { label: "Connect an AI agent", hint: "Download", href: "download.html#agents", icon: I.page },
     { label: "Build from source", hint: "Linux, Windows, Intel", href: "download.html#source", icon: I.page },
     { label: "Changelog", hint: "What's new in each release", href: "changelog.html", icon: I.page },

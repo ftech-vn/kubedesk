@@ -16,6 +16,7 @@
     search: icon('<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>'),
     chevron: icon('<path d="m6 9 6 6 6-6"/>'),
     x: icon('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),
+    map: icon('<rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/>'),
     unplug: icon('<path d="m19 5 3-3"/><path d="m2 22 3-3"/><path d="M6.3 20.3a2.4 2.4 0 0 0 3.4 0L12 18l-6-6-2.3 2.3a2.4 2.4 0 0 0 0 3.4Z"/><path d="M7.5 13.5 10 11"/><path d="M10.5 16.5 13 14"/><path d="m12 6 6 6 2.3-2.3a2.4 2.4 0 0 0 0-3.4l-2.6-2.6a2.4 2.4 0 0 0-3.4 0Z"/>'),
   };
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -159,6 +160,7 @@
 
   const pages = [
     { id: "overview", label: "Overview", icon: I.overview },
+    { id: "map", label: "Map", icon: I.map },
     { group: "Cluster" },
     { id: "nodes", label: "Nodes", icon: I.nodes },
     { id: "events", label: "Events", icon: I.events },
@@ -309,6 +311,41 @@
                 .join("")
             : `<p style="padding:10px 12px;color:var(--a-muted)">No warnings.</p>`
         }</div>`
+      );
+    },
+    map(c) {
+      // Each service, the deployment of the same name, and its pods.
+      const tone = (p) => (p.status === "Running" ? "" : ["Pending", "ContainerCreating"].includes(p.status) ? "warn" : p.status === "Terminating" || p.status === "Completed" ? "idle" : "bad");
+      const apps = c.services
+        .map(([name, ns, type]) => {
+          const d = c.deploys.find((x) => x[0] === name && x[1] === ns);
+          const pods = c.pods.filter((p) => p.ns === ns && p.name.startsWith(name + "-") && !p.job);
+          return { name, ns, type, d, pods };
+        })
+        .concat(
+          c.deploys
+            .filter((d) => !c.services.some((s) => s[0] === d[0] && s[1] === d[1]))
+            .map((d) => ({ name: d[0], ns: d[1], d, pods: c.pods.filter((p) => p.ns === d[1] && p.name.startsWith(d[0] + "-")) })),
+        );
+      const bad = (a) => a.pods.some((p) => tone(p) === "bad") || (a.type && !a.pods.length);
+      apps.sort((a, b) => bad(b) - bad(a));
+      return (
+        heading(c, "Map") +
+        `<div class="dmap">${apps
+          .map((a) => {
+            const ready = a.pods.filter((p) => p.status === "Running").length;
+            const svc = a.type
+              ? `<div class="dn ${a.pods.length ? (ready === a.pods.length ? "" : "warn") : "warn"}"><b>${esc(a.name)}</b><span>Service · ${a.pods.length ? `${ready}/${a.pods.length} pods ready` : "no pods"}</span></div>`
+              : `<div></div>`;
+            const dep = a.d
+              ? `<div class="dn ${a.d && readyOf(c, a.d).split("/")[0] === readyOf(c, a.d).split("/")[1] ? "" : "warn"}"><b>${esc(a.name)}</b><span>Deployment · ${readyOf(c, a.d)} · ${esc(a.ns)}</span></div>`
+              : `<div class="dn idle"><b>${esc(a.name)}</b><span>${a.pods.length ? "StatefulSet" : "no workload"}</span></div>`;
+            const pods = a.pods.length
+              ? a.pods.map((p) => `<div class="dn ${tone(p)}" data-pod="${p.name}" style="cursor:pointer"><b>${esc(p.name)}</b><span>Pod · ${esc(p.status)}${p.restarts ? ` · ${p.restarts} restarts` : ""}</span></div>`).join("")
+              : `<div class="dn warn"><b>no pods</b><span>the selector matches nothing</span></div>`;
+            return `<div class="dmap__app${bad(a) ? " bad" : ""}">${svc}<i class="dmap__arrow"${a.type ? "" : ' style="opacity:0"'}></i>${dep}<i class="dmap__arrow"></i><div class="dmap__pods">${pods}</div></div>`;
+          })
+          .join("")}</div>`
       );
     },
     nodes(c) {
@@ -600,4 +637,36 @@
       pre.src = t.dataset.src;
     });
   }
+})();
+
+// The resource map mock: pointing at an object lights up what it connects to.
+(() => {
+  const map = document.getElementById("rmap");
+  if (!map) return;
+  const paths = [...map.querySelectorAll("[data-e]")];
+  const nodes = [...map.querySelectorAll("[data-n]")];
+  const clear = () => {
+    paths.forEach((p) => p.classList.remove("lit", "dim"));
+    nodes.forEach((n) => n.classList.remove("lit", "dim"));
+  };
+  const light = (id) => {
+    const near = new Set([id]);
+    paths.forEach((p) => {
+      const [a, b] = p.dataset.e.split(" ");
+      const on = a === id || b === id;
+      p.classList.toggle("lit", on);
+      p.classList.toggle("dim", !on);
+      if (on) near.add(a).add(b);
+    });
+    nodes.forEach((n) => {
+      n.classList.toggle("lit", n.dataset.n === id);
+      n.classList.toggle("dim", !near.has(n.dataset.n));
+    });
+  };
+  nodes.forEach((n) => {
+    n.addEventListener("mouseenter", () => light(n.dataset.n));
+    n.addEventListener("focus", () => light(n.dataset.n));
+    n.addEventListener("mouseleave", clear);
+    n.addEventListener("blur", clear);
+  });
 })();

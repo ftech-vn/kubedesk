@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Download Kube Desk for macOS</title>
-    <meta name="description" content="Download Kube Desk 0.4.0 for macOS on Apple silicon. Install guide, connecting AI agents over MCP, and building from source for Linux, Windows and Intel Macs." />
+    <meta name="description" content="Download Kube Desk 0.6.0 for macOS on Apple silicon. Install guide, setting up the assistant, connecting AI agents over MCP, and building from source for Linux, Windows and Intel Macs." />
     <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)" />
     <link rel="canonical" href="https://kubedesk.cloud/download.html" />
@@ -71,9 +71,9 @@
         <div class="dl-card reveal">
           <img src="assets/icon.png" alt="" width="72" height="72" />
           <div>
-            <h2>Kube Desk 0.4.0 for macOS</h2>
+            <h2>Kube Desk 0.6.0 for macOS</h2>
             <dl>
-              <div><dt>Released</dt><dd>22 October 2026</dd></div>
+              <div><dt>Released</dt><dd>24 October 2026</dd></div>
               <div><dt>Needs</dt><dd>macOS 12 or later</dd></div>
               <div><dt>Chip</dt><dd>Apple silicon (arm64)</dd></div>
               <div><dt>License</dt><dd>MIT</dd></div>
@@ -96,6 +96,7 @@
             <ul>
               <li><a href="#install">Install</a></li>
               <li><a href="#updates">Updates</a></li>
+              <li><a href="#assistant">Set up the assistant</a></li>
               <li><a href="#agents">Connect an AI agent</a></li>
               <li><a href="#source">Linux, Windows, Intel</a></li>
               <li><a href="#requirements">Requirements</a></li>
@@ -151,8 +152,51 @@
               </p>
               <ul>
                 <li><strong>Signed.</strong> Every release is signed with Ed25519, and the app checks the signature before installing.</li>
-                <li><strong>Small.</strong> Usually only the changes are downloaded: going from 0.2 to 0.3 was 2.5 MB.</li>
+                <li><strong>Small.</strong> Usually only the changes are downloaded: going from 0.5 to 0.6 is 6.5 MB.</li>
               </ul>
+            </section>
+
+            <section id="assistant" data-palette-section="Set up the assistant">
+              <h2>Set up the assistant</h2>
+              <p>
+                The assistant, <kbd>⌘J</kbd>, is Claude through your own cloud account. Pick one; you only need one of
+                them.
+              </p>
+              <ol class="steps">
+                <li>
+                  <b>Make Claude available to you</b>
+                  <p>
+                    <strong>Microsoft Foundry:</strong> deploy a Claude model in the
+                    <a href="https://ai.azure.com/">Foundry portal</a>, such as <code>claude-opus-5-5</code>. Its
+                    <strong>Details</strong> tab has the Target URI and the key.
+                  </p>
+                  <p>
+                    <strong>Google Vertex AI:</strong> enable the Claude model in
+                    <a href="https://console.cloud.google.com/vertex-ai/model-garden">Model Garden</a>, then sign in once
+                    in a terminal:
+                  </p>
+                  <div class="code">
+                    <header><span>Terminal</span><button class="copy" type="button" data-copy="cmd-adc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></header>
+                    <pre id="cmd-adc"><span class="p">$ </span>gcloud auth application-default login</pre>
+                  </div>
+                </li>
+                <li>
+                  <b>Tell Kube Desk where it is</b>
+                  <p>
+                    Open <strong>Assistant settings</strong> from <kbd>⌘K</kbd>. For Foundry, enter the resource name or
+                    the Target URI, the key and the deployment name; the key goes to your macOS keychain. For Vertex AI,
+                    enter the project and the region (<code>global</code> by default). <strong>Save and test</strong>
+                    checks the connection.
+                  </p>
+                </li>
+                <li>
+                  <b>Ask</b>
+                  <p>
+                    Press <kbd>⌘J</kbd> and ask, for example, <em>“Which pods are failing in this cluster, and
+                    why?”</em> Changes it proposes wait for your approval. Past chats are under the clock in its header.
+                  </p>
+                </li>
+              </ol>
             </section>
 
             <section id="agents" data-palette-section="Connect an AI agent">
@@ -231,8 +275,10 @@ bun run build"><span class="p">$ </span>git clone https://github.com/ftech-vn/ku
                 <div><dt>Chip</dt><dd>Apple silicon. Intel: build from source</dd></div>
                 <div><dt>Clusters</dt><dd>Any Kubernetes API server your kubeconfig reaches</dd></div>
                 <div><dt>Metrics (optional)</dt><dd>metrics-server, for CPU and memory</dd></div>
-                <div><dt>Network</dt><dd>Your API servers and the update server. No telemetry</dd></div>
-                <div><dt>Disk</dt><dd>About 50 MB</dd></div>
+                <div><dt>Helm (optional)</dt><dd>The helm command, to roll releases back. Reading them needs nothing</dd></div>
+                <div><dt>Assistant (optional)</dt><dd>Claude in Microsoft Foundry or Google Vertex AI</dd></div>
+                <div><dt>Network</dt><dd>Your API servers, the update server, and the assistant’s cloud if you use it. No telemetry</dd></div>
+                <div><dt>Disk</dt><dd>About 70 MB</dd></div>
               </dl>
             </section>
           </div>

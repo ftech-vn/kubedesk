@@ -6,7 +6,7 @@
     <title>Kube Desk — a Kubernetes desktop client for many clusters</title>
     <meta
       name="description"
-      content="Kube Desk is a fast, free Kubernetes desktop client for macOS. Every cluster in your kubeconfig in one small app: switch in a keystroke, watch resources live, tail logs, open a shell, edit YAML, and let AI agents help with you approving every change."
+      content="Kube Desk is a fast, free Kubernetes desktop client for macOS. Every cluster in your kubeconfig in one small app: switch in a keystroke, watch resources live, tail logs, open a shell, edit YAML, see Helm releases and a map of each app, and ask an AI assistant, with you approving every change."
     />
     <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)" />
@@ -33,7 +33,7 @@
         "name": "Kube Desk",
         "operatingSystem": "macOS 12 or later",
         "applicationCategory": "DeveloperApplication",
-        "softwareVersion": "0.4.0",
+        "softwareVersion": "0.6.0",
         "license": "https://opensource.org/licenses/MIT",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "downloadUrl": "https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg"
@@ -65,7 +65,7 @@
         </button>
         <nav class="links" aria-label="Main">
           <a href="#features">Features</a>
-          <a href="#agents">AI agents</a>
+          <a href="#assistant">Assistant</a>
           <a href="changelog.html">Changelog</a>
           <a href="https://github.com/ftech-vn/kubedesk">GitHub</a>
           <a class="only-sm" href="download.html">Download</a>
@@ -85,7 +85,7 @@
       <section class="hero" id="top">
         <div class="wrap hero__copy hero-in">
           <a class="release-line" href="changelog.html">
-            <b>0.4.0</b> AI agents with approval, search and compare across clusters
+            <b>0.6.0</b> Helm releases, a map of every app, and the assistant on Azure or Google Cloud
           </a>
           <h1 class="display">Every cluster, <span class="soft">one keystroke</span> away.</h1>
           <div class="hero__aside">
@@ -157,8 +157,8 @@
                 <div class="point__mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.67 19a2 2 0 0 0 1.42-.59l6.15-6.17a6 6 0 0 0-8.49-8.49L5.59 9.91A2 2 0 0 0 5 11.33V18a1 1 0 0 0 1 1z" /><path d="M16 8 2 22" /><path d="M17.5 15H9" /></svg></div>
                 <h3 class="h3">Small and light</h3>
                 <p>
-                  One Go binary, about 47 MB. It uses the system’s WebView instead of bundling Chromium, and starts like a
-                  native app.
+                  One Go binary, a 19 MB download. It uses the system’s WebView instead of bundling Chromium, and starts
+                  like a native app.
                 </p>
               </div>
               <div class="point reveal">
@@ -174,11 +174,12 @@
             <aside class="spec reveal" aria-label="Specifications">
               <h3>At a glance</h3>
               <dl>
-                <dt>Version</dt><dd>0.4.0</dd>
+                <dt>Version</dt><dd>0.6.0</dd>
                 <dt>Platform</dt><dd>macOS 12+, arm64</dd>
-                <dt>Size</dt><dd>~47 MB, one binary</dd>
+                <dt>Size</dt><dd>19 MB download, one binary</dd>
                 <dt>Renderer</dt><dd>system WebView</dd>
                 <dt>Auth</dt><dd>GKE, EKS, AKS, OIDC</dd>
+                <dt>AI</dt><dd>Claude, on Azure or Google Cloud</dd>
                 <dt>Writes to kubeconfig</dt><dd class="good">never</dd>
                 <dt>Telemetry</dt><dd class="good">none</dd>
                 <dt>Updates</dt><dd>signed, delta</dd>
@@ -351,6 +352,155 @@
               </div>
             </form>
           </article>
+
+          <!-- map -->
+          <article class="feature" id="map" data-palette-section="Resource map">
+            <div class="feature__text reveal">
+              <p class="where">Sidebar → Map, and the Map tab of every workload</p>
+              <h2 class="h2">See how an app fits together.</h2>
+              <p>
+                The map draws each app of a namespace from left to right: the ingress, the services it routes to, the
+                workloads behind them, their pods, and the config they use. Every object shows its state, live, and
+                an app with a problem is outlined.
+              </p>
+              <ul class="ticks">
+                <li>A service that selects no pods, or an ingress pointing at a service that’s gone, stands out</li>
+                <li>Point at an object to light up what it connects to; click it to open it</li>
+                <li>Workloads with many pods fold them into one box</li>
+              </ul>
+            </div>
+            <div class="mock rmap reveal" id="rmap" aria-label="Example map of the shop app">
+              <div class="mock__h">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="16" y="16" width="6" height="6" rx="1" /><rect x="2" y="16" width="6" height="6" rx="1" /><rect x="9" y="2" width="6" height="6" rx="1" /><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" /><path d="M12 12V8" /></svg>
+                Map of shop <small>production-eu</small>
+              </div>
+              <div class="rmap__canvas">
+                <svg class="rmap__lines" viewBox="0 0 640 300" preserveAspectRatio="none" aria-hidden="true">
+                  <path data-e="ing checkout" d="M130,150 C160,150 160,60 190,60" />
+                  <path data-e="ing cart" d="M130,150 C160,150 160,150 190,150" />
+                  <path data-e="ing gone" class="broken" d="M130,150 C160,150 160,240 190,240" />
+                  <path data-e="checkout d-checkout" d="M300,60 L330,60" />
+                  <path data-e="cart d-cart" d="M300,150 L330,150" />
+                  <path data-e="d-checkout p-checkout" d="M440,60 L470,60" />
+                  <path data-e="d-cart p-cart" d="M440,150 C455,150 455,130 470,130" />
+                  <path data-e="d-cart p-cart2" d="M440,150 C455,150 455,180 470,180" />
+                  <path data-e="d-checkout cfg" d="M440,60 C455,60 455,250 470,250" />
+                </svg>
+                <div class="rmap__col" style="--x: 0">
+                  <button class="rn" data-n="ing" style="--y: 150"><b>shop</b><span>shop.example.com</span></button>
+                </div>
+                <div class="rmap__col" style="--x: 1">
+                  <button class="rn" data-n="checkout" style="--y: 60"><b>checkout</b><span>Service · 2/2</span></button>
+                  <button class="rn warn" data-n="cart" style="--y: 150"><b>cart</b><span>Service · 1/2</span></button>
+                  <button class="rn bad missing" data-n="gone" style="--y: 240"><b>reviews</b><span>Service · missing</span></button>
+                </div>
+                <div class="rmap__col" style="--x: 2">
+                  <button class="rn" data-n="d-checkout" style="--y: 60"><b>checkout</b><span>Deployment · 2/2</span></button>
+                  <button class="rn warn" data-n="d-cart" style="--y: 150"><b>cart</b><span>Deployment · 1/2</span></button>
+                </div>
+                <div class="rmap__col" style="--x: 3">
+                  <button class="rn" data-n="p-checkout" style="--y: 60"><b>2 pods</b><span>Pod · all ready</span></button>
+                  <button class="rn" data-n="p-cart" style="--y: 130"><b>cart-5d8b9-q9wzl</b><span>Pod · Running</span></button>
+                  <button class="rn bad" data-n="p-cart2" style="--y: 180"><b>cart-5d8b9-x7mpd</b><span>Pod · CrashLoopBackOff</span></button>
+                  <button class="rn idle" data-n="cfg" style="--y: 250"><b>checkout-config</b><span>ConfigMap</span></button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- helm -->
+          <article class="feature" id="helm" data-palette-section="Helm releases">
+            <div class="feature__text reveal">
+              <p class="where">Sidebar → Helm</p>
+              <h2 class="h2">Helm releases, and a way back.</h2>
+              <p>
+                Every release with its chart, app version and status, read straight from the cluster, so looking needs
+                no helm command. Open one for its values, what it rendered, its notes and the objects it deployed.
+              </p>
+              <ul class="ticks">
+                <li>Values as given at install, or merged with the chart’s defaults</li>
+                <li>A diff of values or manifests between any two revisions</li>
+                <li>Roll back after seeing what changes and what Helm deletes</li>
+              </ul>
+            </div>
+            <div class="mock helm-mock reveal" aria-label="Example history of a Helm release">
+              <div class="mock__h">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" /><path d="M12 22V12" /><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7" /></svg>
+                ingress-nginx <small>ingress-nginx-4.13.0 · revision 7</small>
+              </div>
+              <table class="hist">
+                <thead><tr><th>Rev</th><th>Status</th><th>Chart</th><th>Description</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td>7</td><td><span class="badge bad">failed</span></td><td><code>4.13.0</code></td><td>Upgrade “ingress-nginx” failed: timed out</td><td></td></tr>
+                  <tr class="on"><td>6</td><td><span class="badge idle">superseded</span></td><td><code>4.12.3</code></td><td>Upgrade complete</td><td><span class="a-btn a-btn--sm">Roll back</span></td></tr>
+                  <tr><td>5</td><td><span class="badge idle">superseded</span></td><td><code>4.12.1</code></td><td>Upgrade complete</td><td></td></tr>
+                </tbody>
+              </table>
+              <div class="mock__b">
+                <p style="color: var(--a-muted); margin: 0 0 8px">Rolling back to revision 6 changes</p>
+                <div class="diff">
+                  <div class="ctx">   controller:</div>
+                  <div class="del">-    image: registry.k8s.io/ingress-nginx/controller:v1.13.1</div>
+                  <div class="add">+    image: registry.k8s.io/ingress-nginx/controller:v1.12.3</div>
+                  <div class="del">-    allowSnippetAnnotations: true</div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============ assistant ============ -->
+      <section class="section" id="assistant" data-palette-section="Assistant">
+        <div class="wrap">
+          <div class="agents">
+            <div class="reveal">
+              <p class="where"><kbd>⌘</kbd><kbd>J</kbd> Assistant, in the app</p>
+              <h2 class="h2">Ask in your own words. Approve every change.</h2>
+              <p class="lede" style="margin-top: 20px">
+                The assistant is Claude, through your own cloud: Microsoft Foundry with your Azure API key, or Google
+                Vertex AI with your gcloud login. It sees every cluster in Kube Desk and what you have open, so
+                <em>“why is this pod crashing?”</em> is enough.
+              </p>
+              <ul class="ticks">
+                <li>It starts from a whole-cluster overview, then reads logs, events, changes, Helm releases and incident reports</li>
+                <li>Every step it takes shows in the chat</li>
+                <li>A change it proposes opens the same approval as agents: the diff, what it affects, and its reason</li>
+                <li>Your API key stays in the macOS keychain; chats are saved on your Mac, to go on with later</li>
+              </ul>
+              <p class="providers"><span>Microsoft Foundry</span><span>Google Vertex AI</span></p>
+            </div>
+            <div class="reveal">
+              <div class="mock chat" aria-label="Example conversation with the assistant">
+                <div class="mock__h">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.94 14.06 4 20M14.06 9.94 20 4M12 2v4M12 18v4M2 12h4M18 12h4" /></svg>
+                  Assistant <small>claude-opus-5-5</small>
+                </div>
+                <div class="mock__b">
+                  <div class="chat__q">
+                    Why is ledger-sync crash looping?
+                    <small>production-eu · payments · Pod ledger-sync-644d96db59-pj7lp</small>
+                  </div>
+                  <div class="chat__tools">
+                    <span>✓ Looked at the cluster <code>production-eu</code></span>
+                    <span>✓ Read logs <code>payments/ledger-sync-644d96db59-pj7lp previous</code></span>
+                    <span>✓ Read recent changes <code>payments</code></span>
+                  </div>
+                  <div class="chat__a">
+                    <p><b>It can’t reach its database.</b> Every run since 13:51 ends with <code>dial tcp ledger-db-old.payments:5432: no such host</code>.</p>
+                    <p>At 13:47, Helm upgraded <code>ledger-db</code> and the old service was removed, but <code>LEDGER_DB_URL</code> in deployment <code>payments/ledger-sync</code> still points at it.</p>
+                  </div>
+                  <div class="chat__tools">
+                    <span class="w">◐ Apply <code>deployment/ledger-sync</code> · waiting for your approval</span>
+                  </div>
+                </div>
+                <div class="chat__in">
+                  <span>Ask anything about your clusters…</span>
+                  <i aria-hidden="true">↑</i>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -360,7 +510,7 @@
           <div class="agents">
             <div class="reveal">
               <p class="where">MCP server for Claude Code, Cursor, Codex, Claude Desktop</p>
-              <h2 class="h2">Let agents investigate. You approve every change.</h2>
+              <h2 class="h2">Bring your own agent. You still approve every change.</h2>
               <p class="lede" style="margin-top: 20px">
                 Ask <em>“Why is checkout failing in production-eu?”</em> and the agent reads the incident report and
                 recent changes. When it proposes a fix, Kube Desk shows you the diff and what it affects before
@@ -420,8 +570,8 @@
               <div class="tools">
                 <h3>Read</h3>
                 <ul>
-                  <li>list_clusters</li><li>list_resources</li><li>get_resource</li><li>get_logs</li><li>get_events</li>
-                  <li>get_changes</li><li>incident_report</li><li>search</li><li>compare</li><li>preview_impact</li>
+                  <li>list_clusters</li><li>cluster_overview</li><li>list_resources</li><li>get_resource</li><li>get_logs</li><li>get_events</li>
+                  <li>get_changes</li><li>incident_report</li><li>helm_releases</li><li>search</li><li>compare</li><li>preview_impact</li>
                 </ul>
                 <h3>Propose, then wait for you</h3>
                 <ul>
@@ -605,6 +755,14 @@
               <p>From templates or your own YAML, several documents at once.</p>
             </div>
             <div class="reveal">
+              <h3 class="h3">Buttons follow your access</h3>
+              <p>Kube Desk asks the cluster what your user may do. What RBAC doesn’t allow is disabled, and says why, instead of failing after you click.</p>
+            </div>
+            <div class="reveal">
+              <h3 class="h3">Kubeconfig health</h3>
+              <p>Certificates and tokens that expired or soon will, credential plugins that aren’t installed, removed auth providers, clusters added twice.</p>
+            </div>
+            <div class="reveal">
               <h3 class="h3">Works with your login</h3>
               <p>GKE, EKS, AKS/kubelogin and OIDC plugins work even when the app opens from Finder, because it loads your shell’s <code>PATH</code>.</p>
             </div>
@@ -623,6 +781,7 @@
                 <tr><td><kbd>⌘1</kbd> … <kbd>⌘9</kbd></td><td>Switch to the nth cluster</td></tr>
                 <tr><td><kbd>⌘0</kbd></td><td>All clusters</td></tr>
                 <tr><td><kbd>⇧⌘F</kbd></td><td>Search every cluster</td></tr>
+                <tr><td><kbd>⌘J</kbd></td><td>Open or close the assistant</td></tr>
                 <tr><td><kbd>⌘F</kbd></td><td>Filter the current list, by text or <code>label=value</code></td></tr>
                 <tr><td><kbd>⌘S</kbd></td><td>Apply the YAML you’re editing</td></tr>
                 <tr><td><kbd>Esc</kbd></td><td>Close the details panel</td></tr>
@@ -632,7 +791,8 @@
           <div class="reveal">
             <h2 class="h2">Private by design.</h2>
             <ul class="privacy">
-              <li><b>No telemetry.</b> Kube Desk only talks to the API servers in your kubeconfigs and to the update server.</li>
+              <li><b>No telemetry.</b> Kube Desk only talks to the API servers in your kubeconfigs and to the update server, and, when you use the assistant, to your own Foundry resource or Vertex AI project.</li>
+              <li><b>Chats stay on your Mac.</b> The assistant’s conversations are saved in the app’s own folder, and Secret values never reach it.</li>
               <li><b>Your files stay yours.</b> It never writes to your kubeconfig. Pasted kubeconfigs and tokens are stored with <code>0600</code> permissions in the app’s own folder.</li>
               <li><b>Signed updates.</b> Releases are signed with Ed25519, and the app checks the signature before installing.</li>
               <li><b>Open source.</b> Read every line on GitHub, under the MIT license.</li>
@@ -650,7 +810,7 @@
           <div class="cta">
             <a class="btn btn--primary" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
-              Download Kube Desk 0.4.0
+              Download Kube Desk 0.6.0
             </a>
             <a class="btn btn--ghost" href="download.html">Install guide</a>
           </div>
@@ -675,6 +835,7 @@
               <li><a href="download.html">Download</a></li>
               <li><a href="changelog.html">Changelog</a></li>
               <li><a href="#features">Features</a></li>
+              <li><a href="#assistant">Assistant</a></li>
               <li><a href="#agents">AI agents</a></li>
             </ul>
           </div>

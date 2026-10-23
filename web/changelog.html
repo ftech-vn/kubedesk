@@ -75,19 +75,111 @@
           <nav class="toc" aria-label="Releases">
             <h4>Releases</h4>
             <ul>
+              <li><a href="#v0-6-0">0.6.0 <small>24 Oct 2026</small></a></li>
+              <li><a href="#v0-5-0">0.5.0 <small>23 Oct 2026</small></a></li>
+              <li><a href="#v0-4-1">0.4.1 <small>22 Oct 2026</small></a></li>
               <li><a href="#v0-4-0">0.4.0 <small>22 Oct 2026</small></a></li>
               <li><a href="#v0-3-0">0.3.0 <small>22 Oct 2026</small></a></li>
               <li><a href="#v0-2-0">0.2.0 <small>22 Oct 2026</small></a></li>
               <li><a href="#v0-1-0">0.1.0 <small>21 Oct 2026</small></a></li>
             </ul>
             <p style="margin-top: 22px">
-              <a class="btn btn--primary btn--sm" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">Download 0.4.0</a>
+              <a class="btn btn--primary btn--sm" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">Download 0.6.0</a>
             </p>
           </nav>
 
           <div class="prose">
+            <section class="release" id="v0-6-0" data-palette-section="0.6.0: Helm, resource map, RBAC, kubeconfig health">
+              <div class="release__meta"><span class="v">0.6.0</span><time datetime="2026-10-24">24 October 2026</time><span class="latest">Latest</span></div>
+              <h2 class="h2">Helm releases, a map of every app, and buttons that follow your access</h2>
+              <p class="summary">See what Helm deployed and roll it back, see how an app fits together, and know what your credentials allow before they stop working.</p>
+
+              <h3>Helm releases</h3>
+              <p>
+                A new Helm page lists the releases of a namespace, or of the cluster, with their chart, app version,
+                revision and status. Open one to see its values (the ones given at install, or with the chart’s
+                defaults), what it rendered, its notes, the objects it deployed, and its history.
+              </p>
+              <p>
+                Compare any two revisions, values or manifests, and roll back to one: Kube Desk shows first what the
+                rollback changes and what Helm deletes, and asks you to type the name of a production cluster.
+                Releases are read from the cluster, so reading them needs no helm command; rolling back runs
+                <code>helm rollback</code>, so that Helm records it.
+              </p>
+
+              <h3>A map of how things connect</h3>
+              <p>
+                The Map page draws a namespace as its apps: ingresses, the services they route to, the workloads behind
+                them, their pods, and the config maps, secrets and claims those pods use. Each object shows its state,
+                and an app with a problem is outlined; a service with no pods, or an ingress pointing at a service that
+                does not exist, stands out. Point at an object to light its connections, click it to open it.
+                Workloads, services, ingresses and pods have a Map tab of the part they belong to.
+              </p>
+
+              <h3>Buttons follow your access</h3>
+              <p>
+                Kube Desk asks the cluster what your user may do, as <code>kubectl auth can-i</code> does, and disables
+                what it may not: deleting, scaling, restarting, editing YAML, opening a shell, creating objects. Hover a
+                disabled button to see why.
+              </p>
+
+              <h3>Kubeconfig health</h3>
+              <p>
+                Kube Desk checks every kubeconfig entry, without connecting: client certificates, CA certificates and
+                tokens that expired or soon will, credential plugins that are not installed (with how to install them),
+                the removed <code>gcp</code> and <code>azure</code> auth providers, servers reached over plain HTTP or
+                without checking their certificate, and clusters added twice. Problems show on the clusters page, in
+                each cluster’s settings, and under Kubeconfig health in <kbd>⌘K</kbd>.
+              </p>
+
+              <h3>The assistant</h3>
+              <ul>
+                <li>It can also use Claude in Google Vertex AI, signing in with your gcloud login.</li>
+                <li>Chats are saved: open a past one from the clock in the assistant’s header, and go on with it.</li>
+                <li>It reads Helm releases too, as do MCP agents, through a new <code>helm_releases</code> tool.</li>
+              </ul>
+
+              <h3>Good to know when upgrading</h3>
+              <ul>
+                <li>Rolling back needs the helm command on your login shell’s <code>PATH</code>; reading releases needs only access to their Secrets.</li>
+                <li>The map shows built-in kinds; Gateway API routes and custom resources are not on it yet.</li>
+              </ul>
+            </section>
+
+            <section class="release" id="v0-5-0" data-palette-section="0.5.0: an assistant in the app">
+              <div class="release__meta"><span class="v">0.5.0</span><time datetime="2026-10-23">23 October 2026</time></div>
+              <h2 class="h2">An assistant in the app</h2>
+              <p class="summary">Ask about your clusters in your own words, and approve each change it proposes.</p>
+              <p>
+                Press <kbd>⌘J</kbd>, or Assistant in the title bar, and ask: why a pod fails, what changed in the last
+                hour, how a namespace is doing. The assistant is Claude in Microsoft Foundry, with your Azure resource and
+                API key, which Kube Desk keeps in your macOS keychain.
+              </p>
+              <p>
+                It sees every cluster in Kube Desk, starting from an overview of nodes, namespaces and their pods, and
+                knows what you have open. It reads resources, logs, events, the timeline and incident reports, searches
+                and compares clusters, and shows each step it takes. When it wants to change something, Kube Desk shows
+                the diff, what the change affects and the assistant’s reason, and makes it only if you approve.
+                Production clusters ask you to type their name, and read-only clusters refuse.
+              </p>
+              <ul>
+                <li>A fallback deployment answers requests the main one declines.</li>
+                <li>MCP stays a separate option, for agents outside the app.</li>
+                <li>A <code>cluster_overview</code> tool, for the assistant and MCP agents, summarizes a whole cluster at once.</li>
+              </ul>
+            </section>
+
+            <section class="release" id="v0-4-1" data-palette-section="0.4.1: fixes">
+              <div class="release__meta"><span class="v">0.4.1</span><time datetime="2026-10-22">22 October 2026</time></div>
+              <h2 class="h2">Fixes</h2>
+              <ul>
+                <li>Opening AI agents, or comparing across clusters, no longer leaves the window blank.</li>
+                <li>A dialog that fails now shows its error, with a button to close it, instead of blanking the app.</li>
+              </ul>
+            </section>
+
             <section class="release" id="v0-4-0" data-palette-section="0.4.0: AI agents, search, compare">
-              <div class="release__meta"><span class="v">0.4.0</span><time datetime="2026-10-22">22 October 2026</time><span class="latest">Latest</span></div>
+              <div class="release__meta"><span class="v">0.4.0</span><time datetime="2026-10-22">22 October 2026</time></div>
               <h2 class="h2">AI agents with approval, search and compare across clusters</h2>
               <p class="summary">Let AI agents work with your clusters safely, and see many clusters as one.</p>
 
