@@ -1,8 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { marked } from "marked";
-import DOMPurify from "dompurify";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Brain, ChevronDown, ChevronRight, Clock, Loader2, Plus, Settings2, Sparkles, Square, Trash2, Wrench, X, XCircle, CheckCircle2, ShieldQuestion } from "lucide-react";
-import { Kube } from "../mygo";
+import { Markdown } from "./Markdown";
 import { useAssistant, type Part, type Turn } from "../lib/assistant";
 import { useApp } from "../lib/store";
 import { age } from "../lib/k8s";
@@ -15,29 +13,6 @@ const suggestions = [
   "What changed in the last hour?",
   "Check the object I have open",
 ];
-
-const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
-// Answers are Markdown only: HTML in them shows as text, never as markup.
-// DOMPurify then sanitizes what Markdown produced, as a second guard.
-marked.use({ gfm: true, breaks: true, renderer: { html: ({ text }) => escapeHtml(text) } });
-
-function Markdown({ text }: { text: string }) {
-  const html = useMemo(() => DOMPurify.sanitize(marked.parse(text, { async: false }) as string), [text]);
-  return (
-    <div
-      className="md"
-      dangerouslySetInnerHTML={{ __html: html }}
-      onClick={(e) => {
-        const a = (e.target as HTMLElement).closest("a");
-        if (a?.href) {
-          e.preventDefault();
-          Kube.openURL(a.href).catch(() => {});
-        }
-      }}
-    />
-  );
-}
 
 const toolLabels: Record<string, string> = {
   cluster_overview: "Looked at the cluster",

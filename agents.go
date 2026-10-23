@@ -110,6 +110,7 @@ const defaultAgentPort = 47428
 type Agents struct {
 	kube     *Kube
 	clusters *Clusters
+	runbooks *Runbooks
 	show     func()
 	// notify tells the user about a change waiting, and publish tells the
 	// pages; tests replace them.
@@ -125,7 +126,7 @@ type Agents struct {
 }
 
 func newAgents(k *Kube, c *Clusters, show func()) *Agents {
-	a := &Agents{kube: k, clusters: c, show: show, pending: map[string]*ApprovalRequest{}, sessions: map[string]string{}}
+	a := &Agents{kube: k, clusters: c, runbooks: &Runbooks{clusters: c}, show: show, pending: map[string]*ApprovalRequest{}, sessions: map[string]string{}}
 	a.notify = func(r ApprovalRequest) {
 		show()
 		if r.Client == assistantClient {
@@ -552,6 +553,9 @@ var toolDefs = []toolDef{
 	{"helm_releases", "Helm releases", "Helm releases, read from the cluster: without a name, every release with its chart, revision and status; with a name and namespace, its history, the values the user gave (secrets masked) and the objects it deployed.", toolSchema([]string{"cluster"}, map[string]any{
 		"cluster": pCluster, "namespace": pNamespace, "name": str("Release name, for one release"),
 	}), readOnly},
+	{"get_runbooks", "Runbooks", "The team's runbooks for an object, or for a namespace or a cluster with fewer fields: what to check and what to do when it fails. Read them before proposing a fix, and follow them.", toolSchema([]string{"cluster"}, map[string]any{
+		"cluster": pCluster, "namespace": pNamespace, "kind": str("Kind of the object, such as Deployment"), "name": pName,
+	}), readOnly},
 	{"search", "Search clusters", "Finds objects in every shared cluster at once. Words match names; filters: image:nginx, app=web, kind:pod, ns:shop, node:n1, is:failing, status:CrashLoopBackOff.", toolSchema([]string{"query"}, map[string]any{
 		"query": str("Search words and filters"),
 	}), readOnly},
@@ -764,7 +768,7 @@ func (a *Agents) dispatch(ctx context.Context, client, name string, args toolArg
 
 	write := name == "apply_manifest" || name == "delete_resource" || name == "scale" || name == "restart"
 	if !write {
-		if _, ok := map[string]bool{"cluster_overview": true, "list_resources": true, "get_resource": true, "get_logs": true, "get_events": true, "get_changes": true, "incident_report": true, "preview_impact": true, "helm_releases": true}[name]; !ok {
+		if _, ok := map[string]bool{"cluster_overview": true, "list_resources": true, "get_resource": true, "get_logs": true, "get_events": true, "get_changes": true, "incident_report": true, "preview_impact": true, "helm_releases": true, "get_runbooks": true}[name]; !ok {
 			return "", "", fmt.Errorf("%w: %s", errUnknownTool, name)
 		}
 	}
@@ -784,6 +788,22 @@ func (a *Agents) dispatch(ctx context.Context, client, name string, args toolArg
 		return jsonText(ov), "", nil
 	case "list_resources":
 		return a.listResources(ctx, args)
+	case "get_runbooks":
+		list, err := a.runbooks.For(args.Cluster, args.Namespace, canonicalKind(args.Kind), args.Name)
+		if err != nil {
+			return "", "", err
+		}
+		if len(list) == 0 {
+			return "No runbook covers this. The user can write one in Kube Desk, under Runbooks.", "", nil
+		}
+		var b strings.Builder
+		for _, rb := range list {
+			fmt.Fprintf(&b, "# Runbook: %s (%s)\n\n%s\n\n", rb.Title, rb.ID, strings.TrimSpace(rb.Body))
+			if b.Len() > 40_000 {
+				break
+			}
+		}
+		return b.String(), "", nil
 	case "helm_releases":
 		cn, err := a.clusters.conn(args.Cluster)
 		if err != nil {
@@ -824,7 +844,7 @@ func (a *Agents) dispatch(ctx context.Context, client, name string, args toolArg
 			return "", "", err
 		}
 		t := int64(tail)
-		stream, err := cn.cs.CoreV1().Pods(args.Namespace).GetLogs(args.Pod, &corev1.PodLogOptions{Container: args.Container, TailLines: &t, Previous: args.Previous, Timestamps: true}).Stream(ctx)
+		stream, err := openLogs(ctx, cn.cs, args.Namespace, args.Pod, &corev1.PodLogOptions{Container: args.Container, TailLines: &t, Previous: args.Previous, Timestamps: true})
 		if err != nil {
 			return "", "", errors.New(friendlyError(err))
 		}

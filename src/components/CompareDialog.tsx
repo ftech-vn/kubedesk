@@ -79,6 +79,11 @@ export function CompareDialog({ gvr, kind, namespace, name, onClose }: { gvr: GV
                     YAML diff
                   </button>
                 )}
+                {c.found && all.length > 1 && (
+                  <button className="link small" title={`Copy it from ${c.clusterName} to another cluster`} onClick={() => useApp.getState().openDialog({ kind: "promote", from: c.cluster, gvr, object: kind, namespace, name })}>
+                    Promote
+                  </button>
+                )}
               </div>
             ))}
             {rows.length === 0 && (

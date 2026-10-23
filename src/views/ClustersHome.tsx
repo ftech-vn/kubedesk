@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Eye, HeartPulse, MoreHorizontal, Plus, RefreshCw, Search } from "lucide-react";
+import { AlertTriangle, Camera, Eye, HeartPulse, MoreHorizontal, Plus, RefreshCw, Search } from "lucide-react";
 import { AppInfo, Clusters, type About, type Cluster } from "../mygo";
 import { sourceLabel } from "../lib/clusterLook";
 import { run, useApp } from "../lib/store";
@@ -7,6 +7,7 @@ import { Badge, Button, Empty, IconButton, Kbd, mod } from "../components/ui";
 import { ClusterTile, clusterMenu } from "../components/ClusterRail";
 import { ContextMenu } from "../components/Menu";
 import { IssueIcon, issuesOf, useHealth } from "../components/HealthDialog";
+import { openSnapshots } from "../components/SnapshotDialog";
 
 export function ClustersHome() {
   const { clusters, status, sourceErrors, activate, openDialog, checkStatus, refresh } = useApp();
@@ -38,6 +39,9 @@ export function ClustersHome() {
           </div>
           <Button icon={<RefreshCw size={14} />} onClick={() => clusters.forEach((c) => !c.hidden && checkStatus(c.id))}>
             Check all
+          </Button>
+          <Button icon={<Camera size={14} />} onClick={openSnapshots} title="Open a .kubedesk snapshot of a namespace">
+            Open snapshot
           </Button>
           <Button variant="primary" icon={<Plus size={14} />} onClick={() => openDialog({ kind: "add" })}>
             Add cluster
@@ -121,7 +125,7 @@ export function ClustersHome() {
                     <Badge tone="muted">Not checked</Badge>
                   )}
                   {c.production && <span className="env-pill prod">PRODUCTION</span>}
-                  {c.readOnly && <span className="env-pill ro">READ-ONLY</span>}
+                  {c.sourceKind === "snapshot" ? <span className="env-pill ro">SNAPSHOT</span> : c.readOnly && <span className="env-pill ro">READ-ONLY</span>}
                   <Badge tone="muted">{sourceLabel(c)}</Badge>
                   {c.current && <Badge tone="info">current context</Badge>}
                   {c.name !== c.context && <span className="faint small mono" title="Context">{c.context}</span>}

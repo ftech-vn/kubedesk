@@ -81,6 +81,10 @@ const timelineDays = 7
 // Timeline keeps the changes of watched namespaces on disk, a JSON Lines
 // file per cluster and day.
 type Timeline struct {
+	// external serves the changes of clusters the timeline does not
+	// record, such as snapshots.
+	external func(cluster string, q TimelineQuery) ([]Change, bool, error)
+
 	mu   sync.Mutex
 	dir  string
 	seq  int64
@@ -180,6 +184,11 @@ func (t *Timeline) add(changes ...Change) {
 
 // Query returns changes, newest first.
 func (t *Timeline) Query(q TimelineQuery) ([]Change, error) {
+	if t.external != nil {
+		if list, ok, err := t.external(q.Cluster, q); ok {
+			return list, err
+		}
+	}
 	since := time.Now().Add(-24 * time.Hour)
 	if q.Since != "" {
 		s, err := time.Parse(time.RFC3339, q.Since)

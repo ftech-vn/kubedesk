@@ -37,5 +37,7 @@ export function sourceLabel(c: Cluster): string {
       return c.source.split(/[\\/]/).pop() ?? c.source;
     case "stored":
       return "added in app";
+    case "snapshot":
+      return "snapshot";
   }
 }

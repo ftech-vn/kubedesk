@@ -1,4 +1,4 @@
-import { FileText, GitCompareArrows, CirclePause, CirclePlay, FileCode2, Maximize2, Play, RotateCw, ScrollText, ShieldOff, ShieldCheck, SquareTerminal, Trash2, Wind } from "lucide-react";
+import { BookOpen, FileText, GitCompareArrows, Rocket, CirclePause, CirclePlay, FileCode2, Maximize2, Play, RotateCw, ScrollText, ShieldOff, ShieldCheck, SquareTerminal, Trash2, Wind } from "lucide-react";
 import type { GVR } from "../mygo";
 import type { MenuItem } from "../components/Menu";
 import { cordon, deleteObjects, drain, openPodTab, restart, scale, suspendCronJob, triggerCronJob } from "./actions";
@@ -9,6 +9,7 @@ import { canDo, noAccess } from "./access";
 const scalable = new Set(["Deployment", "StatefulSet", "ReplicaSet"]);
 const restartable = new Set(["Deployment", "StatefulSet", "DaemonSet"]);
 const comparable = new Set(["Deployment", "StatefulSet", "DaemonSet", "Service", "ConfigMap", "Secret", "Ingress", "CronJob", "HorizontalPodAutoscaler"]);
+const promotable = new Set(["Deployment", "StatefulSet", "DaemonSet", "Service", "ConfigMap", "Secret", "Ingress", "CronJob", "Job", "HorizontalPodAutoscaler", "PersistentVolumeClaim", "PodDisruptionBudget", "NetworkPolicy", "ServiceAccount", "Role", "RoleBinding"]);
 const reportable = new Set(["Pod", "Deployment", "StatefulSet", "DaemonSet", "ReplicaSet", "Job"]);
 
 /** objectActions are what can be done to an object, for menus and toolbars. */
@@ -37,6 +38,22 @@ export function objectActions(cluster: string, gvr: GVR, kind: string, o: KObj, 
       label: "Compare across clusters",
       icon: <GitCompareArrows size={s} />,
       run: () => useApp.getState().openDialog({ kind: "compare", gvr, object: kind, namespace: o.metadata.namespace ?? "", name: o.metadata.name }),
+    });
+  }
+  const others = useApp.getState().clusters.filter((c) => !c.hidden && c.id !== cluster && c.sourceKind !== "snapshot");
+  if (promotable.has(kind) && others.length > 0) {
+    items.push({
+      label: "Promote to another cluster…",
+      icon: <Rocket size={s} />,
+      run: () => useApp.getState().openDialog({ kind: "promote", from: cluster, gvr, object: kind, namespace: o.metadata.namespace ?? "", name: o.metadata.name }),
+    });
+  }
+  if (kind !== "Event") {
+    const context = useApp.getState().clusters.find((c) => c.id === cluster)?.context ?? "";
+    items.push({
+      label: "Write a runbook…",
+      icon: <BookOpen size={s} />,
+      run: () => useApp.getState().openDialog({ kind: "runbook", target: { cluster: context, namespace: o.metadata.namespace ?? "", kind, name: o.metadata.name } }),
     });
   }
   if (ro) {

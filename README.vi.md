@@ -64,6 +64,12 @@ và [Lens](https://k8slens.dev), rồi lấy việc chuyển cluster làm trọn
 - **Resource map**: sơ đồ Ingress → Service → workload → Pod → ConfigMap/
   Secret/PVC của từng app, tô màu theo trạng thái, chỉ ra Service không có
   pod hay Ingress trỏ vào Service không tồn tại.
+- **Promote**: chép object (kèm ConfigMap/Secret nếu muốn) sang cluster
+  khác, đổi namespace và image, xem diff ở cluster đích trước khi apply.
+- **Ảnh chụp namespace** (file `.kubedesk`): người khác mở bằng Kube Desk như
+  một cluster chỉ đọc, không cần quyền vào cluster; không chứa giá trị Secret.
+- **Runbook**: ghi chú Markdown kèm nút thao tác, gắn vào object/namespace/
+  cluster, lưu trong thư mục git của đội; assistant làm theo runbook.
 - **Nút theo quyền RBAC**: thao tác bạn không có quyền sẽ bị khoá, kèm lý do.
 - **Kiểm tra kubeconfig**: certificate/token hết hạn hoặc sắp hết hạn, thiếu
   credential plugin, auth provider đã bị bỏ, cluster bị thêm hai lần.

@@ -9,6 +9,7 @@ biết.
 
 | Bản | Ngày | Điểm chính | Tải về (delta) |
 |---|---|---|---|
+| [0.7.0](#070--24102026) | 24/10/2026 | Promote giữa các cluster, ảnh chụp namespace (file .kubedesk), runbook gắn vào resource, Gateway API trên Map | xem trang Releases |
 | [0.6.0](#060--24102026) | 24/10/2026 | Helm releases, Resource map, nút theo quyền RBAC, kiểm tra kubeconfig, assistant dùng được Vertex AI và lưu lịch sử chat | xem trang Releases |
 | [0.5.0](#050--23102026) | 23/10/2026 | AI assistant chat ngay trong app (Claude trên Microsoft Foundry), đề xuất thay đổi phải được duyệt | xem trang Releases |
 | [0.4.1](#041--22102026) | 22/10/2026 | Sửa lỗi màn hình trắng khi mở AI agents hoặc so sánh giữa các cluster | xem trang Releases |
@@ -21,6 +22,64 @@ Tải bản mới nhất:
 <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg>
 (macOS 12 trở lên, Apple silicon). App đã cài sẽ tự cập nhật. Thường app chỉ
 tải phần thay đổi (delta), như ở cột cuối bảng trên.
+
+---
+
+## 0.7.0 · 24/10/2026
+
+### Tính năng mới
+
+**Promote: chép object sang cluster khác**
+- Mở từ "Promote to another cluster…" trong menu của Deployment,
+  StatefulSet, DaemonSet, Service, ConfigMap, Secret, Ingress, CronJob, Job,
+  HPA, PVC…, hoặc từ nút **Promote** trong màn so sánh giữa các cluster.
+- Trước khi chép:
+  - chọn cluster đích và namespace đích, đổi image từng container;
+  - chọn mang theo ConfigMap mà pod dùng, và Secret nếu muốn. Secret mặc
+    định **không** chép, vì mỗi cluster thường có credential riêng.
+- App tự bỏ những gì cluster tự điền: `status`, `uid`, `resourceVersion`,
+  owner, `clusterIP`, `nodePort`, label `pod-template-hash`…
+- Hiện diff từng object ở cluster đích, báo những gì cluster đích còn thiếu
+  (ví dụ Secret mà pod cần), và tự tạo namespace nếu chưa có.
+- Cluster production bắt gõ tên, cluster read-only từ chối. Timeline ghi
+  người thực hiện là `kubedesk-promote`.
+
+**Ảnh chụp namespace (file `.kubedesk`)**
+- Nút **Snapshot** ở trang Overview, hoặc "Take a snapshot…" trong ⌘K.
+- File chứa: mọi object của namespace, events, các node mà pod đang chạy,
+  300 dòng log cuối của từng container và của lần chạy trước khi restart,
+  và timeline (nếu namespace đang được theo dõi).
+- **Không bao giờ chứa giá trị Secret** (chỉ có mã fingerprint), token và
+  mật khẩu trong log đều bị che.
+- Người nhận mở file từ Finder (bấm đúp), hoặc bằng nút **Open snapshot** ở
+  trang Clusters. Snapshot hiện như một cluster chỉ đọc, xem được danh sách,
+  chi tiết, log, Map, báo cáo sự cố, và hỏi được assistant; không cần quyền
+  vào cluster thật.
+
+**Runbook gắn vào resource**
+- Ghi chú Markdown "khi lỗi thì kiểm tra gì, làm gì", gắn vào một object,
+  một namespace hoặc một cluster; dùng được wildcard `*`.
+- Link dạng `[Restart](kubedesk:restart)` thành nút bấm cho các thao tác
+  của app: logs, restart, scale, báo cáo sự cố, events, history, map, mở
+  object khác, xoá pod kẹt, hỏi assistant. Bấm vẫn qua bước xác nhận như
+  bình thường.
+- Runbook hiện trong tab **Runbook** của object, trên trang Overview của
+  namespace, và trong trang **Runbooks** ở sidebar. Viết nhanh từ "Write a
+  runbook…" trong menu của object.
+- Lưu thành file Markdown trong thư mục bạn chọn. Chọn thư mục nằm trong một
+  repo git để cả đội dùng chung.
+- Assistant và agent qua MCP đọc runbook bằng tool mới `get_runbooks`, và
+  làm theo runbook trước khi đề xuất cách sửa.
+
+**Map**
+- Thêm Gateway API: Gateway → HTTPRoute → Service, ở những cluster có cài.
+
+### Giới hạn đã biết
+- Promote ghi đè object ở cluster đích bằng bản từ cluster nguồn (giống
+  `kubectl replace`). Field mà người khác thêm ở cluster đích sẽ mất; diff
+  cho thấy trước những gì đổi.
+- Snapshot chỉ chụp một namespace; các object cluster-scoped (trừ node của
+  pod và chính namespace) không có trong file.
 
 ---
 

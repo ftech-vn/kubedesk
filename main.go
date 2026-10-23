@@ -48,10 +48,12 @@ func main() {
 	timeline := newTimeline()
 	alerts := newAlerts(clusters, timeline, showMainWindow)
 	kube := &Kube{clusters: clusters, timeline: timeline}
+	timeline.external = clusters.snapshotChanges
 	agents := newAgents(kube, clusters, showMainWindow)
 	mygo.Bind(clusters)
 	mygo.Bind(kube)
 	mygo.Bind(&Helm{kube: kube})
+	mygo.Bind(&Runbooks{clusters: clusters})
 	mygo.Bind(alerts)
 	mygo.Bind(agents)
 	mygo.Bind(newAssistant(agents, clusters))
@@ -69,10 +71,34 @@ func main() {
 		}
 	})
 
+	// Snapshots opened from the Finder, also the one the app starts with,
+	// wait for the app's folders.
+	var openMu sync.Mutex
+	var ready bool
+	var opened []string
+	mygo.App.OnOpenFile(func(path string) {
+		openMu.Lock()
+		defer openMu.Unlock()
+		if !ready {
+			opened = append(opened, path)
+			return
+		}
+		go func() {
+			clusters.openSnapshotFile(path)
+			showMainWindow()
+		}()
+	})
+
 	mygo.App.WhenReady(func() {
 		if err := clusters.init(); err != nil {
 			log.Printf("clusters: %v", err)
 		}
+		openMu.Lock()
+		ready = true
+		for _, p := range opened {
+			clusters.openSnapshotFile(p)
+		}
+		openMu.Unlock()
 		timeline.init(clusters.dir)
 		// Read the login shell's PATH early: credential plugins need it.
 		go loadShellEnv()

@@ -33,7 +33,7 @@
         "name": "Kube Desk",
         "operatingSystem": "macOS 12 or later",
         "applicationCategory": "DeveloperApplication",
-        "softwareVersion": "0.6.0",
+        "softwareVersion": "0.7.0",
         "license": "https://opensource.org/licenses/MIT",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "downloadUrl": "https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg"
@@ -85,7 +85,7 @@
       <section class="hero" id="top">
         <div class="wrap hero__copy hero-in">
           <a class="release-line" href="changelog.html">
-            <b>0.6.0</b> Helm releases, a map of every app, and the assistant on Azure or Google Cloud
+            <b>0.7.0</b> Promote between clusters, namespace snapshots, and runbooks
           </a>
           <h1 class="display">Every cluster, <span class="soft">one keystroke</span> away.</h1>
           <div class="hero__aside">
@@ -157,7 +157,7 @@
                 <div class="point__mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.67 19a2 2 0 0 0 1.42-.59l6.15-6.17a6 6 0 0 0-8.49-8.49L5.59 9.91A2 2 0 0 0 5 11.33V18a1 1 0 0 0 1 1z" /><path d="M16 8 2 22" /><path d="M17.5 15H9" /></svg></div>
                 <h3 class="h3">Small and light</h3>
                 <p>
-                  One Go binary, a 19 MB download. It uses the system’s WebView instead of bundling Chromium, and starts
+                  One Go binary, a 14 MB download. It uses the system’s WebView instead of bundling Chromium, and starts
                   like a native app.
                 </p>
               </div>
@@ -174,9 +174,9 @@
             <aside class="spec reveal" aria-label="Specifications">
               <h3>At a glance</h3>
               <dl>
-                <dt>Version</dt><dd>0.6.0</dd>
+                <dt>Version</dt><dd>0.7.0</dd>
                 <dt>Platform</dt><dd>macOS 12+, arm64</dd>
-                <dt>Size</dt><dd>19 MB download, one binary</dd>
+                <dt>Size</dt><dd>14 MB download, one binary</dd>
                 <dt>Renderer</dt><dd>system WebView</dd>
                 <dt>Auth</dt><dd>GKE, EKS, AKS, OIDC</dd>
                 <dt>AI</dt><dd>Claude, on Azure or Google Cloud</dd>
@@ -571,7 +571,7 @@
                 <h3>Read</h3>
                 <ul>
                   <li>list_clusters</li><li>cluster_overview</li><li>list_resources</li><li>get_resource</li><li>get_logs</li><li>get_events</li>
-                  <li>get_changes</li><li>incident_report</li><li>helm_releases</li><li>search</li><li>compare</li><li>preview_impact</li>
+                  <li>get_changes</li><li>incident_report</li><li>helm_releases</li><li>get_runbooks</li><li>search</li><li>compare</li><li>preview_impact</li>
                 </ul>
                 <h3>Propose, then wait for you</h3>
                 <ul>
@@ -681,6 +681,74 @@
                 What differs is highlighted, with a YAML diff between any two clusters. Secrets are compared by
                 fingerprint only.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ promote, snapshots, runbooks ============ -->
+      <section class="section" id="share" data-palette-section="Promote, snapshots and runbooks">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <h2 class="h2">Move it, share it, write it down.</h2>
+            <p class="lede">
+              Copy what works in staging to production with a diff first, hand a namespace to someone who has no access
+              to your cluster, and keep what your team knows next to the objects it is about.
+            </p>
+          </div>
+          <div class="trio">
+            <div class="reveal">
+              <p class="where">Promote to another cluster</p>
+              <div class="mock" aria-label="Example: promoting a deployment from staging to production-eu">
+                <div class="mock__h">
+                  <span class="chip-c" style="--cc: var(--c-st)">staging</span> → <span class="chip-c" style="--cc: var(--c-pe)">production-eu</span>
+                  <small>deployment/checkout</small>
+                </div>
+                <div class="mock__b">
+                  <p class="promo-row"><span>image</span><code>checkout:2.5.0</code></p>
+                  <p class="promo-row"><span>brings</span><code>configmap/checkout-config</code></p>
+                  <p class="promo-note">production-eu lacks a secret the pods need: <code>checkout-db</code></p>
+                  <div class="diff">
+                    <div class="ctx">       - name: checkout</div>
+                    <div class="del">-        image: checkout:2.4.1</div>
+                    <div class="add">+        image: checkout:2.5.0</div>
+                    <div class="ctx">   replicas: 2</div>
+                  </div>
+                </div>
+              </div>
+              <p class="trio__p">Status, identifiers, owners and the addresses a cluster gives are left out, so the target makes its own. Secrets stay behind unless you bring them.</p>
+            </div>
+            <div class="reveal">
+              <p class="where">Snapshot of a namespace</p>
+              <div class="mock snapfile" aria-label="Example snapshot file">
+                <div class="snapfile__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg>
+                </div>
+                <b>production-eu-payments.kubedesk</b>
+                <span>1.2 MB · taken 14:07</span>
+                <ul>
+                  <li>214 objects, with events</li>
+                  <li>logs of 12 containers, and their previous runs</li>
+                  <li>the last 7 days of changes</li>
+                  <li>Secret values left out, tokens masked</li>
+                </ul>
+              </div>
+              <p class="trio__p">Your vendor or another team opens it in Kube Desk and browses it as a read-only cluster: lists, details, logs, map, incident reports, even the assistant. No access to your cluster needed.</p>
+            </div>
+            <div class="reveal">
+              <p class="where">Runbooks, next to what they are for</p>
+              <div class="mock runbook-mock" aria-label="Example runbook">
+                <div class="mock__h">When ledger-sync crash loops <small>payments · ledger-*</small></div>
+                <div class="mock__b">
+                  <ol>
+                    <li>Read the logs of the previous run <span class="act">Logs</span></li>
+                    <li>Check what changed in the last hour <span class="act">History</span></li>
+                    <li>If <code>LEDGER_DB_URL</code> points at the old host, fix it and <span class="act">Restart</span></li>
+                    <li>Still failing? <span class="act">Incident report</span> to #payments</li>
+                  </ol>
+                </div>
+              </div>
+              <p class="trio__p">Markdown files in a folder you choose, such as a git repository. Action links become buttons, which confirm as usual. The assistant reads them before it proposes a fix.</p>
             </div>
           </div>
         </div>
@@ -810,7 +878,7 @@
           <div class="cta">
             <a class="btn btn--primary" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
-              Download Kube Desk 0.6.0
+              Download Kube Desk 0.7.0
             </a>
             <a class="btn btn--ghost" href="download.html">Install guide</a>
           </div>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { diffLines, hunks } from "../lib/diff";
+import type { ObjectDiff } from "../mygo";
 
 /** DiffView shows the changes between two YAML texts, as a unified diff. */
 export function DiffView({ before, after }: { before: string; after: string }) {
@@ -38,5 +39,25 @@ export function DiffView({ before, after }: { before: string; after: string }) {
         )}
       </pre>
     </div>
+  );
+}
+
+/** ObjectDiffs shows what applying a document does to each of its objects. */
+export function ObjectDiffs({ diffs }: { diffs: ObjectDiff[] }) {
+  return (
+    <>
+      {diffs.map((d, i) => (
+        <div key={i} className="approval-diff">
+          <div className="approval-diff-head">
+            <span className={`badge tone-${d.action === "create" ? "ok" : d.action === "unchanged" ? "muted" : "info"}`}>{d.action}</span>
+            <span className="mono small">
+              {d.kind} {d.namespace ? `${d.namespace}/` : ""}
+              {d.name}
+            </span>
+          </div>
+          {d.action !== "unchanged" && <DiffView before={d.before} after={d.after} />}
+        </div>
+      ))}
+    </>
   );
 }

@@ -35,7 +35,7 @@ export function TitleBar() {
             {cluster.readOnly && <span className="env-pill ro" title="Kube Desk refuses changes to this cluster">READ-ONLY</span>}
             <span className="crumb-sep">/</span>
             <NamespacePicker cluster={cluster.id} />
-            <WatchToggle cluster={cluster.id} />
+            {cluster.sourceKind !== "snapshot" && <WatchToggle cluster={cluster.id} />}
           </>
         )}
       </div>

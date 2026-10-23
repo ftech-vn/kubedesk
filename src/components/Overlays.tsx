@@ -1,4 +1,7 @@
 import { HealthDialog } from "./HealthDialog";
+import { SnapshotDialog } from "./SnapshotDialog";
+import { PromoteDialog } from "./PromoteDialog";
+import { RunbookEditor } from "./Runbooks";
 import { useEffect, useState } from "react";
 import { CheckCircle2, Info, OctagonAlert, ShieldAlert, TriangleAlert, X, XCircle } from "lucide-react";
 import { Kube, type ImpactItem, type Report } from "../mygo";
@@ -34,6 +37,12 @@ export function Dialogs() {
       return <AssistantSettingsDialog onClose={close} />;
     case "health":
       return <HealthDialog onClose={close} />;
+    case "snapshot":
+      return <SnapshotDialog cluster={dialog.cluster} namespace={dialog.namespace} onClose={close} />;
+    case "promote":
+      return <PromoteDialog from={dialog.from} gvr={dialog.gvr} kind={dialog.object} namespace={dialog.namespace} name={dialog.name} onClose={close} />;
+    case "runbook":
+      return <RunbookEditor id={dialog.id} target={dialog.target} onClose={close} />;
     case "search":
       return <SearchDialog initial={dialog.query} onClose={close} />;
     case "compare":

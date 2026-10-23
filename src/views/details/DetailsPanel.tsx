@@ -17,6 +17,8 @@ import { ObjectHistory } from "../ChangesView";
 import { copy } from "./parts";
 import { canDo, noAccess, useAccessUpdates } from "../../lib/access";
 import { ResourceMapView, mapKinds } from "../ResourceMap";
+import { useRunbooksFor } from "../../lib/runbooks";
+import { RunbooksFor } from "../../components/Runbooks";
 
 const WIDTH_KEY = "details-width";
 
@@ -77,6 +79,7 @@ function DetailsContent({ cluster, detail, depth, watchNamespace }: { cluster: s
   const [tabId, container] = (detail.tab ?? "overview").split(":") as [string, string | undefined];
   useAccessUpdates();
   const mayExec = canDo(cluster, "create", detail.gvr, detail.namespace, "exec");
+  const runbooks = useRunbooksFor(cluster, detail.namespace, detail.kind, detail.name);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -97,6 +100,7 @@ function DetailsContent({ cluster, detail, depth, watchNamespace }: { cluster: s
     ...(detail.kind !== "Event" ? [{ id: "events", label: "Events" }] : []),
     ...(detail.kind !== "Event" ? [{ id: "history", label: "History" }] : []),
     ...(mapKinds.has(detail.kind) ? [{ id: "map", label: "Map" }] : []),
+    ...(runbooks.length ? [{ id: "runbooks", label: `Runbook${runbooks.length > 1 ? `s (${runbooks.length})` : ""}` }] : []),
   ];
 
   return (
@@ -160,6 +164,8 @@ function DetailsContent({ cluster, detail, depth, watchNamespace }: { cluster: s
           <LogsView cluster={cluster} pod={obj} initialContainer={container} />
         ) : tabId === "logs" && workloadLogSource(detail.kind, obj) ? (
           <LogsView cluster={cluster} source={workloadLogSource(detail.kind, obj)!} />
+        ) : tabId === "runbooks" && runbooks.length ? (
+          <RunbooksFor list={runbooks} ctx={{ cluster, namespace: detail.namespace, kind: detail.kind, name: detail.name }} />
         ) : tabId === "map" && mapKinds.has(detail.kind) ? (
           <ResourceMapView cluster={cluster} namespace={detail.namespace} focus={{ kind: detail.kind, namespace: detail.namespace, name: detail.name }} />
         ) : tabId === "terminal" && isPod && !ro ? (

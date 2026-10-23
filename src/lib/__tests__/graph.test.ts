@@ -65,6 +65,21 @@ describe("buildMap", () => {
     expect(g!.nodes.filter((n) => n.kind === "Pod").length).toBe(1);
   });
 
+  test("follows Gateway API routes", () => {
+    const gw = obj("Gateway", "public", { spec: { gatewayClassName: "eg", listeners: [{ protocol: "HTTPS", port: 443 }] }, status: { conditions: [{ type: "Programmed", status: "True" }] } });
+    const route = obj("HTTPRoute", "shop", { spec: { parentRefs: [{ name: "public" }], hostnames: ["shop.example"], rules: [{ backendRefs: [{ name: "web", port: 80 }, { name: "nope", port: 80 }] }] } });
+    const groups = buildMap({ Gateway: [gw], HTTPRoute: [route], Service: [svc], Deployment: [web], ReplicaSet: [rs], Pod: pods });
+    const g = groups.find((x) => x.nodes.some((n) => n.kind === "Gateway"))!;
+    expect(g.edges).toContainEqual({ from: nodeId("Gateway", "shop", "public"), to: nodeId("HTTPRoute", "shop", "shop") });
+    expect(g.edges).toContainEqual({ from: nodeId("HTTPRoute", "shop", "shop"), to: nodeId("Service", "shop", "web") });
+    expect(g.nodes.find((n) => n.name === "nope")!.missing).toBe(true);
+    expect(g.nodes.find((n) => n.kind === "HTTPRoute")!.tone).toBe("bad");
+    const l = layoutGroup(g);
+    const x = (kind: string) => l.placed.find((p) => p.node.kind === kind)!.x;
+    expect(x("Gateway")).toBeLessThan(x("HTTPRoute"));
+    expect(x("HTTPRoute")).toBeLessThan(x("Service"));
+  });
+
   test("lays out columns without overlaps", () => {
     const [g] = buildMap({ Deployment: [web], ReplicaSet: [rs], Pod: pods, Service: [svc], Ingress: [ing], ConfigMap: [cm] });
     const l = layoutGroup(g!);

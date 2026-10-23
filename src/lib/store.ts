@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Clusters, type Cluster, type ClusterStatus, type GVR, type ImpactItem, type ObjectDiff, type SourceError, type Theme } from "../mygo";
+import { Clusters, type Cluster, type ClusterStatus, type GVR, type ImpactItem, type ObjectDiff, type RunbookTarget, type SourceError, type Theme } from "../mygo";
 import { errorMessage } from "./k8s";
 
 /** DetailRef points at an object shown in the details panel. */
@@ -37,6 +37,9 @@ interface AppStore {
     | { kind: "agents" }
     | { kind: "assistant-settings" }
     | { kind: "health"; cluster?: string }
+    | { kind: "snapshot"; cluster: string; namespace: string }
+    | { kind: "promote"; from: string; gvr: GVR; object: string; namespace: string; name: string }
+    | { kind: "runbook"; id?: string; target?: RunbookTarget }
     | { kind: "search"; query?: string }
     | { kind: "compare"; gvr: GVR; object: string; namespace: string; name: string };
 

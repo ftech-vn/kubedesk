@@ -55,7 +55,7 @@ func (k *Kube) Logs(ctx context.Context, cluster, namespace, pod string, opts Lo
 		t := int64(opts.TailLines)
 		po.TailLines = &t
 	}
-	stream, err := cn.cs.CoreV1().Pods(namespace).GetLogs(pod, po).Stream(ctx)
+	stream, err := openLogs(ctx, cn.cs, namespace, pod, po)
 	if err != nil {
 		return errors.New(friendlyError(err))
 	}
@@ -267,6 +267,9 @@ func (k *Kube) StartPortForward(cluster, namespace, pod string, remotePort, loca
 	cn, err := k.clusters.conn(cluster)
 	if err != nil {
 		return PortForward{}, err
+	}
+	if cn.snapshot != nil {
+		return PortForward{}, errSnapshot
 	}
 	if localPort == 0 {
 		l, err := net.Listen("tcp", "127.0.0.1:0")
@@ -559,7 +562,7 @@ func firstContainer(p *corev1.Pod, container string) string {
 // streamPodLogs sends the lines of a container, split from their
 // timestamps, until they end or ctx is done.
 func streamPodLogs(ctx context.Context, cn *conn, namespace, pod, container string, po *corev1.PodLogOptions, out chan<- LogLine) {
-	stream, err := cn.cs.CoreV1().Pods(namespace).GetLogs(pod, po).Stream(ctx)
+	stream, err := openLogs(ctx, cn.cs, namespace, pod, po)
 	if err != nil {
 		if ctx.Err() == nil {
 			select {

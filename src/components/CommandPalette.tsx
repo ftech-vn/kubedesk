@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Bell, Bot, Box, Sparkles, Download, History, Globe, Gauge, HeartPulse, Home, Layers, LayoutGrid, Monitor, Moon, Network, Package, Plus, Search, Settings2, Sun, Waypoints } from "lucide-react";
+import { Bell, BookOpen, Bot, Box, Camera, Sparkles, Download, History, Globe, Gauge, HeartPulse, Home, Layers, LayoutGrid, Monitor, Moon, Network, Package, Plus, Search, Settings2, Sun, Waypoints } from "lucide-react";
 import { AppInfo } from "../mygo";
 import { isWatched, toggleWatch, useAlerts } from "../lib/alerts";
 import { useAssistant } from "../lib/assistant";
@@ -7,6 +7,7 @@ import { byKey, resources } from "../lib/resources";
 import { useApp } from "../lib/store";
 import { useWatch } from "../lib/watch";
 import { ClusterTile } from "./ClusterRail";
+import { openSnapshots } from "./SnapshotDialog";
 import { Kbd, mod } from "./ui";
 
 interface Item {
@@ -65,6 +66,7 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
     );
     out.push({ id: "home", group: "Clusters", label: "All clusters", icon: <Home size={16} />, run: () => s.activate(null) });
     out.push({ id: "add", group: "Clusters", label: "Add a cluster…", icon: <Plus size={16} />, run: () => s.openDialog({ kind: "add" }) });
+    out.push({ id: "snapshot-open", group: "Clusters", label: "Open a namespace snapshot…", keywords: "kubedesk file import share offline", icon: <Camera size={16} />, run: () => void openSnapshots() });
     out.push({ id: "health", group: "Clusters", label: "Kubeconfig health…", keywords: "certificate expire token plugin duplicate", icon: <HeartPulse size={16} />, run: () => s.openDialog({ kind: "health" }) });
     out.push({ id: "assistant", group: "App", label: "Ask the assistant…", hint: "⌘J", keywords: "ai chat claude help explain", icon: <Sparkles size={16} />, run: () => useAssistant.getState().toggle(true) });
     out.push({ id: "assistant-settings", group: "App", label: "Assistant settings…", keywords: "ai claude foundry azure vertex google gcloud api key", icon: <Sparkles size={16} />, run: () => s.openDialog({ kind: "assistant-settings" }) });
@@ -86,6 +88,10 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
       out.push({ id: "sec:overview", group: "Go to", label: "Overview", icon: <Gauge size={16} />, run: () => s.setSection("overview") });
       out.push({ id: "sec:changes", group: "Go to", label: "Changes", keywords: "timeline history what changed diff", icon: <History size={16} />, run: () => s.setSection("changes") });
       out.push({ id: "sec:map", group: "Go to", label: "Map", keywords: "resource map graph topology relations", icon: <Network size={16} />, run: () => s.setSection("map") });
+      out.push({ id: "sec:runbooks", group: "Go to", label: "Runbooks", keywords: "runbook playbook notes procedure", icon: <BookOpen size={16} />, run: () => s.setSection("runbooks") });
+      out.push({ id: "runbook-new", group: "App", label: "Write a runbook…", keywords: "runbook playbook notes", icon: <BookOpen size={16} />, run: () => s.openDialog({ kind: "runbook", target: { namespace: ns || undefined } }) });
+      if (s.clusters.find((c) => c.id === active)?.sourceKind !== "snapshot")
+        out.push({ id: "snapshot-take", group: "App", label: ns ? `Take a snapshot of ${ns}…` : "Take a snapshot of a namespace…", keywords: "export kubedesk file share offline", icon: <Camera size={16} />, run: () => s.openDialog({ kind: "snapshot", cluster: active, namespace: ns }) });
       out.push({ id: "sec:helm", group: "Go to", label: "Helm releases", keywords: "helm charts releases rollback", icon: <Package size={16} />, run: () => s.setSection("helm") });
       for (const r of resources) {
         const Icon = r.icon;

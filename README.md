@@ -104,6 +104,16 @@ clusters the core of the app:
 - Services with no pods, ingresses pointing nowhere and missing config stand
   out; each workload has a Map tab of the part it belongs to
 
+**Promote, snapshots and runbooks**
+- Promote an object to another cluster, with its config: change the
+  namespace and images, see the diff there, and what it lacks
+- Snapshot a namespace into a `.kubedesk` file that anyone opens in Kube
+  Desk, as a read-only cluster, without access to yours. Secret values never
+  go in it
+- Runbooks: what to do when something fails, in Markdown, with buttons for
+  the app's actions, shown with the objects they are for. The assistant
+  follows them
+
 **An assistant in the app**
 - <kbd>⌘J</kbd> opens a chat with Claude in Microsoft Foundry (your Azure API
   key, kept in the macOS keychain) or in Google Vertex AI (your gcloud login)
@@ -304,6 +314,7 @@ bunx tsc --noEmit             # type-check the frontend
 | `impact.go` | What a delete, scale, restart or drain would affect |
 | `report.go` | Incident reports, and masking secrets in logs |
 | `assistant.go`, `overview.go` | The assistant: Claude in Microsoft Foundry or Google Vertex AI, its tool loop, saved chats, the cluster overview |
+| `promote.go`, `snapshot.go`, `runbook.go` | Promoting between clusters, namespace snapshots (served through fake clients), runbooks |
 | `helm.go` | Helm releases, read from the Secrets Helm keeps; rollbacks through the helm command |
 | `access.go`, `health.go` | What the user may do (SelfSubjectAccessReview), and kubeconfig health checks |
 | `src/lib/graph.ts`, `src/views/ResourceMap.tsx` | The resource map: how objects connect, and its layout |
@@ -331,6 +342,9 @@ for 90 seconds after its last view closes.
 - The assistant's chats are kept on your Mac only, with `0600` permissions, in
   `~/Library/Application Support/Kube Desk/assistant/`; Secret values never
   reach the assistant.
+- Snapshots never hold Secret values, only a fingerprint of each, and mask
+  tokens and passwords in logs. Snapshots you open are copied, with `0600`
+  permissions, to `~/Library/Application Support/Kube Desk/snapshots/`.
 - Updates are signed with Ed25519, and the app verifies the signature before
   installing.
 
@@ -350,10 +364,10 @@ for 90 seconds after its last view closes.
 - [x] Helm releases: values, history, diffs between revisions, rollback (0.6)
 - [x] A resource map, buttons that follow RBAC, kubeconfig health (0.6)
 - [x] Diffs before applying YAML (0.4)
-- [ ] Namespace snapshots that open without access to the cluster
-- [ ] Promote objects from one cluster to another, with a diff
+- [x] Namespace snapshots that open without access to the cluster (0.7)
+- [x] Promote objects from one cluster to another, with a diff (0.7)
+- [x] Runbooks attached to workloads (0.7)
 - [ ] Cost estimates per namespace and app
-- [ ] Runbooks attached to workloads
 - [ ] Plugins
 
 ## Contributing

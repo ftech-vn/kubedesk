@@ -144,6 +144,8 @@ type clusterStore struct {
 	Watch      []WatchTarget           `json:"watch,omitempty"`
 	Agents     AgentSettings           `json:"agents,omitempty"`
 	Assistant  AssistantSettings       `json:"assistant,omitempty"`
+	// RunbookDir is the folder of the runbooks; "" is the app's own.
+	RunbookDir string `json:"runbookDir,omitempty"`
 	// LastSeen is when each cluster was last reached, by ID.
 	LastSeen map[string]string `json:"lastSeen,omitempty"`
 }
@@ -158,6 +160,8 @@ type conn struct {
 	mapper  *restmapper.DeferredDiscoveryRESTMapper
 	src     source
 	stamp   string
+	// snapshot is the namespace snapshot the connection serves, if it is one.
+	snapshot *snapshotData
 }
 
 // Clusters manages the clusters the app knows of: the contexts of the
@@ -168,6 +172,8 @@ type Clusters struct {
 	dir   string
 	store clusterStore
 	conns map[string]*conn
+	// snapshots are the IDs of the snapshots opened, as list found them.
+	snapshots map[string]bool
 }
 
 func newClusters() *Clusters {
@@ -242,10 +248,23 @@ func (c *Clusters) sources() []source {
 		p := filepath.Join(c.storedDir(), e.Name())
 		out = append(out, source{key: p, kind: SourceStored, files: []string{p}})
 	}
+	if c.dir != "" {
+		snaps, _ := os.ReadDir(c.snapshotsDir())
+		for _, e := range snaps {
+			if e.IsDir() || !strings.HasSuffix(e.Name(), ".kubedesk") {
+				continue
+			}
+			p := filepath.Join(c.snapshotsDir(), e.Name())
+			out = append(out, source{key: p, kind: SourceSnapshot, files: []string{p}})
+		}
+	}
 	return out
 }
 
 func (s source) load() (*clientcmdapi.Config, error) {
+	if s.kind == SourceSnapshot {
+		return nil, errors.New("a snapshot has no kubeconfig")
+	}
 	if s.kind == SourceDefault {
 		return clientcmd.NewDefaultClientConfigLoadingRules().Load()
 	}
@@ -273,7 +292,26 @@ func (s source) stamp() string {
 func (c *Clusters) list() (ClusterList, map[string]source) {
 	var res ClusterList
 	bySource := map[string]source{}
+	c.snapshots = map[string]bool{}
 	for _, s := range c.sources() {
+		if s.kind == SourceSnapshot {
+			d, err := loadSnapshot(s)
+			if err != nil {
+				res.Errors = append(res.Errors, SourceError{Source: s.label(), Error: err.Error()})
+				continue
+			}
+			cl := snapshotCluster(s, d)
+			if p, ok := c.store.Prefs[cl.ID]; ok {
+				if p.Alias != "" {
+					cl.Name = p.Alias
+				}
+				cl.Color, cl.Hidden = p.Color, p.Hidden
+			}
+			res.Clusters = append(res.Clusters, cl)
+			bySource[cl.ID] = s
+			c.snapshots[cl.ID] = true
+			continue
+		}
 		cfg, err := s.load()
 		if err != nil {
 			if s.kind == SourceDefault && errors.Is(err, os.ErrNotExist) {
@@ -451,6 +489,12 @@ func (c *Clusters) Remove(id string) error {
 	}
 	delete(c.conns, id)
 	switch s.kind {
+	case SourceSnapshot:
+		if err := os.Remove(s.key); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		delete(c.store.Prefs, id)
+		c.store.Order = slices.DeleteFunc(c.store.Order, func(x string) bool { return x == id })
 	case SourceStored:
 		cfg, err := clientcmd.LoadFromFile(s.key)
 		if err != nil {
@@ -810,6 +854,9 @@ func (c *Clusters) writable(id string) error {
 	if c.store.Prefs[id].ReadOnly {
 		return errReadOnly
 	}
+	if c.snapshots[id] {
+		return errSnapshot
+	}
 	return nil
 }
 
@@ -842,6 +889,9 @@ func (c *Clusters) Reconnect(id string) {
 }
 
 func serverVersion(ctx context.Context, cn *conn) (string, error) {
+	if cn.snapshot != nil {
+		return cn.snapshot.ServerVersion, nil
+	}
 	var info struct {
 		GitVersion string `json:"gitVersion"`
 	}
@@ -876,6 +926,18 @@ func (c *Clusters) conn(id string) (*conn, error) {
 		if x.ID == id {
 			cl = x
 		}
+	}
+	if s.kind == SourceSnapshot {
+		d, err := loadSnapshot(s)
+		if err != nil {
+			return nil, err
+		}
+		cn, err := snapshotConn(cl, s, d)
+		if err != nil {
+			return nil, err
+		}
+		c.conns[id] = cn
+		return cn, nil
 	}
 	raw, err := s.load()
 	if err != nil {

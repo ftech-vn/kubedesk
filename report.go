@@ -204,7 +204,7 @@ func mdCell(s string) string {
 
 func (r *reporter) logs(p *corev1.Pod, container string, previous bool) {
 	tail := int64(reportLogLines)
-	stream, err := r.cs.CoreV1().Pods(p.Namespace).GetLogs(p.Name, &corev1.PodLogOptions{Container: container, TailLines: &tail, Previous: previous, Timestamps: true}).Stream(r.ctx)
+	stream, err := openLogs(r.ctx, r.cs, p.Namespace, p.Name, &corev1.PodLogOptions{Container: container, TailLines: &tail, Previous: previous, Timestamps: true})
 	title := fmt.Sprintf("Logs of %s, last %d lines", container, reportLogLines)
 	if previous {
 		title = fmt.Sprintf("Logs of %s before its last restart", container)

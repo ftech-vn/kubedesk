@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { RefreshCw, ShieldAlert } from "lucide-react";
-import { Clusters, type Cluster } from "./mygo";
+import { Camera, RefreshCw, ShieldAlert } from "lucide-react";
+import { Clusters, events, type Cluster } from "./mygo";
 import { run, useActiveView, useApp } from "./lib/store";
 import { byKey, customResourceDef, type ResourceDef } from "./lib/resources";
 import { useWatch } from "./lib/watch";
@@ -21,6 +21,7 @@ import { ClusterOverview } from "./views/ClusterOverview";
 import { ChangesView } from "./views/ChangesView";
 import { ResourceMapPage } from "./views/ResourceMap";
 import { HelmView } from "./views/HelmView";
+import { RunbooksPage } from "./components/Runbooks";
 import { ResourceList } from "./views/ResourceList";
 import { DetailsPanel } from "./views/details/DetailsPanel";
 
@@ -34,6 +35,11 @@ export function App() {
         useAlerts.getState().init();
         useApprovals.getState().init();
         useHealth.getState().load();
+        // A snapshot opened from the Finder shows at once.
+        events.snapshotOpened.on(async (c) => {
+          await useApp.getState().refresh();
+          useApp.getState().activate(c.id);
+        });
       })
       .catch((e) => setError(errorMessage(e)));
   }, [load]);
@@ -145,6 +151,14 @@ function Workspace({ cluster }: { cluster: string }) {
           </div>
         )}
         <ProductionHint cluster={cl} />
+        {cl.sourceKind === "snapshot" && (
+          <div className="hint-bar">
+            <Camera size={15} />
+            <span>
+              A snapshot: <b>{cl.server}</b>. It stays as it was; logs are the last lines saved, and nothing can be changed.
+            </span>
+          </div>
+        )}
         <ErrorBoundary resetKey={view.section}>
           <Section cluster={cluster} section={view.section} />
         </ErrorBoundary>
@@ -207,6 +221,7 @@ function Section({ cluster, section }: { cluster: string; section: string }) {
   if (section === "changes") return <ChangesView cluster={cluster} />;
   if (section === "map") return <ResourceMapPage cluster={cluster} />;
   if (section === "helm") return <HelmView cluster={cluster} />;
+  if (section === "runbooks") return <RunbooksPage cluster={cluster} />;
   const def = byKey.get(section);
   if (def) return <ResourceList key={def.key} cluster={cluster} def={def} />;
   if (section.startsWith("cr:")) return <CustomResourceSection cluster={cluster} section={section} />;

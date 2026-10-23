@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Maximize, Minus, Network, Plus, Search, X } from "lucide-react";
+import { AlertTriangle, Maximize, Minus, Network, Plus, Route, Router, Search, X } from "lucide-react";
 import { buildMap, layoutGroup, mapKindList, NODE_H, NODE_W, type GroupLayout, type MapKind, type MapLists, type MapNode } from "../lib/graph";
 import { byKind } from "../lib/resources";
 import { useActiveView, useApp } from "../lib/store";
 import { useWatch } from "../lib/watch";
+import { useApiResources } from "../lib/discovery";
+import type { GVR } from "../mygo";
 import { Empty, Spinner } from "../components/ui";
 import { ContextMenu } from "../components/Menu";
 
 /** Kinds whose details have a map of what they belong to. */
-export const mapKinds = new Set<string>(["Ingress", "Service", "Deployment", "StatefulSet", "DaemonSet", "ReplicaSet", "Job", "CronJob", "Pod", "HorizontalPodAutoscaler"]);
+export const mapKinds = new Set<string>(["Gateway", "HTTPRoute", "Ingress", "Service", "Deployment", "StatefulSet", "DaemonSet", "ReplicaSet", "Job", "CronJob", "Pod", "HorizontalPodAutoscaler"]);
 
 const MAX_NODES = 700;
 const GROUP_GAP = 34;
@@ -24,16 +26,27 @@ function savedConfig() {
   }
 }
 
+// Gateway API kinds, watched where the cluster serves them.
+const gatewayKinds: Partial<Record<MapKind, GVR>> = {
+  Gateway: { group: "gateway.networking.k8s.io", version: "v1", resource: "gateways" },
+  HTTPRoute: { group: "gateway.networking.k8s.io", version: "v1", resource: "httproutes" },
+};
+
+export const gvrOfMapKind = (kind: string): GVR | undefined => byKind.get(kind)?.gvr ?? gatewayKinds[kind as MapKind];
+
 /** useMapLists watches what the map is drawn from. */
 function useMapLists(cluster: string, namespace: string, config: boolean): { lists: MapLists; loading: boolean; error?: string } {
+  const served = useApiResources(cluster);
   const out: MapLists = {};
   let loading = false;
   let error: string | undefined;
   for (const kind of mapKindList) {
-    const off = !config && (kind === "ConfigMap" || kind === "Secret" || kind === "PersistentVolumeClaim");
+    const gw = gatewayKinds[kind];
+    const unserved = !!gw && !served?.some((r) => r.group === gw.group && r.resource === gw.resource);
+    const off = unserved || (!config && (kind === "ConfigMap" || kind === "Secret" || kind === "PersistentVolumeClaim"));
     // The list of kinds never changes, so the hooks keep their order.
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const w = useWatch(cluster, off ? null : byKind.get(kind)!.gvr, namespace);
+    const w = useWatch(cluster, off ? null : gvrOfMapKind(kind)!, namespace);
     if (off) continue;
     // A kind the user may not list is left out, rather than taken as empty.
     if (w.error && !w.items.length) {
@@ -129,8 +142,8 @@ export function ResourceMapView({ cluster, namespace, focus }: { cluster: string
       setPodMenu({ node: n, x: e.clientX, y: e.clientY });
       return;
     }
-    const def = byKind.get(n.kind);
-    if (def) openDetail({ gvr: def.gvr, kind: n.kind, namespace: n.namespace, name: n.name }, !focus);
+    const gvr = gvrOfMapKind(n.kind);
+    if (gvr) openDetail({ gvr, kind: n.kind, namespace: n.namespace, name: n.name }, !focus);
   };
 
   const toggleConfig = () => {
@@ -226,7 +239,7 @@ export function ResourceMapView({ cluster, namespace, focus }: { cluster: string
           {layouts.map((l) =>
             l.placed.map((p) => {
               const n = p.node;
-              const Icon = byKind.get(n.kind)?.icon ?? Network;
+              const Icon = byKind.get(n.kind)?.icon ?? (n.kind === "Gateway" ? Router : n.kind === "HTTPRoute" ? Route : Network);
               const focused = n.id === focusId || (focus?.kind === "Pod" && n.pods?.includes(focus.name));
               return (
                 <button
@@ -282,7 +295,7 @@ export function ResourceMapView({ cluster, namespace, focus }: { cluster: string
   );
 }
 
-const shortKinds: Partial<Record<MapKind, string>> = { HorizontalPodAutoscaler: "HPA", PersistentVolumeClaim: "PVC" };
+const shortKinds: Partial<Record<MapKind, string>> = { HorizontalPodAutoscaler: "HPA", PersistentVolumeClaim: "PVC", HTTPRoute: "Route" };
 const kindLabel = (k: MapKind) => shortKinds[k] ?? k;
 
 /** ResourceMapPage is the Map page of a cluster. */

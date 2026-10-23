@@ -537,12 +537,78 @@ export interface PortForward {
   error?: string;
 }
 
+/** PromoteContainer is a container of the object, and its image. */
+export interface PromoteContainer {
+  name: string;
+  image: string;
+}
+
+/** PromotePlan is what promoting would do in the target cluster. */
+export interface PromotePlan {
+  diffs: ObjectDiff[];
+  containers: PromoteContainer[];
+  /** ConfigMaps and Secrets are what the pods use, which can come along. */
+  configMaps: string[];
+  secrets: string[];
+  notes: string[];
+}
+
+/** PromoteRequest copies an object from one cluster to another. */
+export interface PromoteRequest {
+  from: string;
+  to: string;
+  gvr: GVR;
+  kind: string;
+  namespace: string;
+  name: string;
+  /** TargetNamespace is where it goes; "" keeps its namespace. */
+  targetNamespace?: string;
+  /** Images replaces the images of containers, by container name. */
+  images?: Record<string, string>;
+  /**
+   * WithConfig copies the config maps its pods use; WithSecrets the
+   * secrets too, values included.
+   */
+  withConfig?: boolean;
+  withSecrets?: boolean;
+}
+
 /** Report is an incident report of an object, in Markdown. */
 export interface Report {
   title: string;
   markdown: string;
   /** Redacted counts the secrets taken out of the logs. */
   redacted: number;
+}
+
+/** Runbook is a Markdown note of what to do, for some objects. */
+export interface Runbook {
+  /** ID is the file's path in the runbooks folder. */
+  id: string;
+  title: string;
+  targets: RunbookTarget[];
+  updated: string;
+  /** Body is the Markdown, without the front matter. */
+  body: string;
+}
+
+/** RunbookFolder is where the runbooks are. */
+export interface RunbookFolder {
+  path: string;
+  /** Default says the folder is the app's own, not one the user chose. */
+  default: boolean;
+}
+
+/**
+ * RunbookTarget is what a runbook is for. Each field matches with
+ * wildcards (*); an empty one matches anything. Cluster matches the
+ * cluster's name or its context, which other machines share.
+ */
+export interface RunbookTarget {
+  cluster?: string;
+  namespace?: string;
+  kind?: string;
+  name?: string;
 }
 
 /** SearchHit is an object that matches a search, in one cluster. */
@@ -574,6 +640,24 @@ export interface SearchQuery {
 /** Severity says how bad an alert is. */
 export type Severity = "critical" | "warning";
 
+/** SnapshotOptions chooses what a snapshot holds besides the objects. */
+export interface SnapshotOptions {
+  /** Logs adds the last lines of each container, and of its previous run. */
+  logs: boolean;
+  /** Changes adds the timeline of the namespace, when it is watched. */
+  changes: boolean;
+}
+
+/** SnapshotResult is what an export wrote. */
+export interface SnapshotResult {
+  /** Path is where the snapshot was saved; "" when the user canceled. */
+  path: string;
+  objects: number;
+  logs: number;
+  bytes: number;
+  skipped: string[];
+}
+
 /** SourceError is a kubeconfig file that could not be read. */
 export interface SourceError {
   source: string;
@@ -581,7 +665,7 @@ export interface SourceError {
 }
 
 /** SourceKind tells where the kubeconfig of a cluster comes from. */
-export type SourceKind = "default" | "file" | "stored";
+export type SourceKind = "default" | "file" | "stored" | "snapshot";
 
 /** Theme is the appearance the user chose. */
 export type Theme = "system" | "light" | "dark";
@@ -660,6 +744,13 @@ export const Clusters = {
   /** List returns every cluster the app knows of, hidden ones included. */
   list(): Promise<ClusterList> {
     return call("Clusters.List");
+  },
+  /**
+   * OpenSnapshot asks for .kubedesk files and opens them, each as a
+   * read-only cluster.
+   */
+  openSnapshot(): Promise<Cluster[]> {
+    return call("Clusters.OpenSnapshot");
   },
   /** PickFiles asks for kubeconfig files and adds them. */
   pickFiles(): Promise<Cluster[]> {
@@ -783,6 +874,13 @@ export const Kube = {
   execResize(session: string, cols: number, rows: number): Promise<void> {
     return call("Kube.ExecResize", session, cols, rows);
   },
+  /**
+   * ExportSnapshot saves a namespace to a .kubedesk file, which Kube Desk
+   * opens without access to the cluster.
+   */
+  exportSnapshot(cluster: string, namespace: string, opts: SnapshotOptions): Promise<SnapshotResult> {
+    return call("Kube.ExportSnapshot", cluster, namespace, opts);
+  },
   /** Get returns one object. */
   get(cluster: string, gvr: GVR, namespace: string, name: string): Promise<Record<string, unknown>> {
     return call("Kube.Get", cluster, gvr, namespace, name);
@@ -830,9 +928,20 @@ export const Kube = {
   planApply(cluster: string, manifest: string, namespace: string): Promise<ObjectDiff[]> {
     return call("Kube.PlanApply", cluster, manifest, namespace);
   },
+  /**
+   * PlanPromote works out, without changing anything, what copying an object
+   * to another cluster would do there. Secret values are masked.
+   */
+  planPromote(req: PromoteRequest): Promise<PromotePlan> {
+    return call("Kube.PlanPromote", req);
+  },
   /** PortForwards returns the port forwards running. */
   portForwards(): Promise<PortForward[]> {
     return call("Kube.PortForwards");
+  },
+  /** Promote copies an object, and the config chosen, to another cluster. */
+  promote(req: PromoteRequest): Promise<string[]> {
+    return call("Kube.Promote", req);
   },
   /**
    * Report gathers what an incident needs about a pod or a workload: its
@@ -856,6 +965,10 @@ export const Kube = {
    */
   restart(cluster: string, gvr: GVR, namespace: string, name: string): Promise<void> {
     return call("Kube.Restart", cluster, gvr, namespace, name);
+  },
+  /** RevealFile shows a file in the Finder. */
+  revealFile(path: string): Promise<void> {
+    return call("Kube.RevealFile", path);
   },
   /**
    * SaveText asks where to save a text, such as logs, and writes it there. It
@@ -949,6 +1062,55 @@ export const Helm = {
    */
   rollback(cluster: string, namespace: string, name: string, revision: number): Promise<string> {
     return call("Helm.Rollback", cluster, namespace, name, revision);
+  },
+} as const;
+
+/**
+ * Runbooks keeps runbooks as Markdown files in a folder, such as one in a
+ * git repository the team shares.
+ */
+export const Runbooks = {
+  /**
+   * ChooseFolder asks for the folder of the runbooks; "" when the user
+   * canceled.
+   */
+  chooseFolder(): Promise<RunbookFolder> {
+    return call("Runbooks.ChooseFolder");
+  },
+  /** Delete removes a runbook's file. */
+  delete(id: string): Promise<void> {
+    return call("Runbooks.Delete", id);
+  },
+  /** Folder returns where the runbooks are. */
+  folder(): Promise<RunbookFolder> {
+    return call("Runbooks.Folder");
+  },
+  /**
+   * For returns the runbooks for an object, or for a namespace or a cluster
+   * with empty fields, the most specific first.
+   */
+  for(cluster: string, namespace: string, kind: string, name: string): Promise<Runbook[]> {
+    return call("Runbooks.For", cluster, namespace, kind, name);
+  },
+  /** Get returns a runbook. */
+  get(id: string): Promise<Runbook> {
+    return call("Runbooks.Get", id);
+  },
+  /** List returns every runbook in the folder, its subfolders included. */
+  list(): Promise<Runbook[]> {
+    return call("Runbooks.List");
+  },
+  /** Reveal shows the folder of the runbooks in the Finder. */
+  reveal(): Promise<void> {
+    return call("Runbooks.Reveal");
+  },
+  /** Save writes a runbook, a new one when its ID is empty, and returns it. */
+  save(rb: Runbook): Promise<Runbook> {
+    return call("Runbooks.Save", rb);
+  },
+  /** SetFolder sets the folder of the runbooks; "" goes back to the app's own. */
+  setFolder(dir: string): Promise<RunbookFolder> {
+    return call("Runbooks.SetFolder", dir);
   },
 } as const;
 
@@ -1134,6 +1296,8 @@ export const events = {
    * menu bar.
    */
   openObject: event<OpenRequest>("open-object"),
+  /** SnapshotOpened is sent when a snapshot was opened from the Finder. */
+  snapshotOpened: event<Cluster>("snapshot:opened"),
   /** TimelineChanged tells pages that a cluster has new changes. */
   timelineChanged: event<string>("timeline:changed"),
 } as const;

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Box, Layers, LayoutGrid, Server } from "lucide-react";
+import { AlertTriangle, Box, Camera, Layers, LayoutGrid, Server } from "lucide-react";
 import { Kube, type ClusterInfo } from "../mygo";
 import { age, errorMessage, formatBytes, formatCores, nodeStatus, parseQuantity, podRequests, podStatus, type KObj } from "../lib/k8s";
 import { byKey, eventTime } from "../lib/resources";
@@ -8,6 +8,8 @@ import { useNow, usePoll, useWatch } from "../lib/watch";
 import { Badge, Button, Card, ErrorBox, Spinner } from "../components/ui";
 import { ChangeList, useChanges } from "./ChangesView";
 import { useAlerts } from "../lib/alerts";
+import { useRunbooksFor } from "../lib/runbooks";
+import { RunbooksFor } from "../components/Runbooks";
 import { ResourceBar } from "./details/Overview";
 
 const def = (k: string) => byKey.get(k)!;
@@ -68,6 +70,11 @@ export function ClusterOverview({ cluster }: { cluster: string }) {
             {ns && <> · namespace <b>{ns}</b></>}
           </div>
         </div>
+        {cl && cl.sourceKind !== "snapshot" && (
+          <Button icon={<Camera size={14} />} onClick={() => useApp.getState().openDialog({ kind: "snapshot", cluster, namespace: ns })} title="Save a namespace to a file others open without access to the cluster">
+            Snapshot
+          </Button>
+        )}
       </header>
 
       <div className="stat-grid">
@@ -77,6 +84,8 @@ export function ClusterOverview({ cluster }: { cluster: string }) {
         <Stat icon={<LayoutGrid size={18} />} label="Namespaces" value={namespaces.loading ? "…" : String(namespaces.items.length)} sub="in the cluster" onClick={() => setSection("namespaces")} />
         <Stat icon={<AlertTriangle size={18} />} label="Warnings" value={events.loading ? "…" : String(warnings.length)} sub="recent events" tone={warnings.length ? "warn" : "ok"} onClick={() => setSection("events")} />
       </div>
+
+      <OverviewRunbooks cluster={cluster} namespace={ns} />
 
       <div className="overview-grid">
         <Card title="Capacity">
@@ -197,5 +206,16 @@ function Stat({ icon, label, value, sub, tone, onClick }: { icon: React.ReactNod
       <div className="stat-value">{value}</div>
       <div className="stat-sub">{sub}</div>
     </button>
+  );
+}
+
+/** OverviewRunbooks shows the runbooks of the namespace, or of the cluster. */
+function OverviewRunbooks({ cluster, namespace }: { cluster: string; namespace: string }) {
+  const list = useRunbooksFor(cluster, namespace, "", "");
+  if (!list.length) return null;
+  return (
+    <div className="overview-runbooks">
+      <RunbooksFor list={list} ctx={{ cluster, namespace }} />
+    </div>
   );
 }

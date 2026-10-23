@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.0
+
+**Promote from one cluster to another.** "Promote to another cluster…", in the menu of a workload, service, config map, ingress and more, or from Compare across clusters, copies an object to another cluster. Change its namespace and the images of its containers first, and bring the config maps its pods use, and their secrets if you choose. Kube Desk leaves out what a cluster fills in (status, identifiers, owners, cluster IPs, node ports), shows the diff of each object in the target, says what is missing there, such as a secret the pods need, and creates the namespace if it has to. Production targets ask you to type their name; the timeline names the change kubedesk-promote.
+
+**Namespace snapshots.** Take a snapshot of a namespace, from the overview or ⌘K, into a .kubedesk file: every object, its events, the nodes its pods run on, the last 300 lines of each container's logs and of its previous run, and its timeline. Secret values never go in the file, and tokens in the logs are masked. Anyone with Kube Desk opens the file from the Finder, or with Open snapshot on the clusters page, and browses it as a read-only cluster without access to the real one: lists, details, logs, map, incident reports, and the assistant.
+
+**Runbooks.** Write what to check and do when something fails, in Markdown, for an object, a namespace or a cluster, with wildcards. Links such as [Restart](kubedesk:restart) become buttons for the app's actions, and run after the usual confirmation. A runbook shows in the Runbook tab of what it is for, and on the overview of its namespace; the Runbooks page lists them all. They are Markdown files in a folder you choose, such as one in a git repository your team shares. The assistant and MCP agents read them, through a new get_runbooks tool, before proposing a fix.
+
+- The map shows Gateway API gateways and HTTP routes, where the cluster serves them.
+
 ## 0.6.0
 
 **Helm releases.** A new Helm page lists the releases of a namespace, or of the cluster, with their chart, app version, revision and status. Open one to see its values (the ones given at install, or with the chart's defaults), what it rendered, its notes, the objects it deployed, and its history. Compare any two revisions, values or manifests, and roll back to one: Kube Desk shows first what the rollback changes and what Helm deletes, and asks you to type the name of a production cluster. Releases are read from the cluster, so reading them needs no helm command; rolling back runs helm, so that Helm records the rollback.

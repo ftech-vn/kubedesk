@@ -3,7 +3,7 @@ import { defineConfig } from "mygo-cli";
 export default defineConfig({
   name: "Kube Desk",
   identifier: "dev.hoangnm.kubedesk",
-  version: "0.6.0",
+  version: "0.7.0",
   // `mygo dev` runs devCommand and loads devUrl; `mygo build` runs
   // buildCommand and embeds frontendDist into the app.
   devUrl: "http://localhost:5188",
@@ -11,6 +11,8 @@ export default defineConfig({
   buildCommand: "bun run build:web",
   frontendDist: "dist",
   bindings: "src/mygo.ts",
+  // Namespace snapshots open in Kube Desk from the Finder.
+  fileAssociations: [{ ext: ["kubedesk"], name: "Kube Desk snapshot", role: "Viewer" }],
   out: "build",
   // Signed updates, published to the kube-desk-releases bucket of
   // Cloudflare R2 by scripts/release.sh. The secret key stays out of the

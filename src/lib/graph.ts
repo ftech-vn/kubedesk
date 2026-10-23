@@ -2,6 +2,8 @@ import { matchesSelector, podStatus, type KObj, type Tone } from "./k8s";
 
 /** The kinds the resource map draws, in the lists it is built from. */
 export type MapKind =
+  | "Gateway"
+  | "HTTPRoute"
   | "Ingress"
   | "Service"
   | "HorizontalPodAutoscaler"
@@ -50,20 +52,24 @@ export interface MapGroup {
 
 // Traffic comes in on the left; what pods use is on the right.
 const columnOf: Record<MapKind, number> = {
-  Ingress: 0,
-  Service: 1,
-  HorizontalPodAutoscaler: 1,
-  CronJob: 2,
-  Deployment: 2,
-  StatefulSet: 2,
-  DaemonSet: 2,
-  ReplicaSet: 3,
-  Job: 3,
-  Pod: 4,
-  ConfigMap: 5,
-  Secret: 5,
-  PersistentVolumeClaim: 5,
+  Gateway: 0,
+  Ingress: 1,
+  HTTPRoute: 1,
+  Service: 2,
+  HorizontalPodAutoscaler: 2,
+  CronJob: 3,
+  Deployment: 3,
+  StatefulSet: 3,
+  DaemonSet: 3,
+  ReplicaSet: 4,
+  Job: 4,
+  Pod: 5,
+  ConfigMap: 6,
+  Secret: 6,
+  PersistentVolumeClaim: 6,
 };
+
+const WORKLOAD_COLUMN = columnOf.Deployment;
 
 export const mapKindList = Object.keys(columnOf) as MapKind[];
 
@@ -114,11 +120,23 @@ function statusOf(kind: MapKind, o: KObj): { tone: Tone; status: string } {
       return { tone: "ok", status: o.spec?.type ?? "ClusterIP" };
     case "Ingress": {
       const hosts = (o.spec?.rules ?? []).map((r: any) => r.host).filter(Boolean);
-      return { tone: "ok", status: hosts.length ? hosts.slice(0, 2).join(", ") + (hosts.length > 2 ? ` +${hosts.length - 2}` : "") : "any host" };
+      return { tone: "ok", status: hostsLine(hosts) };
+    }
+    case "HTTPRoute": {
+      const conds = (st.parents ?? []).flatMap((p: any) => p.conditions ?? []);
+      const refused = conds.some((c: any) => (c.type === "Accepted" || c.type === "ResolvedRefs") && c.status === "False");
+      return { tone: refused ? "bad" : "ok", status: refused ? "not accepted" : hostsLine(o.spec?.hostnames ?? []) };
+    }
+    case "Gateway": {
+      const programmed = (st.conditions ?? []).find((c: any) => c.type === "Programmed");
+      const listeners = (o.spec?.listeners ?? []).map((l: any) => `${l.protocol ?? ""}:${l.port ?? ""}`);
+      return { tone: programmed?.status === "False" ? "bad" : "ok", status: programmed?.status === "False" ? "not programmed" : listeners.slice(0, 3).join(", ") || (o.spec?.gatewayClassName ?? "") };
     }
   }
   return { tone: "ok", status: "" };
 }
+
+const hostsLine = (hosts: string[]) => (hosts.length ? hosts.slice(0, 2).join(", ") + (hosts.length > 2 ? ` +${hosts.length - 2}` : "") : "any host");
 
 /** ingressServices are the services an ingress sends traffic to. */
 function ingressServices(o: KObj): string[] {
@@ -197,7 +215,7 @@ export function buildMap(lists: MapLists, opts: { config: boolean } = { config: 
     return id;
   };
 
-  for (const kind of ["Ingress", "Service", "HorizontalPodAutoscaler", "CronJob", "Deployment", "StatefulSet", "DaemonSet"] as MapKind[]) {
+  for (const kind of ["Gateway", "HTTPRoute", "Ingress", "Service", "HorizontalPodAutoscaler", "CronJob", "Deployment", "StatefulSet", "DaemonSet"] as MapKind[]) {
     for (const o of lists[kind] ?? []) add(kind, o);
   }
   // ReplicaSets left behind by rollouts, at zero, are history: leave them out.
@@ -318,6 +336,25 @@ export function buildMap(lists: MapLists, opts: { config: boolean } = { config: 
     }
   }
 
+  // Gateway API: gateways route to HTTP routes, which route to services.
+  for (const route of lists.HTTPRoute ?? []) {
+    const ns = route.metadata.namespace ?? "";
+    const id = nodeId("HTTPRoute", ns, route.metadata.name);
+    for (const p of route.spec?.parentRefs ?? []) {
+      if ((p.kind ?? "Gateway") !== "Gateway") continue;
+      const gw = nodeId("Gateway", p.namespace ?? ns, p.name);
+      if (nodes.has(gw)) link(gw, id);
+    }
+    for (const rule of route.spec?.rules ?? []) {
+      for (const b of rule.backendRefs ?? []) {
+        if ((b.kind ?? "Service") !== "Service" || (b.group ?? "") !== "") continue;
+        const to = ref("Service", b.namespace ?? ns, b.name, listed("Service"));
+        if (nodes.get(to)?.missing) nodes.get(id)!.tone = "bad";
+        link(id, to);
+      }
+    }
+  }
+
   for (const hpa of lists.HorizontalPodAutoscaler ?? []) {
     const ns = hpa.metadata.namespace ?? "";
     const t = hpa.spec?.scaleTargetRef;
@@ -370,7 +407,7 @@ function groupsOf(nodes: Map<string, MapNode>, edges: MapEdge[]): MapGroup[] {
   for (const g of out) {
     g.worst = worstTone(g.nodes.map((n) => n.tone));
     // Named after its leftmost workload, or its first object.
-    const lead = [...g.nodes].sort((a, b) => (a.column === 2 ? -1 : 0) - (b.column === 2 ? -1 : 0) || a.column - b.column || a.name.localeCompare(b.name))[0]!;
+    const lead = [...g.nodes].sort((a, b) => (a.column === WORKLOAD_COLUMN ? -1 : 0) - (b.column === WORKLOAD_COLUMN ? -1 : 0) || a.column - b.column || a.name.localeCompare(b.name))[0]!;
     g.title = lead.name;
     g.id = lead.id;
   }

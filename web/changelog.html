@@ -75,6 +75,7 @@
           <nav class="toc" aria-label="Releases">
             <h4>Releases</h4>
             <ul>
+              <li><a href="#v0-7-0">0.7.0 <small>24 Oct 2026</small></a></li>
               <li><a href="#v0-6-0">0.6.0 <small>24 Oct 2026</small></a></li>
               <li><a href="#v0-5-0">0.5.0 <small>23 Oct 2026</small></a></li>
               <li><a href="#v0-4-1">0.4.1 <small>22 Oct 2026</small></a></li>
@@ -84,13 +85,63 @@
               <li><a href="#v0-1-0">0.1.0 <small>21 Oct 2026</small></a></li>
             </ul>
             <p style="margin-top: 22px">
-              <a class="btn btn--primary btn--sm" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">Download 0.6.0</a>
+              <a class="btn btn--primary btn--sm" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">Download 0.7.0</a>
             </p>
           </nav>
 
           <div class="prose">
+            <section class="release" id="v0-7-0" data-palette-section="0.7.0: promote, snapshots, runbooks">
+              <div class="release__meta"><span class="v">0.7.0</span><time datetime="2026-10-24">24 October 2026</time><span class="latest">Latest</span></div>
+              <h2 class="h2">Promote between clusters, namespace snapshots, and runbooks</h2>
+              <p class="summary">Move what works from one cluster to another, share a namespace with people who can’t reach it, and keep your team’s know-how next to the objects.</p>
+
+              <h3>Promote from one cluster to another</h3>
+              <p>
+                “Promote to another cluster…”, in the menu of a workload, service, config map, ingress and more, or from
+                Compare across clusters, copies an object to another cluster. Change its namespace and the images of its
+                containers first, and bring the config maps its pods use, and their secrets if you choose.
+              </p>
+              <p>
+                Kube Desk leaves out what a cluster fills in (status, identifiers, owners, cluster IPs, node ports),
+                shows the diff of each object in the target, says what is missing there, such as a secret the pods
+                need, and creates the namespace if it has to. Production targets ask you to type their name; the
+                timeline names the change <code>kubedesk-promote</code>.
+              </p>
+
+              <h3>Namespace snapshots</h3>
+              <p>
+                Take a snapshot of a namespace, from the overview or <kbd>⌘K</kbd>, into a <code>.kubedesk</code> file:
+                every object, its events, the nodes its pods run on, the last 300 lines of each container’s logs and of
+                its previous run, and its timeline. Secret values never go in the file, and tokens in the logs are
+                masked.
+              </p>
+              <p>
+                Anyone with Kube Desk opens the file from the Finder, or with Open snapshot on the clusters page, and
+                browses it as a read-only cluster without access to the real one: lists, details, logs, map, incident
+                reports, and the assistant.
+              </p>
+
+              <h3>Runbooks</h3>
+              <p>
+                Write what to check and do when something fails, in Markdown, for an object, a namespace or a cluster,
+                with wildcards. Links such as <code>[Restart](kubedesk:restart)</code> become buttons for the app’s
+                actions, and run after the usual confirmation. A runbook shows in the Runbook tab of what it is for,
+                and on the overview of its namespace; the Runbooks page lists them all.
+              </p>
+              <p>
+                They are Markdown files in a folder you choose, such as one in a git repository your team shares. The
+                assistant and MCP agents read them, through a new <code>get_runbooks</code> tool, before proposing a
+                fix.
+              </p>
+
+              <h3>Also</h3>
+              <ul>
+                <li>The map shows Gateway API gateways and HTTP routes, where the cluster serves them.</li>
+              </ul>
+            </section>
+
             <section class="release" id="v0-6-0" data-palette-section="0.6.0: Helm, resource map, RBAC, kubeconfig health">
-              <div class="release__meta"><span class="v">0.6.0</span><time datetime="2026-10-24">24 October 2026</time><span class="latest">Latest</span></div>
+              <div class="release__meta"><span class="v">0.6.0</span><time datetime="2026-10-24">24 October 2026</time></div>
               <h2 class="h2">Helm releases, a map of every app, and buttons that follow your access</h2>
               <p class="summary">See what Helm deployed and roll it back, see how an app fits together, and know what your credentials allow before they stop working.</p>
 

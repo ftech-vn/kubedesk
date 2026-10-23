@@ -3338,3 +3338,168 @@ h2:hover .copy-btn {
   white-space: nowrap;
   font-size: 12.5px;
 }
+
+/* ---- Promote ---- */
+
+.promote-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+.promote-end {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  min-width: 0;
+}
+.promote-end:last-child {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+.promote-images {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.promote-image {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+.promote-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  font-size: 12.5px;
+}
+.promote-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--info);
+}
+
+/* ---- Runbooks ---- */
+
+.runbook {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 12px 14px;
+}
+.runbook-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.runbook-head h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.runbook-targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin: 6px 0 10px;
+}
+.runbook-body a[href^="kubedesk:"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 9px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--panel-2);
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.runbook-body a[href^="kubedesk:"]::before {
+  content: "▸";
+  color: var(--accent);
+  font-size: 10px;
+}
+.runbook-body a[href^="kubedesk:"]:hover {
+  border-color: var(--accent);
+  background: var(--active);
+}
+.runbooks-split {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  min-height: 0;
+}
+.runbooks-list {
+  border-right: 1px solid var(--border);
+  overflow: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.runbooks-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  text-align: left;
+  min-width: 0;
+}
+.runbooks-item b,
+.runbooks-item span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.runbooks-item:hover {
+  background: var(--hover);
+}
+.runbooks-item.on {
+  background: var(--active);
+}
+.runbooks-view {
+  overflow: auto;
+  padding: 14px 16px;
+}
+.runbook-target-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.runbook-target-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: 6px;
+}
+.runbook-editor-bar {
+  display: flex;
+  align-items: center;
+}
+.runbook-text {
+  width: 100%;
+  min-height: 280px;
+  resize: vertical;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.runbook-preview {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  min-height: 280px;
+  max-height: 420px;
+  overflow: auto;
+}
+.overview-runbooks {
+  margin-bottom: 16px;
+}
