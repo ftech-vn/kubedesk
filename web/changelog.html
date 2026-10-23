@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Changelog — Kube Desk</title>
+    <meta name="description" content="What's new in each release of Kube Desk, the Kubernetes desktop client for many clusters." />
+    <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)" />
+    <link rel="canonical" href="https://kubedesk.cloud/changelog.html" />
+    <meta property="og:title" content="Kube Desk changelog" />
+    <meta property="og:description" content="What's new in each release of Kube Desk." />
+    <meta property="og:image" content="https://kubedesk.cloud/assets/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@75..125,200..900&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="bar">
+      <div class="wrap bar__in">
+        <a class="brand" href="./" aria-label="Kube Desk home">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <defs>
+              <linearGradient id="kd-g" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#4b7bf5" />
+                <stop offset="1" stop-color="#9b5cf5" />
+              </linearGradient>
+            </defs>
+            <rect x="2" y="2" width="28" height="28" rx="7" fill="url(#kd-g)" />
+            <circle cx="16" cy="16" r="7.8" fill="none" stroke="#fff" stroke-width="3.2" />
+          </svg>
+          Kube Desk
+        </a>
+        <button class="jump" type="button" data-palette aria-label="Jump to a section or page">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+          <span class="jump__label">Jump to…</span>
+          <kbd><span data-mod>⌘</span>K</kbd>
+        </button>
+        <nav class="links" aria-label="Main">
+          <a href="./#features">Features</a>
+          <a href="./#agents">AI agents</a>
+          <a href="changelog.html" aria-current="page">Changelog</a>
+          <a href="https://github.com/ftech-vn/kubedesk">GitHub</a>
+          <a class="only-sm" href="download.html">Download</a>
+        </nav>
+        <a class="btn btn--primary btn--sm" href="download.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+          Download
+        </a>
+        <button class="menu-btn" type="button" aria-label="Menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" x2="20" y1="7" y2="7" /><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="17" y2="17" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="page-head">
+        <div class="wrap hero-in">
+          <h1 class="display">Changelog.</h1>
+          <p class="lede">
+            What’s new in each release, newest first. Kube Desk shows these notes in its update window before you
+            install.
+          </p>
+        </div>
+      </section>
+
+      <section class="section" style="padding-top: 0">
+        <div class="wrap doc">
+          <nav class="toc" aria-label="Releases">
+            <h4>Releases</h4>
+            <ul>
+              <li><a href="#v0-4-0">0.4.0 <small>22 Oct 2026</small></a></li>
+              <li><a href="#v0-3-0">0.3.0 <small>22 Oct 2026</small></a></li>
+              <li><a href="#v0-2-0">0.2.0 <small>22 Oct 2026</small></a></li>
+              <li><a href="#v0-1-0">0.1.0 <small>21 Oct 2026</small></a></li>
+            </ul>
+            <p style="margin-top: 22px">
+              <a class="btn btn--primary btn--sm" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">Download 0.4.0</a>
+            </p>
+          </nav>
+
+          <div class="prose">
+            <section class="release" id="v0-4-0" data-palette-section="0.4.0: AI agents, search, compare">
+              <div class="release__meta"><span class="v">0.4.0</span><time datetime="2026-10-22">22 October 2026</time><span class="latest">Latest</span></div>
+              <h2 class="h2">AI agents with approval, search and compare across clusters</h2>
+              <p class="summary">Let AI agents work with your clusters safely, and see many clusters as one.</p>
+
+              <h3>AI agents, with you approving every change</h3>
+              <p>
+                Kube Desk is now an MCP server, so that Claude Code, Cursor, Codex, Claude Desktop and other MCP clients
+                can work with your clusters. Turn it on under AI agents (the robot in the title bar, or <kbd>⌘K</kbd>),
+                copy the command for your client, and choose for each cluster what agents may do: nothing, read, or
+                propose changes.
+              </p>
+              <p>
+                Agents can list and read resources, read logs and events, see what changed and who changed it, get
+                incident reports, search and compare clusters, and preview what a change would affect. When an agent
+                wants to apply YAML, delete, scale or restart, Kube Desk shows you the change, a diff of each object,
+                what it affects and the agent’s reason, and makes it only if you approve.
+              </p>
+              <p>
+                Production clusters ask you to type their name, read-only clusters refuse, and changes carry the
+                agent’s name, so the timeline shows who made them. Secret values never reach agents, and tokens and
+                passwords in logs are masked. The server listens on this Mac only, behind a token.
+              </p>
+
+              <h3>Search every cluster at once</h3>
+              <p>
+                <kbd>⇧⌘F</kbd>, or “Search every cluster” in <kbd>⌘K</kbd>, finds objects across all your clusters as
+                you type: by name, <code>image:nginx</code>, <code>app=web</code>, <code>kind:svc</code>,
+                <code>ns:shop</code>, <code>node:…</code>, <code>is:failing</code> or
+                <code>status:CrashLoopBackOff</code>. Results come in cluster by cluster; click one to open it there.
+              </p>
+
+              <h3>Compare across clusters</h3>
+              <p>
+                “Compare across clusters” lines up a deployment, stateful set, daemon set, service, config map, secret,
+                ingress, cron job or autoscaler in each cluster: images, replicas, resources, environment, ports,
+                volumes, keys. Fields that differ are highlighted, and a YAML diff shows everything between two
+                clusters. Secret values are compared by fingerprint only.
+              </p>
+
+              <h3>See what Save changes</h3>
+              <p>Saving YAML now shows the diff the cluster will get, and says so when nothing changed.</p>
+
+              <h3>Good to know when upgrading</h3>
+              <ul>
+                <li>The MCP server is <strong>off by default</strong>, and every cluster starts at Off for agents.</li>
+                <li>A change waits 5 minutes for approval; after that the agent gets an error and can ask again.</li>
+                <li>Search covers pods, workloads, services, ingresses, config maps, nodes and namespaces, not custom resources yet.</li>
+              </ul>
+            </section>
+
+            <section class="release" id="v0-3-0" data-palette-section="0.3.0: timeline, impact, incident reports">
+              <div class="release__meta"><span class="v">0.3.0</span><time datetime="2026-10-22">22 October 2026</time></div>
+              <h2 class="h2">Timeline of changes, impact before you act, incident reports</h2>
+              <p class="summary">Three questions during an incident: what just changed, what will this break, and what do I send to whoever is helping?</p>
+
+              <h3>A timeline of what changed</h3>
+              <p>
+                In the namespaces you watch, Kube Desk records every change while it runs and keeps it for 7 days:
+                deployments, stateful sets, daemon sets, services, ingresses, config maps, secrets, cron jobs and
+                autoscalers, pods restarting or becoming ready, nodes going down, and warning events.
+              </p>
+              <p>
+                Each change says what changed in plain words (“image api: api:1 → api:2”, “replicas 2 → 3”, “env
+                DATABASE_URL changed”), who changed it (kubectl, Helm, Argo CD, a controller), and shows a diff of
+                before and after. When Kube Desk starts again, it finds what was changed, created or deleted while it
+                was closed. Find it under Changes in the sidebar, in the History tab of each object, and on the
+                overview. Secret values never reach the timeline: only which keys changed.
+              </p>
+
+              <h3>See what a change breaks, before you make it</h3>
+              <p>
+                Deleting, scaling, restarting and draining now show what else they affect: services left without
+                endpoints, ingress routes that stop working, disruption budgets that would be broken, pods without a
+                controller that would be gone for good, data in emptyDir and volumes that would be lost, config maps and
+                secrets that pods need, pods that would not fit on the other nodes, autoscalers and Helm, Argo CD or
+                Flux that would fight the change. Scaling updates the preview as you type the replicas.
+              </p>
+
+              <h3>Incident reports in one click</h3>
+              <p>
+                For a pod or a workload, Incident report gathers its state, conditions, events, the last lines of logs
+                of every container and those before its last restart, its node, the recent changes of its namespace and
+                what depends on it, into Markdown to paste into Slack, an issue or an AI assistant. Tokens, keys,
+                passwords and credentials in URLs are masked.
+              </p>
+            </section>
+
+            <section class="release" id="v0-2-0" data-palette-section="0.2.0: watchlist and notifications">
+              <div class="release__meta"><span class="v">0.2.0</span><time datetime="2026-10-22">22 October 2026</time></div>
+              <h2 class="h2">Watchlist, workload logs, production guardrails</h2>
+
+              <h3>Watch namespaces, and hear about problems</h3>
+              <p>
+                Watch a namespace or a whole cluster from the title bar, the <kbd>⌘K</kbd> palette or the menu bar.
+                Kube Desk keeps watching in the background, also with its window closed, and sends a notification when a
+                pod crash loops, runs out of memory, fails to pull its image or cannot be scheduled, a rollout gets
+                stuck, or a node goes down. A menu bar icon counts the problems and lists them; click one to open it.
+                When many things break at once, you get a single notification.
+              </p>
+
+              <h3>Logs of a whole workload</h3>
+              <p>
+                Deployments, stateful sets, daemon sets, replica sets, jobs and services have a Logs tab with the logs
+                of all their pods, interleaved by time and colored by pod. Pods that start during a rollout join in.
+                Hide pods with a click, and save the logs shown to a file.
+              </p>
+
+              <h3>Production guardrails</h3>
+              <p>
+                Mark a cluster as production: it shows in red, and every change, from deleting to scaling or saving
+                YAML, asks you to type the cluster’s name. Read-only clusters refuse all changes and shells; the app
+                enforces this itself, not just its buttons. Clusters whose names say “prod” offer to be protected.
+              </p>
+
+              <h3>CPU and memory in lists</h3>
+              <p>Pods and nodes show what they use, from metrics-server, with a bar against their limits or what the node can allocate.</p>
+
+              <h3 class="also">Also</h3>
+              <ul>
+                <li>Log lines are colored by level, for JSON, logfmt, klog and bracketed levels.</li>
+                <li>The <kbd>⌘K</kbd> palette no longer lists results that do not match.</li>
+                <li>Completed pods no longer look unhealthy, long commands are folded, and badges are no longer cut off.</li>
+              </ul>
+            </section>
+
+            <section class="release" id="v0-1-0" data-palette-section="0.1.0: the first release">
+              <div class="release__meta"><span class="v">0.1.0</span><time datetime="2026-10-21">21 October 2026</time></div>
+              <h2 class="h2">The first release</h2>
+              <ul>
+                <li>Several clusters: the contexts of <code>~/.kube/config</code> and <code>$KUBECONFIG</code>, kubeconfig files read where they are, pasted kubeconfigs, and clusters added from a server address and a token. Rename, color, hide, reorder and remove them.</li>
+                <li>Switch clusters from the rail, with <kbd>⌘1</kbd>…<kbd>⌘9</kbd>, or from the <kbd>⌘K</kbd> palette; each cluster keeps its page, namespace and open object.</li>
+                <li>Live lists of nodes, namespaces, events, workloads, network, config, storage, RBAC and custom resources.</li>
+                <li>Edit YAML, create resources from templates, delete, scale, restart, cordon, uncordon and drain, run cron jobs now.</li>
+                <li>Pod logs, shells in containers and port forwards.</li>
+                <li>Light and dark mode, or the system’s.</li>
+                <li>Updates itself from signed releases.</li>
+              </ul>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    
+
+    <script src="site.js"></script>
+  </body>
+</html>
