@@ -3,7 +3,7 @@ import { defineConfig } from "mygo-cli";
 export default defineConfig({
   name: "Kube Desk",
   identifier: "dev.hoangnm.kubedesk",
-  version: "0.4.1",
+  version: "0.5.0",
   // `mygo dev` runs devCommand and loads devUrl; `mygo build` runs
   // buildCommand and embeds frontendDist into the app.
   devUrl: "http://localhost:5188",

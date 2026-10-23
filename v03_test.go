@@ -263,3 +263,26 @@ func TestTimelineRecorder(t *testing.T) {
 		return upd != nil && strings.Contains(upd.After, "api:2") && del != nil && add != nil
 	})
 }
+
+func TestClusterOverview(t *testing.T) {
+	cs := fake.NewSimpleClientset(demoObjects()...)
+	ov, err := clusterOverview(context.Background(), cs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ov.Nodes) != 2 || ov.Nodes[0].State != "Ready" {
+		t.Errorf("nodes: %+v", ov.Nodes)
+	}
+	var shop *OverviewNamespace
+	for i := range ov.Namespaces {
+		if ov.Namespaces[i].Name == "shop" {
+			shop = &ov.Namespaces[i]
+		}
+	}
+	if shop == nil || shop.Pods != 3 || shop.ByStatus["Running, not ready"] != 3 {
+		t.Errorf("namespace shop: %+v", shop)
+	}
+	if len(ov.NotReady) != 1 || !strings.Contains(ov.NotReady[0], "deployment shop/api: 0/2 ready") {
+		t.Errorf("not ready: %v", ov.NotReady)
+	}
+}

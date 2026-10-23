@@ -9,6 +9,7 @@ import { YamlEditor } from "./YamlEditor";
 import { AddClusterDialog, ClusterSettingsDialog } from "./ClusterDialogs";
 import { CommandPalette } from "./CommandPalette";
 import { AgentsDialog } from "./AgentsDialog";
+import { AssistantSettingsDialog } from "./AssistantSettings";
 import { SearchDialog } from "./SearchDialog";
 import { CompareDialog } from "./CompareDialog";
 import { DiffView } from "./DiffView";
@@ -28,6 +29,8 @@ export function Dialogs() {
       return <CreateDialog initial={dialog.yaml ?? ""} onClose={close} />;
     case "agents":
       return <AgentsDialog onClose={close} />;
+    case "assistant-settings":
+      return <AssistantSettingsDialog onClose={close} />;
     case "search":
       return <SearchDialog initial={dialog.query} onClose={close} />;
     case "compare":

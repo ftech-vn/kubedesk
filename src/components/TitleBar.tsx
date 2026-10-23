@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRightLeft, Bot, Bell, BellOff, BellRing, Check, ChevronDown, Eye, ExternalLink, LayoutGrid, Monitor, Moon, Search, Square, Sun } from "lucide-react";
+import { ArrowRightLeft, Bot, Bell, Sparkles, BellOff, BellRing, Check, ChevronDown, Eye, ExternalLink, LayoutGrid, Monitor, Moon, Search, Square, Sun } from "lucide-react";
 import { Alerts, type Alert } from "../mygo";
 import { isWatched, openRequest, toggleWatch, useAlerts } from "../lib/alerts";
 import { useApprovals } from "./ApprovalDialog";
+import { useAssistant } from "../lib/assistant";
 import { age } from "../lib/k8s";
 import type { Theme } from "../mygo";
 import { Kube } from "../mygo";
@@ -45,6 +46,7 @@ export function TitleBar() {
       </button>
       <div className="titlebar-right">
         <PortForwardsButton />
+        <AssistantButton />
         <AgentsButton />
         <AlertsButton />
         <ThemeSwitch />
@@ -287,6 +289,17 @@ function AgentsButton() {
     <button className={`crumb agents-button ${waiting ? "waiting" : ""}`} onClick={() => openDialog({ kind: "agents" })} title={waiting ? `${waiting} change${waiting === 1 ? "" : "s"} waiting for your approval` : "AI agents (MCP)"}>
       <Bot size={14} />
       {waiting > 0 && <span className="alerts-count">{waiting}</span>}
+    </button>
+  );
+}
+
+function AssistantButton() {
+  const open = useAssistant((s) => s.open);
+  const running = useAssistant((s) => s.running);
+  return (
+    <button className={`crumb assistant-button ${open ? "on" : ""}`} onClick={() => useAssistant.getState().toggle()} title="Assistant (⌘J)">
+      <Sparkles size={14} className={running ? "pulse" : ""} />
+      <span>Assistant</span>
     </button>
   );
 }

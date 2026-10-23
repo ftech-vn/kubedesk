@@ -13,6 +13,8 @@ import { Button, Empty, ErrorBox, Spinner } from "./components/ui";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useAlerts } from "./lib/alerts";
 import { ApprovalDialog, useApprovals } from "./components/ApprovalDialog";
+import { AssistantPanel } from "./components/AssistantPanel";
+import { useAssistant } from "./lib/assistant";
 import { ClustersHome } from "./views/ClustersHome";
 import { ClusterOverview } from "./views/ClusterOverview";
 import { ChangesView } from "./views/ChangesView";
@@ -70,6 +72,9 @@ export function App() {
             </>
           )}
         </main>
+        <ErrorBoundary resetKey="assistant">
+          <AssistantPanel />
+        </ErrorBoundary>
       </div>
       <OverlayBoundary>
         <Dialogs />
@@ -221,6 +226,11 @@ function useHotkeys() {
     const onKey = (e: KeyboardEvent) => {
       const s = useApp.getState();
       const modKey = e.metaKey || e.ctrlKey;
+      if (modKey && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        useAssistant.getState().toggle();
+        return;
+      }
       if (modKey && e.shiftKey && e.key.toLowerCase() === "f") {
         e.preventDefault();
         s.openDialog({ kind: "search" });

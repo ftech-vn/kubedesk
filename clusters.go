@@ -143,6 +143,7 @@ type clusterStore struct {
 	Theme      Theme                   `json:"theme,omitempty"`
 	Watch      []WatchTarget           `json:"watch,omitempty"`
 	Agents     AgentSettings           `json:"agents,omitempty"`
+	Assistant  AssistantSettings       `json:"assistant,omitempty"`
 }
 
 // conn is a connection to a cluster, reused until its kubeconfig changes.
@@ -726,6 +727,19 @@ func (c *Clusters) setAgentSettings(s AgentSettings) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.store.Agents = s
+	return c.save()
+}
+
+func (c *Clusters) assistantSettings() AssistantSettings {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.store.Assistant
+}
+
+func (c *Clusters) setAssistantSettings(s AssistantSettings) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.store.Assistant = s
 	return c.save()
 }
 

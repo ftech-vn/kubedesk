@@ -82,8 +82,8 @@ func TestMCPProtocol(t *testing.T) {
 	}
 	_, out = post(t, h, host, "secret-token", session, `{"jsonrpc":"2.0","id":2,"method":"tools/list"}`)
 	tools, _ := out["result"].(map[string]any)["tools"].([]any)
-	if len(tools) != 14 {
-		t.Fatalf("%d tools, want 14", len(tools))
+	if len(tools) != 15 {
+		t.Fatalf("%d tools, want 15", len(tools))
 	}
 	for _, x := range tools {
 		tool := x.(map[string]any)

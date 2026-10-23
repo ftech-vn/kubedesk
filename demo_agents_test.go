@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -200,6 +202,53 @@ func TestDemoAgents(t *testing.T) {
 	// The twin may only be read.
 	if text, isErr := call("restart", map[string]any{"cluster": twinID, "kind": "deployment", "namespace": ns, "name": "echo", "reason": "x"}); !isErr || !strings.Contains(text, "may only read") {
 		t.Fatalf("restart on a read cluster: %s", text)
+	}
+
+	// The app's own assistant, through a stand-in for Foundry: it looks at the
+	// cluster, then proposes a scale that the user approves.
+	step := 0
+	var overviewSeen string
+	foundrySrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		step++
+		switch step {
+		case 1:
+			sse(w, "tool_use", [2]string{`{"type":"tool_use","id":"t1","name":"cluster_overview","input":{}}`, fmt.Sprintf(`{"type":"input_json_delta","partial_json":%q}`, fmt.Sprintf(`{"cluster":%q}`, id))})
+		case 2:
+			overviewSeen = string(b)
+			sse(w, "tool_use", [2]string{`{"type":"tool_use","id":"t2","name":"scale","input":{}}`, fmt.Sprintf(`{"type":"input_json_delta","partial_json":%q}`, fmt.Sprintf(`{"cluster":%q,"kind":"deployment","namespace":%q,"name":"echo","replicas":3,"reason":"load"}`, id, ns))})
+		default:
+			sse(w, "end_turn", [2]string{`{"type":"text","text":""}`, `{"type":"text_delta","text":"Scaled."}`})
+		}
+	}))
+	defer foundrySrv.Close()
+	as := newAssistant(a, c)
+	as.key = func() ([]byte, error) { return []byte("k"), nil }
+	_ = c.setAssistantSettings(AssistantSettings{Endpoint: foundrySrv.URL + "/anthropic", Deployment: "claude-opus-5-5"})
+	_ = a.SetAccess(id, AgentOff) // the assistant does not need agents' access
+	done := make(chan error, 1)
+	go func() { done <- as.send(ctx, "demo", "scale echo to 3", ChatView{Cluster: id, Namespace: ns}, func(ChatEvent) error { return nil }) }()
+	req = <-requests
+	if req.Client != assistantClient || req.Action != "scale" {
+		t.Fatalf("assistant approval: %+v", req)
+	}
+	_ = a.Decide(req.ID, true)
+	if err := <-done; err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(overviewSeen, ns) || !strings.Contains(overviewSeen, "byStatus") {
+		t.Errorf("the overview did not reach the model: %.300s", overviewSeen)
+	}
+	d, _ = cn.cs.AppsV1().Deployments(ns).Get(ctx, "echo", metav1.GetOptions{})
+	if *d.Spec.Replicas != 3 {
+		t.Fatalf("replicas %d after the assistant's approved scale", *d.Spec.Replicas)
+	}
+	assistantManager := false
+	for _, f := range d.ManagedFields {
+		assistantManager = assistantManager || f.Manager == "kubedesk-agent (Kube Desk assistant)"
+	}
+	if !assistantManager {
+		t.Errorf("the change does not carry the assistant's name")
 	}
 
 	// Saving YAML shows its diff first.

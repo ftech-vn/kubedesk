@@ -122,6 +122,34 @@ export interface ApprovalRequest {
   expires: string;
 }
 
+/** AssistantInfo is what the page shows about the assistant's setup. */
+export interface AssistantInfo {
+  settings: AssistantSettings;
+  hasKey: boolean;
+  configured: boolean;
+}
+
+/**
+ * AssistantSettings is how the assistant reaches Claude in Microsoft
+ * Foundry. The API key is kept in the system's credential store, apart.
+ */
+export interface AssistantSettings {
+  /**
+   * Endpoint is the Foundry resource name, or its full base URL
+   * (https://<resource>.services.ai.azure.com/anthropic/).
+   */
+  endpoint: string;
+  /** Deployment is the deployment name, which Foundry takes as the model. */
+  deployment: string;
+  /**
+   * Fallback is a deployment that answers when the main one declines a
+   * request; "" for none.
+   */
+  fallback: string;
+  /** Effort is low, medium, high, xhigh or max. */
+  effort: string;
+}
+
 /** Change is something that happened in a watched namespace. */
 export interface Change {
   id: string;
@@ -151,6 +179,35 @@ export interface Change {
 
 /** ChangeType is what happened to an object. */
 export type ChangeType = "created" | "updated" | "deleted" | "status" | "event";
+
+/** ChatEvent is a part of the assistant's answer, as it streams. */
+export interface ChatEvent {
+  type: ChatEventType;
+  text?: string;
+  /** Tool, ToolID, Input and IsError describe tool calls. */
+  tool?: string;
+  toolId?: string;
+  input?: string;
+  isError?: boolean;
+  /** Write marks tools that change the cluster, after approval. */
+  write?: boolean;
+  /** Usage, on done: input, cached and output tokens of the turn. */
+  inputTokens?: number;
+  cachedTokens?: number;
+  outputTokens?: number;
+}
+
+/** ChatEventType is the kind of a ChatEvent. */
+export type ChatEventType = "text" | "thinking" | "tool_start" | "tool_end" | "note" | "done";
+
+/** ChatView is what the user looks at in the app when they write. */
+export interface ChatView {
+  cluster?: string;
+  namespace?: string;
+  kind?: string;
+  name?: string;
+  section?: string;
+}
 
 /** Cluster is a context of a kubeconfig: a cluster the app connects to. */
 export interface Cluster {
@@ -801,6 +858,46 @@ export const Agents = {
   /** SetEnabled starts or stops the MCP server. */
   setEnabled(on: boolean): Promise<AgentInfo> {
     return call("Agents.SetEnabled", on);
+  },
+} as const;
+
+/**
+ * Assistant chats with Claude in Microsoft Foundry about the clusters, with
+ * the tools of the MCP server; every change waits for the user's approval.
+ */
+export const Assistant = {
+  /** ForgetKey removes the API key from the credential store. */
+  forgetKey(): Promise<void> {
+    return call("Assistant.ForgetKey");
+  },
+  /** Info returns the assistant's setup, without the key. */
+  info(): Promise<AssistantInfo> {
+    return call("Assistant.Info");
+  },
+  /** Reset forgets a conversation. */
+  reset(chatID: string): Promise<void> {
+    return call("Assistant.Reset", chatID);
+  },
+  /**
+   * Save keeps the settings, and the API key in the credential store; an
+   * empty key keeps the one stored.
+   */
+  save(s: AssistantSettings, apiKey: string): Promise<AssistantInfo> {
+    return call("Assistant.Save", s, apiKey);
+  },
+  /**
+   * Send asks the assistant something and streams its answer, tool calls
+   * included, until it is done or the page stops listening.
+   */
+  send(chatID: string, text: string, view: ChatView, events: Channel<ChatEvent>): Promise<void> {
+    return call("Assistant.Send", chatID, text, view, events);
+  },
+  /**
+   * Test sends a short request with the settings, and returns the model's
+   * reply.
+   */
+  test(): Promise<string> {
+    return call("Assistant.Test");
   },
 } as const;
 

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Bell, Bot, Box, Download, History, Globe, Gauge, Home, Layers, LayoutGrid, Monitor, Moon, Plus, Search, Settings2, Sun, Waypoints } from "lucide-react";
+import { Bell, Bot, Box, Sparkles, Download, History, Globe, Gauge, Home, Layers, LayoutGrid, Monitor, Moon, Plus, Search, Settings2, Sun, Waypoints } from "lucide-react";
 import { AppInfo } from "../mygo";
 import { isWatched, toggleWatch, useAlerts } from "../lib/alerts";
+import { useAssistant } from "../lib/assistant";
 import { byKey, resources } from "../lib/resources";
 import { useApp } from "../lib/store";
 import { useWatch } from "../lib/watch";
@@ -64,6 +65,8 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
     );
     out.push({ id: "home", group: "Clusters", label: "All clusters", icon: <Home size={16} />, run: () => s.activate(null) });
     out.push({ id: "add", group: "Clusters", label: "Add a cluster…", icon: <Plus size={16} />, run: () => s.openDialog({ kind: "add" }) });
+    out.push({ id: "assistant", group: "App", label: "Ask the assistant…", hint: "⌘J", keywords: "ai chat claude help explain", icon: <Sparkles size={16} />, run: () => useAssistant.getState().toggle(true) });
+    out.push({ id: "assistant-settings", group: "App", label: "Assistant settings…", keywords: "ai claude foundry azure api key", icon: <Sparkles size={16} />, run: () => s.openDialog({ kind: "assistant-settings" }) });
     out.push({ id: "agents", group: "App", label: "AI agents (MCP)…", keywords: "mcp claude codex cursor ai agent", icon: <Bot size={16} />, run: () => s.openDialog({ kind: "agents" }) });
     out.push({ id: "updates", group: "App", label: "Check for updates…", keywords: "update version upgrade", icon: <Download size={16} />, run: () => AppInfo.checkForUpdates() });
     out.push({ id: "theme:light", group: "Appearance", label: "Light mode", keywords: "theme", hint: s.theme === "light" ? "current" : undefined, icon: <Sun size={16} />, run: () => s.setTheme("light") });

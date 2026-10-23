@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0
+
+**An assistant in the app.** Press ⌘J, or Assistant in the title bar, and ask about your clusters in your own words: why a pod fails, what changed in the last hour, how a namespace is doing. The assistant is Claude in Microsoft Foundry, with your Azure resource and API key, which Kube Desk keeps in your macOS keychain. It sees every cluster in Kube Desk, starting from an overview of nodes, namespaces and their pods, and knows what you have open. It reads resources, logs, events, the timeline and incident reports, searches and compares clusters, and shows each step it takes. When it wants to change something, it proposes the change: Kube Desk shows the diff, what the change affects and the assistant's reason, and makes it only if you approve. Production clusters ask you to type their name, and read-only clusters refuse.
+
+- Set it up under Assistant settings: the Foundry resource (or the deployment's Target URI), the API key, the deployment, and the effort.
+- A fallback deployment answers requests the main one declines.
+- MCP stays a separate option, for agents outside the app; the assistant does not need it.
+- A `cluster_overview` tool, for the assistant and MCP agents, summarizes a whole cluster at once.
+
 ## 0.4.1
 
 - Opening AI agents, or comparing across clusters, no longer leaves the window blank.

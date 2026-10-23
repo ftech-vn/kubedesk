@@ -59,6 +59,9 @@ và [Lens](https://k8slens.dev), rồi lấy việc chuyển cluster làm trọn
   mất, pod nào không còn chỗ chạy.
 - **Báo cáo sự cố**: một click gom trạng thái, events, logs (cả log trước khi
   restart), node và thay đổi gần đây thành Markdown, đã che token/mật khẩu.
+- **AI assistant trong app** (⌘J): chat với Claude trên Microsoft Foundry
+  (API key lưu trong Keychain). Assistant nắm mọi cluster, namespace và pod,
+  biết bạn đang xem gì; mọi thay đổi phải được bạn duyệt.
 - **AI agents (MCP)**: Claude Code, Cursor, Codex… đọc được cluster bạn cho
   phép; mọi thay đổi agent đề xuất phải được bạn duyệt trong app, kèm diff và
   phân tích ảnh hưởng. Giá trị Secret không bao giờ được gửi cho agent.

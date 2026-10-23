@@ -53,6 +53,7 @@ func main() {
 	mygo.Bind(kube)
 	mygo.Bind(alerts)
 	mygo.Bind(agents)
+	mygo.Bind(newAssistant(agents, clusters))
 	setupUpdates()
 
 	// The watchlist keeps working with the window closed, from the menu bar.

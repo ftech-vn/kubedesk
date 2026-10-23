@@ -35,6 +35,7 @@ interface AppStore {
   theme: Theme;
   dialog: null | { kind: "add" } | { kind: "settings"; cluster: string } | { kind: "palette" } | { kind: "create"; yaml?: string } | { kind: "report"; cluster: string; object: string; namespace: string; name: string }
     | { kind: "agents" }
+    | { kind: "assistant-settings" }
     | { kind: "search"; query?: string }
     | { kind: "compare"; gvr: GVR; object: string; namespace: string; name: string };
 

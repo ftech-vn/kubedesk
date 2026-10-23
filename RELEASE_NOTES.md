@@ -9,6 +9,7 @@ biết.
 
 | Bản | Ngày | Điểm chính | Tải về (delta) |
 |---|---|---|---|
+| [0.5.0](#050--23102026) | 23/10/2026 | AI assistant chat ngay trong app (Claude trên Microsoft Foundry), đề xuất thay đổi phải được duyệt | xem trang Releases |
 | [0.4.1](#041--22102026) | 22/10/2026 | Sửa lỗi màn hình trắng khi mở AI agents hoặc so sánh giữa các cluster | xem trang Releases |
 | [0.4.0](#040--22102026) | 22/10/2026 | AI agents qua MCP (có duyệt từng thay đổi), tìm kiếm mọi cluster, so sánh giữa các cluster | xem trang Releases |
 | [0.3.0](#030--22102026) | 22/10/2026 | Timeline thay đổi, xem trước ảnh hưởng, báo cáo sự cố | 15.5 MB (từ 0.2: 2.5 MB · từ 0.1: 5.0 MB) |
@@ -19,6 +20,56 @@ Tải bản mới nhất:
 <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg>
 (macOS 12 trở lên, Apple silicon). App đã cài sẽ tự cập nhật. Thường app chỉ
 tải phần thay đổi (delta), như ở cột cuối bảng trên.
+
+---
+
+## 0.5.0 · 23/10/2026
+
+### Tính năng mới
+
+**AI assistant trong app**
+- Mở bằng ⌘J, nút **Assistant** trên title bar, hoặc "Ask the assistant" trong
+  ⌘K. Hỏi bằng ngôn ngữ của bạn; assistant trả lời bằng chính ngôn ngữ đó.
+- Assistant là **Claude trên Microsoft Foundry (Azure)**:
+  - cài đặt gồm resource Foundry (hoặc Target URI của deployment), API key,
+    tên deployment (mặc định `claude-opus-5-5`) và mức effort (mặc định High);
+  - API key lưu trong **Keychain của macOS**, không nằm trong file nào, và
+    trang web của app không bao giờ thấy key;
+  - nút "Save and test" kiểm tra kết nối và giải thích các lỗi hay gặp
+    (401, 403, 404 deployment, 429).
+- **Nắm toàn bộ cluster:** đọc được mọi cluster đang hiện trong Kube Desk.
+  - Bắt đầu từ tool mới `cluster_overview`: node, từng namespace với số pod
+    theo trạng thái, workload chưa sẵn sàng, pod restart nhiều, Warning event
+    trong 1 giờ qua.
+  - Sau đó đọc chi tiết: resource, logs, events, timeline (đổi gì, ai đổi),
+    báo cáo sự cố; tìm kiếm và so sánh giữa các cluster.
+  - Biết bạn đang xem gì: cluster, namespace, trang, object đang mở. Hỏi
+    "pod này bị gì?" là đủ.
+- **Thay đổi phải hỏi và được duyệt:** khi assistant muốn apply, xoá, scale
+  hay restart, app mở hộp thoại duyệt (giống MCP) với diff, phần "What this
+  affects" và lý do assistant đưa ra. Cluster production bắt gõ tên, cluster
+  read-only từ chối. Thay đổi được ghi tên
+  `kubedesk-agent (Kube Desk assistant)` nên timeline biết ai đã làm.
+- Khung chat hiện từng bước assistant làm (đọc gì, gọi tool nào, đang chờ
+  duyệt), phần suy luận thu gọn được, số token kèm tỷ lệ cache. Có nút Stop
+  và New chat.
+- **Fallback:** một deployment dự phòng (mặc định `claude-opus-4-8`) trả lời
+  thay khi deployment chính từ chối một yêu cầu. Nếu deployment không hỗ trợ
+  fallback, app tự chạy tiếp không kèm fallback và báo cho bạn.
+- **MCP vẫn là tuỳ chọn riêng** cho agent bên ngoài; assistant không cần bật
+  MCP. Tool `cluster_overview` có cho cả hai.
+
+### An toàn
+- Câu trả lời của assistant chỉ được hiển thị dưới dạng Markdown: HTML trong
+  câu trả lời bị hiện thành chữ, và kết quả còn được DOMPurify làm sạch thêm
+  một lần.
+- Tham số tool bị cắt giữa chừng (stream bị ngắt) không bao giờ được chạy như
+  thể đầy đủ; assistant được báo lại để gọi lại.
+
+### Giới hạn đã biết
+- Mới hỗ trợ Claude trên Microsoft Foundry với API key; chưa hỗ trợ đăng nhập
+  Entra ID.
+- Hội thoại nằm trong bộ nhớ: đóng app là mất lịch sử chat.
 
 ---
 

@@ -128,6 +128,9 @@ func newAgents(k *Kube, c *Clusters, show func()) *Agents {
 	a := &Agents{kube: k, clusters: c, show: show, pending: map[string]*ApprovalRequest{}, sessions: map[string]string{}}
 	a.notify = func(r ApprovalRequest) {
 		show()
+		if r.Client == assistantClient {
+			return // asked in the app, which shows the request
+		}
 		showNotification(mygo.NotificationOptions{
 			ID:    "agent|" + r.ID,
 			Title: fmt.Sprintf("%s asks to %s", r.Client, r.Action),
@@ -524,6 +527,9 @@ var (
 
 var toolDefs = []toolDef{
 	{"list_clusters", "List clusters", "The clusters the user shares with agents, with what each allows: read, or read and propose changes.", toolSchema(nil, map[string]any{}), readOnly},
+	{"cluster_overview", "Cluster overview", "The whole cluster at a glance: nodes and their state, every namespace with its pods by status, workloads that are not fully ready, pods restarting, and warning events of the last hour. Start here.", toolSchema([]string{"cluster"}, map[string]any{
+		"cluster": pCluster,
+	}), readOnly},
 	{"list_resources", "List resources", "Lists objects of a kind with their state: pods with status, readiness, restarts and node; workloads with ready replicas and images.", toolSchema([]string{"cluster", "kind"}, map[string]any{
 		"cluster": pCluster, "kind": pKind, "namespace": pNamespace, "label_selector": str("Label selector, such as app=web"), "limit": num("At most this many, 200 by default"),
 	}), readOnly},
@@ -568,6 +574,57 @@ var toolDefs = []toolDef{
 
 var errUnknownTool = errors.New("unknown tool")
 
+// accessPolicy says which clusters a caller of the tools may read, and on
+// which it may propose changes. Changes still wait for the user's approval.
+type accessPolicy struct {
+	name     string
+	readable func(cluster string) bool
+	writable func(cluster string) bool
+	// notShared and readOnlyAccess explain the refusals, in the caller's terms.
+	notShared, readOnlyAccess string
+}
+
+// mcpPolicy follows what the user allowed agents, cluster by cluster.
+func (a *Agents) mcpPolicy() accessPolicy {
+	return accessPolicy{
+		name:           "mcp",
+		readable:       func(id string) bool { return a.clusters.agentAccess(id) != AgentOff },
+		writable:       func(id string) bool { return a.clusters.agentAccess(id) == AgentWrite },
+		notShared:      "this cluster is not shared with agents: the user can share it in Kube Desk, under AI agents",
+		readOnlyAccess: "agents may only read this cluster: the user can allow proposing changes in Kube Desk, under AI agents",
+	}
+}
+
+// assistantPolicy lets the app's own assistant read every cluster shown,
+// and propose changes to any; the user approves each.
+func (a *Agents) assistantPolicy() accessPolicy {
+	shown := func(id string) bool {
+		for _, c := range a.clusters.List().Clusters {
+			if c.ID == id {
+				return !c.Hidden
+			}
+		}
+		return false
+	}
+	return accessPolicy{
+		name:      "assistant",
+		readable:  shown,
+		writable:  shown,
+		notShared: "there is no such cluster in Kube Desk: call list_clusters for their IDs",
+	}
+}
+
+// sharedClusters lists the clusters a policy may read.
+func (a *Agents) sharedClusters(pol accessPolicy) []Cluster {
+	var out []Cluster
+	for _, c := range a.clusters.List().Clusters {
+		if !c.Hidden && pol.readable(c.ID) {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
 type toolArgs struct {
 	Cluster       string   `json:"cluster"`
 	Kind          string   `json:"kind"`
@@ -600,7 +657,7 @@ func (a *Agents) callTool(ctx context.Context, client, name string, raw json.Raw
 		act.Cluster = ""
 	}
 	act.Detail = strings.Trim(strings.Join([]string{args.Kind, args.Namespace, orDefault(args.Name, args.Pod), args.Query}, " "), " ")
-	text, outcome, err := a.dispatch(ctx, client, name, args)
+	text, outcome, err := a.dispatch(ctx, client, name, args, a.mcpPolicy())
 	act.Outcome = outcome
 	if err != nil && outcome == "" {
 		act.Outcome = "error"
@@ -614,24 +671,22 @@ func (a *Agents) callTool(ctx context.Context, client, name string, raw json.Raw
 	return text, err
 }
 
-// access checks what agents may do with a cluster.
-func (a *Agents) access(cluster string, write bool) error {
-	if cluster == "" {
-		return errors.New("cluster is required: call list_clusters first")
-	}
-	acc := a.clusters.agentAccess(cluster)
+// access checks what a caller may do with a cluster.
+func (a *Agents) access(cluster string, write bool, pol accessPolicy) error {
 	switch {
-	case acc == AgentOff:
-		return errors.New("this cluster is not shared with agents: the user can share it in Kube Desk, under AI agents")
-	case write && acc != AgentWrite:
-		return errors.New("agents may only read this cluster: the user can allow proposing changes in Kube Desk, under AI agents")
+	case cluster == "":
+		return errors.New("cluster is required: call list_clusters first")
+	case !pol.readable(cluster):
+		return errors.New(pol.notShared)
+	case write && !pol.writable(cluster):
+		return errors.New(pol.readOnlyAccess)
 	case write && a.clusters.writable(cluster) != nil:
 		return errReadOnly
 	}
 	return nil
 }
 
-func (a *Agents) dispatch(ctx context.Context, client, name string, args toolArgs) (string, string, error) {
+func (a *Agents) dispatch(ctx context.Context, client, name string, args toolArgs, pol accessPolicy) (string, string, error) {
 	k := a.kube
 	switch name {
 	case "list_clusters":
@@ -644,10 +699,15 @@ func (a *Agents) dispatch(ctx context.Context, client, name string, args toolArg
 			ReadOnly   bool        `json:"readOnly"`
 		}
 		var rows []row
-		for _, c := range a.clusters.List().Clusters {
-			if acc := a.clusters.agentAccess(c.ID); acc != AgentOff && !c.Hidden {
-				rows = append(rows, row{c.ID, c.Name, c.Server, acc, c.Production, c.ReadOnly})
+		for _, c := range a.sharedClusters(pol) {
+			acc := AgentWrite
+			if pol.name == "mcp" {
+				acc = a.clusters.agentAccess(c.ID)
 			}
+			if c.ReadOnly {
+				acc = AgentRead
+			}
+			rows = append(rows, row{c.ID, c.Name, c.Server, acc, c.Production, c.ReadOnly})
 		}
 		if len(rows) == 0 {
 			return "No cluster is shared with agents. The user can share clusters in Kube Desk, under AI agents.", "", nil
@@ -655,10 +715,8 @@ func (a *Agents) dispatch(ctx context.Context, client, name string, args toolArg
 		return jsonText(rows), "", nil
 	case "search":
 		var ids []string
-		for _, c := range a.clusters.List().Clusters {
-			if a.clusters.agentAccess(c.ID) != AgentOff && !c.Hidden {
-				ids = append(ids, c.ID)
-			}
+		for _, c := range a.sharedClusters(pol) {
+			ids = append(ids, c.ID)
 		}
 		if len(ids) == 0 {
 			return "", "", errors.New("no cluster is shared with agents")
@@ -675,14 +733,12 @@ func (a *Agents) dispatch(ctx context.Context, client, name string, args toolArg
 	case "compare":
 		ids := args.Clusters
 		if len(ids) == 0 {
-			for _, c := range a.clusters.List().Clusters {
-				if a.clusters.agentAccess(c.ID) != AgentOff && !c.Hidden {
-					ids = append(ids, c.ID)
-				}
+			for _, c := range a.sharedClusters(pol) {
+				ids = append(ids, c.ID)
 			}
 		}
 		for _, id := range ids {
-			if err := a.access(id, false); err != nil {
+			if err := a.access(id, false, pol); err != nil {
 				return "", "", fmt.Errorf("%s: %w", id, err)
 			}
 		}
@@ -705,14 +761,24 @@ func (a *Agents) dispatch(ctx context.Context, client, name string, args toolArg
 
 	write := name == "apply_manifest" || name == "delete_resource" || name == "scale" || name == "restart"
 	if !write {
-		if _, ok := map[string]bool{"list_resources": true, "get_resource": true, "get_logs": true, "get_events": true, "get_changes": true, "incident_report": true, "preview_impact": true}[name]; !ok {
+		if _, ok := map[string]bool{"cluster_overview": true, "list_resources": true, "get_resource": true, "get_logs": true, "get_events": true, "get_changes": true, "incident_report": true, "preview_impact": true}[name]; !ok {
 			return "", "", fmt.Errorf("%w: %s", errUnknownTool, name)
 		}
 	}
-	if err := a.access(args.Cluster, write); err != nil {
+	if err := a.access(args.Cluster, write, pol); err != nil {
 		return "", "", err
 	}
 	switch name {
+	case "cluster_overview":
+		cn, err := a.clusters.conn(args.Cluster)
+		if err != nil {
+			return "", "", err
+		}
+		ov, err := clusterOverview(ctx, cn.cs)
+		if err != nil {
+			return "", "", errors.New(friendlyError(err))
+		}
+		return jsonText(ov), "", nil
 	case "list_resources":
 		return a.listResources(ctx, args)
 	case "get_resource":

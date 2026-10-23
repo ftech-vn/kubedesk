@@ -90,6 +90,14 @@ clusters the core of the app:
   before the last restart), node and recent changes in one Markdown report,
   with tokens and passwords masked
 
+**An assistant in the app**
+- <kbd>⌘J</kbd> opens a chat with Claude in Microsoft Foundry, with your Azure
+  resource and API key (kept in the macOS keychain)
+- It sees every cluster in Kube Desk and what you have open, reads resources,
+  logs, events, the timeline and incident reports, and shows each step
+- Changes it proposes wait for your approval, with a diff, their impact and
+  its reason
+
 **AI agents, with you approving every change**
 - Kube Desk is an MCP server for Claude Code, Cursor, Codex, Claude Desktop
   and other MCP clients. Choose per cluster what agents may do: nothing, read,
@@ -168,6 +176,16 @@ The code is cross-platform (MyGo uses WebKitGTK on Linux and WebView2 on
 Windows), but releases are only built for macOS so far. You can
 [build it yourself](#build-from-source).
 
+## The assistant
+
+1. Deploy a Claude model in [Microsoft Foundry](https://ai.azure.com/)
+   (for example `claude-opus-5-5`, and `claude-opus-4-8` as a fallback).
+2. In Kube Desk, open **Assistant settings** (<kbd>⌘K</kbd>) and enter the
+   resource name or the deployment's Target URI, the API key, and the
+   deployment name. **Save and test** checks the connection.
+3. Press <kbd>⌘J</kbd> and ask, for example *"Which pods are failing in
+   this cluster, and why?"*
+
 ## Use with AI agents
 
 1. In Kube Desk, open **AI agents** (the robot in the title bar, or <kbd>⌘K</kbd>)
@@ -196,6 +214,7 @@ Kube Desk shows you the diff and what it affects before anything changes.
 | <kbd>⌘1</kbd> … <kbd>⌘9</kbd> | Switch to the nth cluster |
 | <kbd>⌘0</kbd> | All clusters |
 | <kbd>⇧⌘F</kbd> | Search every cluster |
+| <kbd>⌘J</kbd> | Open or close the assistant |
 | <kbd>⌘F</kbd> | Filter the current list |
 | <kbd>⌘S</kbd> | Apply the YAML being edited |
 | <kbd>Esc</kbd> | Close the details panel |
@@ -257,6 +276,7 @@ bunx tsc --noEmit             # type-check the frontend
 | `timeline.go`, `recorder.go` | The timeline: describing changes, storage, finding changes made while closed |
 | `impact.go` | What a delete, scale, restart or drain would affect |
 | `report.go` | Incident reports, and masking secrets in logs |
+| `assistant.go`, `overview.go` | The assistant: Claude in Microsoft Foundry, its tool loop, the cluster overview |
 | `agents.go`, `mcp_bridge.go` | The MCP server, its tools and approvals, and the stdio bridge |
 | `search.go`, `compare.go`, `plan.go` | Search across clusters, comparisons, diffs before applying |
 | `updates.go` | Auto-updates and the application menu |
