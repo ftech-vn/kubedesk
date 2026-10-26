@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -89,13 +88,13 @@ func (r *Runbooks) SetFolder(dir string) (RunbookFolder, error) {
 	return r.Folder(), err
 }
 
-// Reveal shows the folder of the runbooks in the Finder.
+// Reveal shows the folder of the runbooks in the file manager.
 func (r *Runbooks) Reveal() error {
 	d := r.dir()
 	if err := os.MkdirAll(d, 0o755); err != nil {
 		return err
 	}
-	return exec.Command("open", d).Start()
+	return mygo.Shell.OpenPath(d)
 }
 
 var frontMatter = regexp.MustCompile(`(?s)\A---\r?\n(.*?)\r?\n---\r?\n?`)

@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Download Kube Desk for macOS</title>
-    <meta name="description" content="Download Kube Desk 0.7.0 for macOS on Apple silicon. Install guide, setting up the assistant, connecting AI agents over MCP, and building from source for Linux, Windows and Intel Macs." />
+    <title>Download Kube Desk for macOS, Linux and Windows</title>
+    <meta name="description" content="Download Kube Desk 0.7.1 for macOS (Apple silicon), Linux (x64, arm64) and Windows (x64). Install guide, setting up the assistant, connecting AI agents over MCP, and building from source." />
     <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)" />
     <link rel="canonical" href="https://kubedesk.cloud/download.html" />
     <meta property="og:title" content="Download Kube Desk" />
-    <meta property="og:description" content="A fast Kubernetes desktop client for people who juggle many clusters. Free and open source, for macOS." />
+    <meta property="og:description" content="A fast Kubernetes desktop client for people who juggle many clusters. Free and open source, for macOS, Linux and Windows." />
     <meta property="og:image" content="https://kubedesk.cloud/assets/og.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/png" href="assets/favicon.png" />
@@ -71,22 +71,55 @@
         <div class="dl-card reveal">
           <img src="assets/icon.png" alt="" width="72" height="72" />
           <div>
-            <h2>Kube Desk 0.7.0 for macOS</h2>
+            <h2>Kube Desk 0.7.1</h2>
             <dl>
-              <div><dt>Released</dt><dd>24 October 2026</dd></div>
-              <div><dt>Needs</dt><dd>macOS 12 or later</dd></div>
-              <div><dt>Chip</dt><dd>Apple silicon (arm64)</dd></div>
+              <div><dt>Released</dt><dd>26 October 2026</dd></div>
+              <div><dt>For</dt><dd>macOS, Linux and Windows</dd></div>
               <div><dt>License</dt><dd>MIT</dd></div>
             </dl>
           </div>
           <div class="cta">
-            <a class="btn btn--primary" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
-              Download .dmg
-            </a>
             <a class="btn btn--ghost btn--sm" href="https://github.com/ftech-vn/kubedesk/releases">All releases on GitHub</a>
           </div>
         </div>
+        <div class="dl-platforms reveal">
+          <article class="dl-platform" data-os="mac">
+            <span class="dl-yours">For your system</span>
+            <h3>macOS</h3>
+            <p>macOS 12 or later, Apple silicon</p>
+            <a class="btn btn--primary" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>Download .dmg</a>
+            <div class="dl-more">
+              <a href="#source">Intel Macs: build from source</a>
+            </div>
+          </article>
+          <article class="dl-platform" data-os="linux">
+            <span class="dl-yours">For your system</span>
+            <h3>Linux</h3>
+            <p>x64 or arm64, with WebKitGTK 4.1</p>
+            <a class="btn btn--primary" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-linux-amd64.deb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>Download .deb (x64)</a>
+            <div class="dl-more">
+              <a href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-linux-arm64.deb">.deb for arm64</a>
+              <a href="#install-linux">install.sh, no root</a>
+            </div>
+          </article>
+          <article class="dl-platform" data-os="windows">
+            <span class="dl-yours">For your system</span>
+            <h3>Windows</h3>
+            <p>Windows 10 or 11, x64</p>
+            <a class="btn btn--primary" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-Setup-latest-amd64.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>Download installer</a>
+            <div class="dl-more">
+              <a href="#install-windows">Install guide</a>
+            </div>
+          </article>
+        </div>
+        <script>
+          (function () {
+            var ua = navigator.userAgent;
+            var os = /Windows/.test(ua) ? "windows" : /Mac OS X|Macintosh/.test(ua) ? "mac" : /Linux|X11/.test(ua) && !/Android/.test(ua) ? "linux" : "";
+            var el = os && document.querySelector('.dl-platform[data-os="' + os + '"]');
+            if (el) el.classList.add("is-yours");
+          })();
+        </script>
       </div>
 
       <section class="section">
@@ -94,18 +127,20 @@
           <nav class="toc" aria-label="On this page">
             <h4>On this page</h4>
             <ul>
-              <li><a href="#install">Install</a></li>
+              <li><a href="#install">Install on macOS</a></li>
+              <li><a href="#install-linux">Install on Linux</a></li>
+              <li><a href="#install-windows">Install on Windows</a></li>
               <li><a href="#updates">Updates</a></li>
               <li><a href="#assistant">Set up the assistant</a></li>
               <li><a href="#agents">Connect an AI agent</a></li>
-              <li><a href="#source">Linux, Windows, Intel</a></li>
+              <li><a href="#source">Build from source</a></li>
               <li><a href="#requirements">Requirements</a></li>
             </ul>
           </nav>
 
           <div class="prose">
-            <section id="install" data-palette-section="Install">
-              <h2>Install</h2>
+            <section id="install" data-palette-section="Install on macOS">
+              <h2>Install on macOS</h2>
               <p>Three steps, about a minute.</p>
               <ol class="steps">
                 <li>
@@ -141,6 +176,55 @@
                   loads your login shell’s <code>PATH</code>.
                 </p>
               </div>
+            </section>
+
+            <section id="install-linux" data-palette-section="Install on Linux">
+              <h2>Install on Linux</h2>
+              <p>
+                Install it for yourself in <code>~/.local</code>, without root. It adds Kube Desk to your applications
+                menu and keeps it up to date:
+              </p>
+              <div class="code">
+                <header><span>Terminal</span><button class="copy" type="button" data-copy="cmd-linux-sh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></header>
+                <pre id="cmd-linux-sh" data-text="curl -fsSL https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/install.sh | sh"><span class="p">$ </span>curl -fsSL https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/install.sh | sh</pre>
+              </div>
+              <p style="margin-top: 14px">
+                Or install the Debian package, for <a href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-linux-amd64.deb">x64</a> or
+                <a href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-linux-arm64.deb">arm64</a>, which brings what it needs:
+              </p>
+              <div class="code">
+                <header><span>Terminal</span><button class="copy" type="button" data-copy="cmd-linux-deb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></header>
+                <pre id="cmd-linux-deb"><span class="p">$ </span>sudo apt install ./Kube-Desk-latest-linux-amd64.deb</pre>
+              </div>
+              <p style="margin-top: 14px">
+                Kube Desk needs GTK 3 and WebKitGTK 4.1: <code>libwebkit2gtk-4.1-0</code> on Debian and Ubuntu,
+                <code>webkit2gtk4.1</code> on Fedora, <code>webkit2gtk-4.1</code> on Arch. The assistant keeps its API key
+                in the Secret Service (GNOME Keyring, KWallet, KeePassXC).
+              </p>
+            </section>
+
+            <section id="install-windows" data-palette-section="Install on Windows">
+              <h2>Install on Windows</h2>
+              <ol class="steps">
+                <li>
+                  <b>Download and run the installer</b>
+                  <p>
+                    <a href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-Setup-latest-amd64.exe">Kube Desk Setup</a> installs Kube Desk for you and adds
+                    it to the Start menu.
+                  </p>
+                </li>
+                <li>
+                  <b>Let SmartScreen run it</b>
+                  <p>
+                    The installer isn’t signed yet, so Windows may warn the first time. Choose <strong>More info</strong>,
+                    then <strong>Run anyway</strong>.
+                  </p>
+                </li>
+              </ol>
+              <p>
+                Kube Desk uses WebView2, which comes with Windows 10 and 11, and keeps the assistant’s API key in the
+                Credential Manager.
+              </p>
             </section>
 
             <section id="updates">
@@ -184,7 +268,7 @@
                   <b>Tell Kube Desk where it is</b>
                   <p>
                     Open <strong>Assistant settings</strong> from <kbd>⌘K</kbd>. For Foundry, enter the resource name or
-                    the Target URI, the key and the deployment name; the key goes to your macOS keychain. For Vertex AI,
+                    the Target URI, the key and the deployment name; the key goes to the system’s credential store (the keychain on macOS). For Vertex AI,
                     enter the project and the region (<code>global</code> by default). <strong>Save and test</strong>
                     checks the connection.
                   </p>
@@ -241,10 +325,10 @@
             </section>
 
             <section id="source" data-palette-section="Build from source">
-              <h2>Linux, Windows and Intel Macs</h2>
+              <h2>Build from source</h2>
               <p>
-                The code is cross-platform: MyGo uses WebKitGTK on Linux and WebView2 on Windows. Releases are only
-                built for Apple silicon so far, so on other systems, build it yourself. You need
+                For Intel Macs, other systems, or to change it. The code is cross-platform: MyGo uses WebKitGTK on Linux
+                and WebView2 on Windows. You need
                 <a href="https://go.dev/dl/">Go</a> 1.27 or later and <a href="https://bun.sh">Bun</a>; no C toolchain.
               </p>
               <div class="code">
@@ -263,7 +347,7 @@ bun run build"><span class="p">$ </span>git clone https://github.com/ftech-vn/ku
                 <pre><span class="p">$ </span>bun run build -- -platform darwin/universal,linux/amd64,windows/amd64</pre>
               </div>
               <p style="margin-top: 14px">
-                Linux and Windows releases, and notarized macOS builds, are on the
+                Notarized macOS builds and a signed Windows installer are on the
                 <a href="https://github.com/ftech-vn/kubedesk#roadmap">roadmap</a>.
               </p>
             </section>
@@ -271,8 +355,9 @@ bun run build"><span class="p">$ </span>git clone https://github.com/ftech-vn/ku
             <section id="requirements">
               <h2>Requirements</h2>
               <dl class="reqs">
-                <div><dt>System</dt><dd>macOS 12 Monterey or later</dd></div>
-                <div><dt>Chip</dt><dd>Apple silicon. Intel: build from source</dd></div>
+                <div><dt>macOS</dt><dd>macOS 12 Monterey or later, Apple silicon. Intel: build from source</dd></div>
+                <div><dt>Linux</dt><dd>x64 or arm64, with GTK 3 and WebKitGTK 4.1</dd></div>
+                <div><dt>Windows</dt><dd>Windows 10 or 11, x64, with WebView2</dd></div>
                 <div><dt>Clusters</dt><dd>Any Kubernetes API server your kubeconfig reaches</dd></div>
                 <div><dt>Metrics (optional)</dt><dd>metrics-server, for CPU and memory</dd></div>
                 <div><dt>Helm (optional)</dt><dd>The helm command, to roll releases back. Reading them needs nothing</dd></div>

@@ -9,7 +9,7 @@ paste in, from one small app. Switch clusters in a keystroke, watch resources
 change live, tail logs, open a shell, edit YAML.
 
 [Website](https://kubedesk.cloud/) ·
-[Download for macOS](https://github.com/ftech-vn/kubedesk/releases/latest) ·
+[Download for macOS, Linux and Windows](https://kubedesk.cloud/download.html) ·
 [Features](#features) ·
 [Screenshots](#screenshots) ·
 [Build from source](#build-from-source) ·
@@ -17,7 +17,7 @@ change live, tail logs, open a shell, edit YAML.
 [Tiếng Việt](README.vi.md)
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
-![Platform: macOS](https://img.shields.io/badge/platform-macOS%2012%2B-lightgrey)
+![Platform: macOS, Linux, Windows](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
 ![Go](https://img.shields.io/badge/Go-1.27-00ADD8)
 ![Built with MyGo](https://img.shields.io/badge/built%20with-MyGo-8b5cf6)
 
@@ -201,11 +201,33 @@ clusters the core of the app:
 After that, Kube Desk checks for updates daily. You can also check from
 **Kube Desk → Check for Updates…**.
 
-### Linux and Windows
+### Linux
 
-The code is cross-platform (MyGo uses WebKitGTK on Linux and WebView2 on
-Windows), but releases are only built for macOS so far. You can
-[build it yourself](#build-from-source).
+Install for yourself in `~/.local`, without root, and get updates
+automatically:
+
+```sh
+curl -fsSL https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/install.sh | sh
+```
+
+Or install the Debian package, for
+[x64](https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-linux-amd64.deb) or
+[arm64](https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-linux-arm64.deb):
+
+```sh
+sudo apt install ./Kube-Desk-latest-linux-amd64.deb
+```
+
+Kube Desk needs GTK 3 and WebKitGTK 4.1 (`libwebkit2gtk-4.1-0` on Debian and
+Ubuntu, `webkit2gtk4.1` on Fedora, `webkit2gtk-4.1` on Arch). The assistant
+keeps its API key in the Secret Service (GNOME Keyring, KWallet…).
+
+### Windows
+
+Download **[Kube-Desk-Setup-latest-amd64.exe](https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-Setup-latest-amd64.exe)**
+(Windows 10 or 11, x64) and run it. The installer isn't signed yet, so
+SmartScreen may warn: choose **More info → Run anyway**. Kube Desk uses
+WebView2, which comes with Windows, and keeps updating itself.
 
 ## The assistant
 
@@ -350,7 +372,8 @@ for 90 seconds after its last view closes.
 
 ## Roadmap
 
-- [ ] Notarized macOS builds, and Linux and Windows releases
+- [ ] Notarized macOS builds and a signed Windows installer
+- [x] Linux and Windows releases (0.7.1)
 - [x] Pod and node metrics in lists (0.2)
 - [x] Logs of all the pods of a workload (0.2)
 - [x] Watchlist with notifications and a menu bar icon (0.2)

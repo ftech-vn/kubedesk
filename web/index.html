@@ -6,7 +6,7 @@
     <title>Kube Desk — a Kubernetes desktop client for many clusters</title>
     <meta
       name="description"
-      content="Kube Desk is a fast, free Kubernetes desktop client for macOS. Every cluster in your kubeconfig in one small app: switch in a keystroke, watch resources live, tail logs, open a shell, edit YAML, see Helm releases and a map of each app, and ask an AI assistant, with you approving every change."
+      content="Kube Desk is a fast, free Kubernetes desktop client for macOS, Linux and Windows. Every cluster in your kubeconfig in one small app: switch in a keystroke, watch resources live, tail logs, open a shell, edit YAML, see Helm releases and a map of each app, and ask an AI assistant, with you approving every change."
     />
     <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)" />
@@ -14,7 +14,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://kubedesk.cloud/" />
     <meta property="og:title" content="Kube Desk — every cluster, one keystroke away" />
-    <meta property="og:description" content="A fast Kubernetes desktop client for people who juggle many clusters. Free and open source, for macOS." />
+    <meta property="og:description" content="A fast Kubernetes desktop client for people who juggle many clusters. Free and open source, for macOS, Linux and Windows." />
     <meta property="og:image" content="https://kubedesk.cloud/assets/og.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/png" href="assets/favicon.png" />
@@ -31,9 +31,9 @@
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
         "name": "Kube Desk",
-        "operatingSystem": "macOS 12 or later",
+        "operatingSystem": "macOS 12 or later, Linux, Windows 10 or later",
         "applicationCategory": "DeveloperApplication",
-        "softwareVersion": "0.7.0",
+        "softwareVersion": "0.7.1",
         "license": "https://opensource.org/licenses/MIT",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "downloadUrl": "https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg"
@@ -85,7 +85,7 @@
       <section class="hero" id="top">
         <div class="wrap hero__copy hero-in">
           <a class="release-line" href="changelog.html">
-            <b>0.7.0</b> Promote between clusters, namespace snapshots, and runbooks
+            <b>0.7.1</b> Now on Linux and Windows
           </a>
           <h1 class="display">Every cluster, <span class="soft">one keystroke</span> away.</h1>
           <div class="hero__aside">
@@ -96,9 +96,9 @@
             </p>
             <div class="hero__act">
             <div class="cta">
-              <a class="btn btn--primary" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.77-3.32-1.8-1.41-.14-2.76.83-3.47.83-.72 0-1.82-.81-3-.79-1.54.02-2.96.9-3.76 2.28-1.6 2.78-.41 6.9 1.15 9.16.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.23-.02 2.01-1.12 2.77-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.67zM14.1 5.84c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.67 1.37-.58.67-1.1 1.76-.96 2.79 1.01.08 2.05-.52 2.69-1.27z" /></svg>
-                Download for macOS
+              <a class="btn btn--primary" data-dl href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">
+                <svg data-apple viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.77-3.32-1.8-1.41-.14-2.76.83-3.47.83-.72 0-1.82-.81-3-.79-1.54.02-2.96.9-3.76 2.28-1.6 2.78-.41 6.9 1.15 9.16.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.23-.02 2.01-1.12 2.77-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.67zM14.1 5.84c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.67 1.37-.58.67-1.1 1.76-.96 2.79 1.01.08 2.05-.52 2.69-1.27z" /></svg>
+                <span data-dl-label>Download for macOS</span>
               </a>
               <a class="btn btn--ghost" href="https://github.com/ftech-vn/kubedesk">
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z" /></svg>
@@ -106,8 +106,8 @@
               </a>
             </div>
             <p class="fine">
-              <span>Free and open source (MIT)</span><span>Apple silicon, macOS 12+</span><span>No telemetry</span>
-              <a href="download.html#source">Linux, Windows, Intel</a>
+              <span>Free and open source (MIT)</span><span>macOS, Linux, Windows</span><span>No telemetry</span>
+              <a href="download.html">Other systems</a>
             </p>
             </div>
           </div>
@@ -174,8 +174,8 @@
             <aside class="spec reveal" aria-label="Specifications">
               <h3>At a glance</h3>
               <dl>
-                <dt>Version</dt><dd>0.7.0</dd>
-                <dt>Platform</dt><dd>macOS 12+, arm64</dd>
+                <dt>Version</dt><dd>0.7.1</dd>
+                <dt>Platform</dt><dd>macOS 12+, Linux, Windows 10+</dd>
                 <dt>Size</dt><dd>14 MB download, one binary</dd>
                 <dt>Renderer</dt><dd>system WebView</dd>
                 <dt>Auth</dt><dd>GKE, EKS, AKS, OIDC</dd>
@@ -466,7 +466,7 @@
                 <li>It starts from a whole-cluster overview, then reads logs, events, changes, Helm releases and incident reports</li>
                 <li>Every step it takes shows in the chat</li>
                 <li>A change it proposes opens the same approval as agents: the diff, what it affects, and its reason</li>
-                <li>Your API key stays in the macOS keychain; chats are saved on your Mac, to go on with later</li>
+                <li>Your API key stays in the system’s keychain; chats are saved on your computer, to go on with later</li>
               </ul>
               <p class="providers"><span>Microsoft Foundry</span><span>Google Vertex AI</span></p>
             </div>
@@ -876,15 +876,15 @@
           <h2 class="display">Bring every cluster<br />into one window.</h2>
           <p class="lede">Free and open source. Updates itself after the first install.</p>
           <div class="cta">
-            <a class="btn btn--primary" href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">
+            <a class="btn btn--primary" data-dl href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
-              Download Kube Desk 0.7.0
+              Download Kube Desk 0.7.1
             </a>
             <a class="btn btn--ghost" href="download.html">Install guide</a>
           </div>
           <p class="fine">
-            <span>macOS 12 or later, Apple silicon</span>
-            <span>Not notarized yet: the first time, right-click the app and choose Open</span>
+            <span>macOS 12+ (Apple silicon), Linux (x64, arm64), Windows 10+ (x64)</span>
+            <span>Not signed yet: the <a href="download.html">install guide</a> says how to open it the first time</span>
           </p>
         </div>
       </section>
@@ -934,5 +934,25 @@
 
     <script src="site.js"></script>
     <script src="home.js"></script>
+    <script>
+      // The download buttons get the installer for the visitor's system.
+      (function () {
+        var ua = navigator.userAgent;
+        var base = "https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/";
+        var dl = /Windows/.test(ua)
+          ? { file: "Kube-Desk-Setup-latest-amd64.exe", label: "Download for Windows" }
+          : /Linux|X11/.test(ua) && !/Android/.test(ua)
+            ? { file: /aarch64|arm64/.test(ua) ? "Kube-Desk-latest-linux-arm64.deb" : "Kube-Desk-latest-linux-amd64.deb", label: "Download for Linux" }
+            : null;
+        if (!dl) return;
+        document.querySelectorAll("[data-dl]").forEach(function (a) {
+          a.href = base + dl.file;
+          var label = a.querySelector("[data-dl-label]");
+          if (label) label.textContent = dl.label;
+          var apple = a.querySelector("[data-apple]");
+          if (apple) apple.remove();
+        });
+      })();
+    </script>
   </body>
 </html>

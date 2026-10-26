@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.1
+
+**Linux and Windows.** Kube Desk now ships for Linux (x64 and arm64), as a Debian package or a tar.gz that installs it in your home folder and keeps it up to date, and for Windows (x64), with an installer. Everything works as on macOS; the assistant keeps its API key in the system's credential store.
+
+- Show in folder, for snapshots and runbooks, opens the file manager of each system.
+
 ## 0.7.0
 
 **Promote from one cluster to another.** "Promote to another cluster…", in the menu of a workload, service, config map, ingress and more, or from Compare across clusters, copies an object to another cluster. Change its namespace and the images of its containers first, and bring the config maps its pods use, and their secrets if you choose. Kube Desk leaves out what a cluster fills in (status, identifiers, owners, cluster IPs, node ports), shows the diff of each object in the target, says what is missing there, such as a secret the pods need, and creates the namespace if it has to. Production targets ask you to type their name; the timeline names the change kubedesk-promote.

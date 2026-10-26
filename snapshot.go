@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -540,10 +539,11 @@ func (c *Clusters) openSnapshotFile(path string) {
 	SnapshotOpened.Broadcast(cl)
 }
 
-// RevealFile shows a file in the Finder.
+// RevealFile shows a file in the file manager.
 func (k *Kube) RevealFile(path string) error {
 	if !filepath.IsAbs(path) {
 		return errors.New("not a file")
 	}
-	return exec.Command("open", "-R", path).Start()
+	mygo.Shell.ShowItemInFolder(path)
+	return nil
 }

@@ -966,7 +966,7 @@ export const Kube = {
   restart(cluster: string, gvr: GVR, namespace: string, name: string): Promise<void> {
     return call("Kube.Restart", cluster, gvr, namespace, name);
   },
-  /** RevealFile shows a file in the Finder. */
+  /** RevealFile shows a file in the file manager. */
   revealFile(path: string): Promise<void> {
     return call("Kube.RevealFile", path);
   },
@@ -1100,7 +1100,7 @@ export const Runbooks = {
   list(): Promise<Runbook[]> {
     return call("Runbooks.List");
   },
-  /** Reveal shows the folder of the runbooks in the Finder. */
+  /** Reveal shows the folder of the runbooks in the file manager. */
   reveal(): Promise<void> {
     return call("Runbooks.Reveal");
   },

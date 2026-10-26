@@ -5,7 +5,7 @@
 **Ứng dụng desktop quản lý Kubernetes, nhanh và gọn, cho người làm việc với nhiều cluster.**
 
 [Website](https://kubedesk.cloud/) ·
-[Tải cho macOS](https://github.com/ftech-vn/kubedesk/releases/latest) ·
+[Tải cho macOS, Linux, Windows](https://kubedesk.cloud/download.html) ·
 [Lịch sử phát hành](RELEASE_NOTES.md) ·
 [English](README.md)
 
@@ -93,13 +93,34 @@ và [Lens](https://k8slens.dev), rồi lấy việc chuyển cluster làm trọn
 | ![Logs](docs/screenshots/logs.png) | ![Shell](docs/screenshots/shell.png) |
 | ![Deployment](docs/screenshots/deployment.png) | ![YAML](docs/screenshots/yaml.png) |
 
-## Cài đặt (macOS)
+## Cài đặt
+
+### macOS
 
 1. Tải **[Kube-Desk-latest-arm64.dmg](https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg)**
    (Apple silicon, macOS 12 trở lên) rồi kéo vào Applications.
 2. Bản phát hành chưa được notarize: lần đầu, chuột phải vào app và chọn
    **Open**, hoặc chạy
    `xattr -dr com.apple.quarantine "/Applications/Kube Desk.app"`.
+
+### Linux
+
+Cài cho user hiện tại vào `~/.local`, không cần root, app tự cập nhật:
+
+```sh
+curl -fsSL https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/install.sh | sh
+```
+
+Hoặc cài gói Debian, bản [x64](https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-linux-amd64.deb) hay
+[arm64](https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-linux-arm64.deb):
+`sudo apt install ./Kube-Desk-latest-linux-amd64.deb`. Cần GTK 3 và
+WebKitGTK 4.1.
+
+### Windows
+
+Tải **[Kube-Desk-Setup-latest-amd64.exe](https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-Setup-latest-amd64.exe)**
+(Windows 10/11, x64) rồi chạy. Bộ cài chưa được ký, nên SmartScreen có thể
+cảnh báo: chọn **More info → Run anyway**.
 
 ## Build từ mã nguồn
 

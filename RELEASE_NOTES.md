@@ -9,6 +9,7 @@ biết.
 
 | Bản | Ngày | Điểm chính | Tải về (delta) |
 |---|---|---|---|
+| [0.7.1](#071--26102026) | 26/10/2026 | Có bản cho Linux (x64, arm64: gói .deb hoặc install.sh) và Windows (x64, bộ cài .exe) | 0.7.0 → 0.7.1 trên macOS: 1 MB |
 | [0.7.0](#070--24102026) | 24/10/2026 | Promote giữa các cluster, ảnh chụp namespace (file .kubedesk), runbook gắn vào resource, Gateway API trên Map | xem trang Releases |
 | [0.6.0](#060--24102026) | 24/10/2026 | Helm releases, Resource map, nút theo quyền RBAC, kiểm tra kubeconfig, assistant dùng được Vertex AI và lưu lịch sử chat | xem trang Releases |
 | [0.5.0](#050--23102026) | 23/10/2026 | AI assistant chat ngay trong app (Claude trên Microsoft Foundry), đề xuất thay đổi phải được duyệt | xem trang Releases |
@@ -20,8 +21,32 @@ biết.
 
 Tải bản mới nhất:
 <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg>
-(macOS 12 trở lên, Apple silicon). App đã cài sẽ tự cập nhật. Thường app chỉ
+(macOS 12 trở lên, Apple silicon), <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-linux-amd64.deb>
+(Linux x64; arm64: `...-linux-arm64.deb`, hoặc `curl -fsSL https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/install.sh | sh`)
+và <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-Setup-latest-amd64.exe> (Windows 10/11 x64). App đã cài sẽ tự cập nhật. Thường app chỉ
 tải phần thay đổi (delta), như ở cột cuối bảng trên.
+
+---
+
+## 0.7.1 · 26/10/2026
+
+### Tính năng mới
+
+**Linux và Windows**
+- Linux x64 và arm64: gói `.deb` (cần `libwebkit2gtk-4.1-0`), hoặc
+  `install.sh` cài vào `~/.local` không cần root và tự cập nhật.
+- Windows x64: bộ cài `Kube Desk Setup 0.7.1 amd64.exe`, app tự cập nhật.
+- Mọi tính năng chạy như trên macOS. Assistant lưu API key trong kho
+  credential của hệ điều hành: Secret Service trên Linux, Credential Manager
+  trên Windows.
+
+### Sửa lỗi
+- "Show in folder" của snapshot và runbook trước chỉ chạy trên macOS
+  (`open`), giờ mở file manager của từng hệ điều hành.
+
+### Giới hạn đã biết
+- Bộ cài Windows chưa được ký: SmartScreen sẽ cảnh báo lần đầu.
+- Bản macOS vẫn chưa notarize.
 
 ---
 
