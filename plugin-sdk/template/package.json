@@ -1,0 +1,25 @@
+{
+  "name": "kubedesk-plugin-hello",
+  "version": "0.1.0",
+  "description": "A Kube Desk plugin",
+  "keywords": ["kubedesk-plugin"],
+  "license": "MIT",
+  "files": ["dist", "README.md"],
+  "engines": {
+    "kubedesk": ">=0.8.0"
+  },
+  "kubedesk": {
+    "displayName": "Hello",
+    "main": "dist/main.js"
+  },
+  "scripts": {
+    "build": "bun build src/index.tsx --outfile dist/main.js --format cjs --target browser --external react --external 'react/*' --external react-dom --external kubedesk --production",
+    "dev": "bun run build --watch",
+    "typecheck": "tsc --noEmit",
+    "package": "bun run build && npm pack"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "typescript": "^7"
+  }
+}

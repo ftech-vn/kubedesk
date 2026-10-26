@@ -7,6 +7,7 @@ The Kube Desk website: plain HTML, CSS and JavaScript, with no build step.
 | `index.html` | Home: what Kube Desk does, with a working preview of the app (`home.js`) |
 | `download.html` | Download, install, connecting AI agents, building from source |
 | `changelog.html` | Release notes, from `../CHANGELOG.md` |
+| `plugins.html` | The plugin marketplace (`plugins.js`), read live from the plugin registry on R2 |
 | `404.html` | Not found |
 
 `styles.css` and `site.js` (top bar, ⌘K palette, copy buttons) are shared by every page.
@@ -50,6 +51,19 @@ kubectl --context azure-k3s -n shipez get secret ghcr -o json \
   | kubectl --context azure-k3s apply -f -
 kubectl --context azure-k3s apply -f web/k8s/kubedesk-web.yaml
 ```
+
+## The plugin marketplace
+
+`plugins.html` reads `plugins/index.json` of the `kube-desk-releases` bucket from the browser, so publishing a plugin
+(`../scripts/publish-plugin.sh`, see `../plugin-sdk/README.md`) needs no new image. The bucket must let the site read
+it across origins, once:
+
+```sh
+wrangler r2 bucket cors set kube-desk-releases --file web/r2-cors.json
+```
+
+To preview with a local registry, such as the `OUT` of `DRY_RUN=1 ../scripts/publish-plugin.sh …` copied into
+`plugins/` here: `http://localhost:4321/plugins.html?registry=/plugins`.
 
 ## When releasing a new version
 

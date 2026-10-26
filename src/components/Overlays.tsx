@@ -17,6 +17,7 @@ import { AssistantSettingsDialog } from "./AssistantSettings";
 import { SearchDialog } from "./SearchDialog";
 import { CompareDialog } from "./CompareDialog";
 import { DiffView } from "./DiffView";
+import { PluginsDialog } from "./PluginsDialog";
 
 export function Dialogs() {
   const dialog = useApp((s) => s.dialog);
@@ -37,6 +38,8 @@ export function Dialogs() {
       return <AssistantSettingsDialog onClose={close} />;
     case "health":
       return <HealthDialog onClose={close} />;
+    case "plugins":
+      return <PluginsDialog key={`${dialog.install ?? ""}@${dialog.version ?? ""}`} plugin={dialog.plugin} install={dialog.install} version={dialog.version} onClose={close} />;
     case "snapshot":
       return <SnapshotDialog cluster={dialog.cluster} namespace={dialog.namespace} onClose={close} />;
     case "promote":

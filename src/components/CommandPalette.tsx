@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Bell, BookOpen, Bot, Box, Camera, Sparkles, Download, History, Globe, Gauge, HeartPulse, Home, Layers, LayoutGrid, Monitor, Moon, Network, Package, Plus, Search, Settings2, Sun, Waypoints } from "lucide-react";
+import { Bell, BookOpen, Bot, Box, Camera, Puzzle, Sparkles, Download, History, Globe, Gauge, HeartPulse, Home, Layers, LayoutGrid, Monitor, Moon, Network, Package, Plus, Search, Settings2, Sun, Waypoints } from "lucide-react";
 import { AppInfo } from "../mygo";
 import { isWatched, toggleWatch, useAlerts } from "../lib/alerts";
 import { useAssistant } from "../lib/assistant";
@@ -9,6 +9,8 @@ import { useWatch } from "../lib/watch";
 import { ClusterTile } from "./ClusterRail";
 import { openSnapshots } from "./SnapshotDialog";
 import { Kbd, mod } from "./ui";
+import { guard, usePlugins } from "../plugins/registry";
+import { pluginIcon } from "../plugins/Slot";
 
 interface Item {
   id: string;
@@ -46,6 +48,7 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
   const pods = useWatch(active, byKey.get("pods")!.gvr, ns);
   const deployments = useWatch(active, byKey.get("deployments")!.gvr, ns);
   const services = useWatch(active, byKey.get("services")!.gvr, ns);
+  const pluginCommands = usePlugins((p) => p.commands);
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(0);
   const list = useRef<HTMLDivElement>(null);
@@ -71,6 +74,12 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
     out.push({ id: "assistant", group: "App", label: "Ask the assistant…", hint: "⌘J", keywords: "ai chat claude help explain", icon: <Sparkles size={16} />, run: () => useAssistant.getState().toggle(true) });
     out.push({ id: "assistant-settings", group: "App", label: "Assistant settings…", keywords: "ai claude foundry azure vertex google gcloud api key", icon: <Sparkles size={16} />, run: () => s.openDialog({ kind: "assistant-settings" }) });
     out.push({ id: "agents", group: "App", label: "AI agents (MCP)…", keywords: "mcp claude codex cursor ai agent", icon: <Bot size={16} />, run: () => s.openDialog({ kind: "agents" }) });
+    out.push({ id: "plugins", group: "App", label: "Plugins…", keywords: "plugin extension addon install", icon: <Puzzle size={16} />, run: () => s.openDialog({ kind: "plugins" }) });
+    const ctx = { cluster: active, namespace: ns };
+    for (const c of pluginCommands) {
+      if (c.when && !guard(c.plugin, () => c.when!(ctx), false)) continue;
+      out.push({ id: `plugin:${c.key}`, group: "Plugins", label: c.label, keywords: c.keywords, icon: pluginIcon(c.plugin, c.icon, 16), run: () => void c.run(ctx) });
+    }
     out.push({ id: "updates", group: "App", label: "Check for updates…", keywords: "update version upgrade", icon: <Download size={16} />, run: () => AppInfo.checkForUpdates() });
     out.push({ id: "theme:light", group: "Appearance", label: "Light mode", keywords: "theme", hint: s.theme === "light" ? "current" : undefined, icon: <Sun size={16} />, run: () => s.setTheme("light") });
     out.push({ id: "theme:dark", group: "Appearance", label: "Dark mode", keywords: "theme", hint: s.theme === "dark" ? "current" : undefined, icon: <Moon size={16} />, run: () => s.setTheme("dark") });
@@ -119,7 +128,7 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
       objs(pods.items, "pods", "Pod", <Box size={16} />);
     }
     return out;
-  }, [s, active, namespaces.items, pods.items, deployments.items, services.items]);
+  }, [s, active, ns, namespaces.items, pods.items, deployments.items, services.items, pluginCommands]);
 
   const query = q.trim().toLowerCase();
   const results = useMemo(() => {

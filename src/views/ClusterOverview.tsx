@@ -11,6 +11,8 @@ import { useAlerts } from "../lib/alerts";
 import { useRunbooksFor } from "../lib/runbooks";
 import { RunbooksFor } from "../components/Runbooks";
 import { ResourceBar } from "./details/Overview";
+import { usePlugins } from "../plugins/registry";
+import { PluginBoundary } from "../plugins/Slot";
 
 const def = (k: string) => byKey.get(k)!;
 
@@ -169,8 +171,24 @@ export function ClusterOverview({ cluster }: { cluster: string }) {
             </div>
           )}
         </Card>
+        <PluginCards cluster={cluster} namespace={ns} />
       </div>
     </div>
+  );
+}
+
+function PluginCards({ cluster, namespace }: { cluster: string; namespace: string }) {
+  const cards = usePlugins((s) => s.overviewCards);
+  return (
+    <>
+      {cards.map((c) => (
+        <Card key={c.key} title={c.title} className={c.wide ? "span-2" : undefined}>
+          <PluginBoundary plugin={c.plugin}>
+            <c.component cluster={cluster} namespace={namespace} />
+          </PluginBoundary>
+        </Card>
+      ))}
+    </>
   );
 }
 

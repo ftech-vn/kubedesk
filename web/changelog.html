@@ -45,6 +45,7 @@
         <nav class="links" aria-label="Main">
           <a href="./#features">Features</a>
           <a href="./#agents">AI agents</a>
+          <a href="plugins.html">Plugins</a>
           <a href="changelog.html" aria-current="page">Changelog</a>
           <a href="https://github.com/ftech-vn/kubedesk">GitHub</a>
           <a class="only-sm" href="download.html">Download</a>
@@ -75,6 +76,7 @@
           <nav class="toc" aria-label="Releases">
             <h4>Releases</h4>
             <ul>
+              <li><a href="#v0-8-0">0.8.0 <small>26 Oct 2026</small></a></li>
               <li><a href="#v0-7-1">0.7.1 <small>26 Oct 2026</small></a></li>
               <li><a href="#v0-7-0">0.7.0 <small>24 Oct 2026</small></a></li>
               <li><a href="#v0-6-0">0.6.0 <small>24 Oct 2026</small></a></li>
@@ -86,13 +88,43 @@
               <li><a href="#v0-1-0">0.1.0 <small>21 Oct 2026</small></a></li>
             </ul>
             <p style="margin-top: 22px">
-              <a class="btn btn--primary btn--sm" href="download.html">Download 0.7.1</a>
+              <a class="btn btn--primary btn--sm" href="download.html">Download 0.8.0</a>
             </p>
           </nav>
 
           <div class="prose">
+            <section class="release" id="v0-8-0" data-palette-section="0.8.0: plugins">
+              <div class="release__meta"><span class="v">0.8.0</span><time datetime="2026-10-26">26 October 2026</time><span class="latest">Latest</span></div>
+              <h2 class="h2">Plugins, and a marketplace to find them</h2>
+              <p class="summary">Add pages, tabs, columns, actions and commands to Kube Desk, from plugins others wrote, or your own.</p>
+
+              <h3>Plugins</h3>
+              <p>
+                Plugins add to Kube Desk: pages in the sidebar, tabs and sections in an object's details, items in its menu,
+                columns in lists (custom resources' too), commands in <kbd>⌘K</kbd>, buttons in the title bar, cards on the
+                overview, and settings of their own. A plugin that crashes says so in its place and leaves the rest of the app
+                alone. The changes a plugin asks for go through Kube Desk's diff and confirmation, and read-only clusters
+                refuse them.
+              </p>
+
+              <h3>A marketplace</h3>
+              <p>
+                Find plugins in Kube Desk (<kbd>⌘K</kbd> → Plugins… → Find plugins) or on <a href="plugins.html">the
+                marketplace</a>, whose Install button opens Kube Desk. They come from Kube Desk's own registry, which signs its
+                index; Kube Desk checks the signature and each archive before it installs, asks you first, and offers updates.
+                Plugins of your own team install from a file or an address.
+              </p>
+
+              <h3>Writing plugins</h3>
+              <p>
+                A plugin is a React bundle with a small, versioned API and the app's own components. Load its folder in Kube
+                Desk, and it reloads as you rebuild it. The <a href="https://github.com/ftech-vn/kubedesk/blob/main/plugin-sdk/README.md">plugin
+                guide</a> has the API and two examples: cert-manager certificates, and a kubectl helper.
+              </p>
+            </section>
+
             <section class="release" id="v0-7-1" data-palette-section="0.7.1: Linux and Windows">
-              <div class="release__meta"><span class="v">0.7.1</span><time datetime="2026-10-26">26 October 2026</time><span class="latest">Latest</span></div>
+              <div class="release__meta"><span class="v">0.7.1</span><time datetime="2026-10-26">26 October 2026</time></div>
               <h2 class="h2">Kube Desk on Linux and Windows</h2>
               <p class="summary">The same app, on the system you use.</p>
 

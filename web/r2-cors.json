@@ -1,0 +1,11 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": ["https://kubedesk.cloud", "https://www.kubedesk.cloud", "http://localhost:4321"],
+        "methods": ["GET", "HEAD"]
+      },
+      "maxAgeSeconds": 3600
+    }
+  ]
+}

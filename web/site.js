@@ -24,6 +24,7 @@
     { label: "Set up the assistant", hint: "Microsoft Foundry or Google Vertex AI", href: "download.html#assistant", icon: I.page },
     { label: "Connect an AI agent", hint: "Download", href: "download.html#agents", icon: I.page },
     { label: "Build from source", hint: "Linux, Windows, Intel", href: "download.html#source", icon: I.page },
+    { label: "Plugins", hint: "Find and install plugins", href: "plugins.html", icon: I.page },
     { label: "Changelog", hint: "What's new in each release", href: "changelog.html", icon: I.page },
     { label: "Source code on GitHub", hint: "github.com", href: REPO, icon: I.link },
     { label: "All releases", hint: "github.com", href: REPO + "/releases", icon: I.link },

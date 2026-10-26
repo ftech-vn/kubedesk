@@ -1,0 +1,36 @@
+{
+  "name": "kubedesk-plugin-kubectl-helper",
+  "version": "0.1.0",
+  "description": "Copy the kubectl command of any object, and see the requests and limits of pods",
+  "keywords": [
+    "kubedesk-plugin",
+    "kubectl"
+  ],
+  "author": "Kube Desk",
+  "license": "MIT",
+  "homepage": "https://github.com/ftech-vn/kubedesk/tree/main/plugin-sdk/examples/kubectl-helper",
+  "files": [
+    "dist",
+    "README.md",
+    "icon.png"
+  ],
+  "engines": {
+    "kubedesk": ">=0.8.0"
+  },
+  "kubedesk": {
+    "displayName": "kubectl helper",
+    "main": "dist/main.js",
+    "icon": "icon.png",
+    "features": [
+      "Copy the kubectl command that gets any object, from its menu",
+      "Copy kubectl config use-context for the cluster, from ⌘K",
+      "A Resources tab for pods: each container's requests and limits",
+      "Choose the command (kubectl, k, oc) and the output format"
+    ]
+  },
+  "scripts": {
+    "build": "bun build src/index.tsx --outfile dist/main.js --format cjs --target browser --external react --external 'react/*' --external react-dom --external kubedesk --production",
+    "dev": "bun run build --watch",
+    "package": "bun run build && npm pack"
+  }
+}

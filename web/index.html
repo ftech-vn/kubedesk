@@ -33,7 +33,7 @@
         "name": "Kube Desk",
         "operatingSystem": "macOS 12 or later, Linux, Windows 10 or later",
         "applicationCategory": "DeveloperApplication",
-        "softwareVersion": "0.7.1",
+        "softwareVersion": "0.8.0",
         "license": "https://opensource.org/licenses/MIT",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "downloadUrl": "https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg"
@@ -66,6 +66,7 @@
         <nav class="links" aria-label="Main">
           <a href="#features">Features</a>
           <a href="#assistant">Assistant</a>
+          <a href="plugins.html">Plugins</a>
           <a href="changelog.html">Changelog</a>
           <a href="https://github.com/ftech-vn/kubedesk">GitHub</a>
           <a class="only-sm" href="download.html">Download</a>
@@ -85,7 +86,7 @@
       <section class="hero" id="top">
         <div class="wrap hero__copy hero-in">
           <a class="release-line" href="changelog.html">
-            <b>0.7.1</b> Now on Linux and Windows
+            <b>0.8.0</b> Plugins, and a marketplace to find them
           </a>
           <h1 class="display">Every cluster, <span class="soft">one keystroke</span> away.</h1>
           <div class="hero__aside">
@@ -174,7 +175,7 @@
             <aside class="spec reveal" aria-label="Specifications">
               <h3>At a glance</h3>
               <dl>
-                <dt>Version</dt><dd>0.7.1</dd>
+                <dt>Version</dt><dd>0.8.0</dd>
                 <dt>Platform</dt><dd>macOS 12+, Linux, Windows 10+</dd>
                 <dt>Size</dt><dd>14 MB download, one binary</dd>
                 <dt>Renderer</dt><dd>system WebView</dd>
@@ -754,6 +755,60 @@
         </div>
       </section>
 
+      <!-- ============ plugins ============ -->
+      <section class="section" id="plugins" data-palette-section="Plugins">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <h2 class="h2">Add what your team needs.</h2>
+            <p class="lede">
+              Plugins add pages, tabs, columns, actions and commands to Kube Desk. Find them in the app or in the
+              <a href="plugins.html">marketplace</a>, reviewed and signed, and write your own in React.
+            </p>
+          </div>
+          <div class="trio">
+            <div class="reveal">
+              <p class="where">⌘K → Plugins… → Find plugins</p>
+              <div class="mock" aria-label="Example: the plugins you can install">
+                <div class="mock__h">Find plugins <small>signed by the registry</small></div>
+                <div class="mock__b">
+                  <p class="promo-row"><span>cert-manager</span><code>0.1.0 · Install</code></p>
+                  <p class="promo-row"><span>kubectl helper</span><code>0.1.0 · Installed</code></p>
+                </div>
+              </div>
+              <p class="trio__p">Kube Desk checks the registry's signature and each archive before it installs, asks you first, and keeps plugins up to date.</p>
+            </div>
+            <div class="reveal">
+              <p class="where">Where plugins show</p>
+              <div class="mock" aria-label="What plugins can add">
+                <div class="mock__b">
+                  <ul class="plain-list">
+                    <li>Pages in the sidebar, and cards on the overview</li>
+                    <li>Tabs and sections in an object's details</li>
+                    <li>Actions in menus, columns in lists, custom resources' too</li>
+                    <li>Commands in ⌘K, buttons in the title bar, settings</li>
+                  </ul>
+                </div>
+              </div>
+              <p class="trio__p">A plugin that crashes says so in its place, and the rest of the app carries on. Changes it asks for go through Kube Desk's diff and confirmation.</p>
+            </div>
+            <div class="reveal">
+              <p class="where">Write your own</p>
+              <div class="mock" aria-label="Example plugin code">
+                <div class="diff">
+                  <div class="ctx">import { registerPage, k8s, ui } from "kubedesk";</div>
+                  <div class="ctx"> </div>
+                  <div class="add">registerPage({ id: "failing",</div>
+                  <div class="add">  title: "Failing pods",</div>
+                  <div class="add">  component: FailingPods });</div>
+                </div>
+              </div>
+              <p class="trio__p">A small, versioned API and the app's own components. Load your folder in Kube Desk and it reloads as you build. <a href="https://github.com/ftech-vn/kubedesk/blob/main/plugin-sdk/README.md">The plugin guide</a></p>
+            </div>
+          </div>
+          <p class="reveal" style="margin-top: 32px"><a class="btn btn--ghost" href="plugins.html">Browse plugins</a></p>
+        </div>
+      </section>
+
       <!-- ============ screenshots ============ -->
       <section class="section" id="screens" data-palette-section="Screenshots">
         <div class="wrap">
@@ -878,7 +933,7 @@
           <div class="cta">
             <a class="btn btn--primary" data-dl href="https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
-              Download Kube Desk 0.7.1
+              Download Kube Desk 0.8.0
             </a>
             <a class="btn btn--ghost" href="download.html">Install guide</a>
           </div>

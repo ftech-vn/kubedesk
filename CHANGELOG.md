@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+
+**Plugins.** Plugins add to Kube Desk: pages in the sidebar, tabs and sections in an object's details, items in its menu, columns in lists (custom resources' too), commands in ⌘K, buttons in the title bar, cards on the overview, and settings of their own. Find them in Plugins (⌘K → Plugins…) or on kubedesk.cloud/plugins.html, whose Install button opens Kube Desk. They come from Kube Desk's own registry, which signs its index; Kube Desk checks the signature and each archive before installing, and offers updates. A plugin can also be installed from a file or an address. An installed plugin is off until you turn it on, since it runs with the app's access; the changes it asks for go through Kube Desk's diff and confirmation, and read-only clusters refuse them. A plugin that crashes says so in its place and leaves the rest of the app alone.
+
+**Writing plugins.** A plugin is a React bundle with a small, versioned API, the "kubedesk" module. Start one with scripts/new-plugin.sh, load its folder in Plugins, and Kube Desk reloads it as you rebuild it. The guide, the types and two examples, cert-manager certificates and a kubectl helper, are in plugin-sdk/.
+
 ## 0.7.1
 
 **Linux and Windows.** Kube Desk now ships for Linux (x64 and arm64), as a Debian package or a tar.gz that installs it in your home folder and keeps it up to date, and for Windows (x64), with an installer. Everything works as on macOS; the assistant keeps its API key in the system's credential store.

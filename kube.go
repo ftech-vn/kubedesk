@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -241,6 +242,40 @@ func (k *Kube) Get(ctx context.Context, cluster string, gvr GVR, namespace, name
 		return nil, err
 	}
 	return trim(o), nil
+}
+
+// Request reads a path of the cluster's API with GET, such as
+// /apis/metrics.k8s.io/v1beta1/nodes or a service's /proxy/, for plugins.
+// It returns the body; it changes nothing.
+func (k *Kube) Request(ctx context.Context, cluster, path string) (string, error) {
+	if !strings.HasPrefix(path, "/") {
+		return "", errors.New("the path must start with /")
+	}
+	cn, err := k.clusters.conn(cluster)
+	if err != nil {
+		return "", err
+	}
+	if cn.snapshot != nil {
+		return "", errSnapshot
+	}
+	u, err := url.Parse(path)
+	if err != nil {
+		return "", err
+	}
+	req := cn.cs.Discovery().RESTClient().Get().AbsPath(u.Path)
+	for key, vals := range u.Query() {
+		for _, v := range vals {
+			req = req.Param(key, v)
+		}
+	}
+	b, err := req.DoRaw(ctx)
+	if err != nil {
+		if len(b) > 0 {
+			return "", fmt.Errorf("%w: %s", err, strings.TrimSpace(string(b)))
+		}
+		return "", err
+	}
+	return string(b), nil
 }
 
 // GetYAML returns one object as YAML, without its managed fields.

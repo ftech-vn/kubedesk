@@ -9,6 +9,7 @@ biết.
 
 | Bản | Ngày | Điểm chính | Tải về (delta) |
 |---|---|---|---|
+| [0.8.0](#080--26102026) | 26/10/2026 | Plugin và marketplace (registry riêng trên R2, có chữ ký): thêm trang, tab, action, cột, lệnh ⌘K; bộ SDK và 2 plugin mẫu | xem trang Releases |
 | [0.7.1](#071--26102026) | 26/10/2026 | Có bản cho Linux (x64, arm64: gói .deb hoặc install.sh) và Windows (x64, bộ cài .exe) | 0.7.0 → 0.7.1 trên macOS: 1 MB |
 | [0.7.0](#070--24102026) | 24/10/2026 | Promote giữa các cluster, ảnh chụp namespace (file .kubedesk), runbook gắn vào resource, Gateway API trên Map | xem trang Releases |
 | [0.6.0](#060--24102026) | 24/10/2026 | Helm releases, Resource map, nút theo quyền RBAC, kiểm tra kubeconfig, assistant dùng được Vertex AI và lưu lịch sử chat | xem trang Releases |
@@ -25,6 +26,62 @@ Tải bản mới nhất:
 (Linux x64; arm64: `...-linux-arm64.deb`, hoặc `curl -fsSL https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/install.sh | sh`)
 và <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-Setup-latest-amd64.exe> (Windows 10/11 x64). App đã cài sẽ tự cập nhật. Thường app chỉ
 tải phần thay đổi (delta), như ở cột cuối bảng trên.
+
+---
+
+## 0.8.0 · 26/10/2026
+
+### Tính năng mới
+
+**Plugin (theo hướng của Headlamp)**
+- Plugin thêm được: trang trong sidebar (nhóm Plugins), tab và section trong
+  chi tiết object, action trong menu, cột trong danh sách (cả custom
+  resource), lệnh trong ⌘K, nút trên title bar, card trên overview, và trang
+  cài đặt riêng.
+- Quản lý ở **Plugins** (⌘K → Plugins…, hoặc menu Kube Desk → Plugins…):
+  bật/tắt, gỡ, xem lỗi, kiểm tra bản cập nhật.
+- **Marketplace riêng**, không dùng npm: plugin nằm trong registry của Kube
+  Desk trên R2 (`plugins/index.json` cùng các archive). Index được ký bằng
+  khoá Ed25519 riêng của registry; app chỉ tin index có chữ ký đúng và kiểm
+  SHA-256 + kích thước của từng archive trước khi cài.
+- Tìm và cài ở tab **Find plugins** trong app (có trang chi tiết với README,
+  danh sách tính năng, version), hoặc trên web ở
+  `kubedesk.cloud/plugins.html`: nút **Install in Kube Desk** mở app qua link
+  `kubedesk://plugins/install?id=…`, app hiện plugin và hỏi trước khi cài.
+- Vẫn cài được từ file `.tgz`/`.zip`, hoặc từ địa chỉ HTTPS (tuỳ chọn
+  SHA-256), cho plugin nội bộ.
+- Plugin mới cài **tắt sẵn**; bật lên thì app nói rõ plugin chạy với quyền như
+  app. Thay đổi plugin muốn làm phải qua diff và xác nhận của app (production
+  phải gõ tên cluster, read-only từ chối).
+- Plugin lỗi chỉ hiện báo lỗi ở chỗ của nó, không làm hỏng app; plugin này lỗi
+  không chặn plugin khác.
+
+**Viết plugin**
+- API nhỏ, có version (`apiVersion: 1`), module `kubedesk`; React dùng chung
+  với app. Kiểu ở `plugin-sdk/kubedesk.d.ts`, hướng dẫn ở
+  `plugin-sdk/README.md`.
+- `scripts/new-plugin.sh <thư mục>` tạo plugin từ template; build bằng
+  `bun build`. **Load from folder…** nạp plugin đang viết, và app tự nạp lại
+  plugin mỗi lần build lại, không phải reload app.
+- `engines.kubedesk` khai báo version app hỗ trợ; app từ chối cài và không
+  chạy plugin không hợp.
+- Publish: `scripts/publish-plugin.sh <thư mục plugin>` build, pack, thêm vào
+  index, ký và upload lên R2 (`DRY_RUN=1` để xem trước). Gỡ một plugin hay
+  một version: `scripts/publish-plugin.sh --remove <id>[@version]`. Khoá
+  registry tạo bằng `go run ./cmd/plugin-registry keygen`, nằm ở
+  `~/Library/Application Support/mygo/update-keys/kubedesk-plugins.key`.
+- Trên Windows và Linux app chỉ chạy một instance; link và file mở khi app
+  đang chạy được chuyển cho instance đó.
+- 2 plugin mẫu: cert-manager (trang Certificates, card overview, cột Expires,
+  section, action "Open its secret", cài đặt số ngày cảnh báo) và kubectl
+  helper ("Copy kubectl command", lệnh ⌘K, tab Resources cho pod).
+
+### Giới hạn đã biết
+- Plugin chạy chung ngữ cảnh JavaScript với app, không sandbox (giống
+  Headlamp): chỉ cài plugin của người bạn tin.
+- Chỉ maintainer (người giữ khoá registry) publish được lên marketplace;
+  tác giả khác gửi plugin qua GitHub issue để được duyệt.
+- Plugin chưa thêm được công cụ cho assistant và MCP agent.
 
 ---
 

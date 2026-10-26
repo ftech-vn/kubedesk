@@ -3503,3 +3503,228 @@ h2:hover .copy-btn {
 .overview-runbooks {
   margin-bottom: 16px;
 }
+
+/* ---- Plugins ---- */
+
+.plugins {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+.plugins-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.plugins-toolbar .search-input {
+  flex: 1;
+  max-width: 340px;
+}
+.plugin-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  max-height: 52vh;
+  overflow-y: auto;
+}
+.plugin-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+}
+.plugin-row + .plugin-row {
+  border-top: 1px solid var(--border);
+}
+.plugin-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--faint);
+}
+.plugin-row.on .plugin-icon {
+  background: var(--active);
+  color: var(--accent);
+}
+.plugin-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.plugin-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.plugin-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+}
+.plugin-meta .mono {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 360px;
+  white-space: nowrap;
+}
+.plugin-meta .link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.plugin-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+.plugins-note {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 0;
+}
+.plugins-note svg {
+  flex: none;
+  margin-top: 2px;
+}
+.plugin-settings-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+  margin-left: 6px;
+  cursor: pointer;
+}
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: inherit;
+}
+.switch span {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--border-strong);
+  transition: background 0.15s;
+  pointer-events: none;
+}
+.switch span::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s;
+}
+.switch input:checked + span {
+  background: var(--accent);
+}
+.switch input:checked + span::after {
+  transform: translateX(14px);
+}
+.switch input:focus-visible + span {
+  box-shadow: 0 0 0 3px var(--selection);
+}
+.switch input:disabled + span {
+  opacity: 0.5;
+}
+.switch:has(input:disabled) {
+  cursor: default;
+}
+
+.plugin-crash {
+  margin: 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--bad);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  background: var(--panel);
+}
+.plugin-crash-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.plugin-crash .error-message {
+  max-height: 160px;
+  overflow: auto;
+}
+.plugin-sections {
+  margin-top: 12px;
+}
+.page-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+img.plugin-icon {
+  object-fit: cover;
+  background: none;
+}
+.plugin-row.clickable {
+  cursor: pointer;
+}
+.plugin-row.clickable:hover {
+  background: var(--hover);
+}
+.plugin-tag {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--muted);
+}
+.plugin-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.plugin-detail-head .plugin-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+}
+.plugin-detail-head .plugin-name b {
+  font-size: 15px;
+}
+.plugin-detail-desc {
+  margin: 0;
+}
+.plugin-features {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--muted);
+}
+.plugin-readme {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  max-height: 46vh;
+  overflow-y: auto;
+}

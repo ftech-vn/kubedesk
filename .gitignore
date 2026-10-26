@@ -6,3 +6,7 @@ mygo_windows_*.syso
 node_modules/
 /release/
 /k8s-client
+
+# Builds of plugins
+/plugin-sdk/**/dist/
+*.tgz

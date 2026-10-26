@@ -172,6 +172,15 @@ clusters the core of the app:
 - Filter lists by text or `label=value`, sort any column, select rows for bulk
   actions
 
+**Plugins**
+- Plugins add pages, details tabs and sections, menu actions, list columns,
+  ⌘K commands, title-bar buttons and overview cards, with settings of their own
+- Find them in **Plugins** (⌘K) or the [marketplace](https://kubedesk.cloud/plugins.html),
+  from Kube Desk's signed registry, or install one from a file or an address;
+  archives are checked, and updates offered
+- Off until you turn them on; their changes go through the app's diff and
+  confirmation. Write your own with the [plugin SDK](plugin-sdk/README.md)
+
 **App**
 - Light, dark, or follow the system
 - Updates itself: signed releases, delta updates, a Sparkle-style update window
@@ -391,7 +400,7 @@ for 90 seconds after its last view closes.
 - [x] Promote objects from one cluster to another, with a diff (0.7)
 - [x] Runbooks attached to workloads (0.7)
 - [ ] Cost estimates per namespace and app
-- [ ] Plugins
+- [x] Plugins and a marketplace: pages, tabs, actions, columns and commands (0.8)
 
 ## Contributing
 

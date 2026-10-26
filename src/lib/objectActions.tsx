@@ -5,6 +5,8 @@ import { cordon, deleteObjects, drain, openPodTab, restart, scale, suspendCronJo
 import type { KObj } from "./k8s";
 import { useApp } from "./store";
 import { canDo, noAccess } from "./access";
+import { matches, usePlugins } from "../plugins/registry";
+import { pluginIcon } from "../plugins/Slot";
 
 const scalable = new Set(["Deployment", "StatefulSet", "ReplicaSet"]);
 const restartable = new Set(["Deployment", "StatefulSet", "DaemonSet"]);
@@ -55,6 +57,13 @@ export function objectActions(cluster: string, gvr: GVR, kind: string, o: KObj, 
       icon: <BookOpen size={s} />,
       run: () => useApp.getState().openDialog({ kind: "runbook", target: { cluster: context, namespace: o.metadata.namespace ?? "", kind, name: o.metadata.name } }),
     });
+  }
+  // Plugins' actions, for read-only clusters too: changes they make go
+  // through the app, which refuses them there.
+  const ctx = { cluster, gvr, kind, object: o };
+  for (const a of usePlugins.getState().actions) {
+    if (!matches(a, ctx)) continue;
+    items.push({ label: a.label, icon: pluginIcon(a.plugin, a.icon, s), danger: a.danger, run: () => void a.run(ctx) });
   }
   if (ro) {
     if (!opts.inDetails) {

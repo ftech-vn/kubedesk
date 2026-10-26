@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Camera, RefreshCw, ShieldAlert } from "lucide-react";
-import { Clusters, events, type Cluster } from "./mygo";
+import { Clusters, Plugins, events, type Cluster } from "./mygo";
 import { run, useActiveView, useApp } from "./lib/store";
 import { byKey, customResourceDef, type ResourceDef } from "./lib/resources";
 import { useWatch } from "./lib/watch";
@@ -24,6 +24,9 @@ import { HelmView } from "./views/HelmView";
 import { RunbooksPage } from "./components/Runbooks";
 import { ResourceList } from "./views/ResourceList";
 import { DetailsPanel } from "./views/details/DetailsPanel";
+import { startPlugins } from "./plugins/loader";
+import { pluginPagePrefix, usePlugins } from "./plugins/registry";
+import { PluginBoundary } from "./plugins/Slot";
 
 export function App() {
   const { loaded, active, load } = useApp();
@@ -40,6 +43,17 @@ export function App() {
           await useApp.getState().refresh();
           useApp.getState().activate(c.id);
         });
+        // The plugins, or one to install, from the app's menu or a
+        // kubedesk://plugins link of the website.
+        const openPlugins = async () => {
+          const r = await Plugins.takePendingOpen().catch(() => null);
+          useApp.getState().openDialog({ kind: "plugins", install: r?.install || undefined, version: r?.version || undefined });
+        };
+        events.pluginsOpen.on(() => void openPlugins());
+        Plugins.takePendingOpen()
+          .then((r) => r && useApp.getState().openDialog({ kind: "plugins", install: r.install || undefined, version: r.version || undefined }))
+          .catch(() => {});
+        startPlugins().catch((e) => console.error("plugins:", e));
       })
       .catch((e) => setError(errorMessage(e)));
   }, [load]);
@@ -225,7 +239,20 @@ function Section({ cluster, section }: { cluster: string; section: string }) {
   const def = byKey.get(section);
   if (def) return <ResourceList key={def.key} cluster={cluster} def={def} />;
   if (section.startsWith("cr:")) return <CustomResourceSection cluster={cluster} section={section} />;
+  if (section.startsWith(pluginPagePrefix)) return <PluginPage cluster={cluster} section={section} />;
   return <Empty title="Unknown page" />;
+}
+
+function PluginPage({ cluster, section }: { cluster: string; section: string }) {
+  const page = usePlugins((s) => s.pages.find((p) => pluginPagePrefix + p.key === section));
+  const namespace = useApp((s) => s.views[cluster]?.namespace ?? "");
+  if (!page) return <Empty title="This page's plugin is off">Turn it on again in Plugins, from ⌘K.</Empty>;
+  const Page = page.component;
+  return (
+    <PluginBoundary key={page.key} plugin={page.plugin}>
+      <Page cluster={cluster} namespace={namespace} />
+    </PluginBoundary>
+  );
 }
 
 function CustomResourceSection({ cluster, section }: { cluster: string; section: string }) {

@@ -12,6 +12,8 @@ import { Button, Empty, ErrorBox, IconButton, Spinner } from "../components/ui";
 import { newResourceTemplate } from "../lib/templates";
 import { useMetricsColumns } from "../lib/metricsColumns";
 import { canDo, noAccess, useAccessUpdates } from "../lib/access";
+import { guard, usePlugins } from "../plugins/registry";
+import { PluginBoundary } from "../plugins/Slot";
 
 /** matches filters by words of the name and columns, and key=value labels. */
 export function matches(o: KObj, def: ResourceDef, filter: string): boolean {
@@ -46,12 +48,26 @@ export function ResourceList({ cluster, def }: { cluster: string; def: ResourceD
   useAccessUpdates();
   const mayCreate = canDo(cluster, "create", def.gvr, namespace);
   const mayDelete = (o: KObj) => canDo(cluster, "delete", def.gvr, o.metadata.namespace ?? "");
+  const pluginColumns = usePlugins((s) => s.columns);
   const columns = useMemo(() => {
     const cols = def.namespaced && namespace ? def.columns.filter((c) => c.id !== "namespace") : def.columns;
-    if (!metrics.length) return cols;
-    // Usage goes before the age, which stays last.
-    return [...cols.slice(0, -1), ...metrics, ...cols.slice(-1)];
-  }, [def, namespace, metrics]);
+    // Plugins' columns, which may not break the list.
+    const extra = pluginColumns
+      .filter((c) => c.kinds.includes(def.kind))
+      .map((c) => ({
+        id: `plugin/${c.key}`,
+        title: c.title,
+        align: c.align,
+        width: c.width,
+        mono: c.mono,
+        value: (o: KObj) => guard(c.plugin, () => c.value(o), ""),
+        render: c.render ? (o: KObj) => <PluginBoundary plugin={c.plugin} inline>{c.render!(o)}</PluginBoundary> : undefined,
+      }));
+    const added = [...metrics, ...extra];
+    if (!added.length) return cols;
+    // Usage and plugins' columns go before the age, which stays last.
+    return [...cols.slice(0, -1), ...added, ...cols.slice(-1)];
+  }, [def, namespace, metrics, pluginColumns]);
 
   const actions: RowAction[] = [];
   if (def.kind === "Pod") {

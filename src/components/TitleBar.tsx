@@ -13,6 +13,21 @@ import { useWatch } from "../lib/watch";
 import { clusterColor } from "../lib/clusterLook";
 import { Popover } from "./Menu";
 import { IconButton, Kbd, mod } from "./ui";
+import { usePlugins } from "../plugins/registry";
+import { PluginBoundary } from "../plugins/Slot";
+
+function PluginTitleBarActions() {
+  const actions = usePlugins((s) => s.titleBar);
+  return (
+    <>
+      {actions.map((a) => (
+        <PluginBoundary key={a.key} plugin={a.plugin} inline>
+          <a.component />
+        </PluginBoundary>
+      ))}
+    </>
+  );
+}
 
 export function TitleBar() {
   const cluster = useActiveCluster();
@@ -49,6 +64,7 @@ export function TitleBar() {
         <AssistantButton />
         <AgentsButton />
         <AlertsButton />
+        <PluginTitleBarActions />
         <ThemeSwitch />
       </div>
     </header>

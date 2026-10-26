@@ -7,7 +7,7 @@ import { objectActions } from "../../lib/objectActions";
 import { readOnly as readOnlyCluster, typeToConfirm } from "../../lib/actions";
 import { ask, toast, useActiveView, useApp, type DetailRef } from "../../lib/store";
 import { useNow, useWatch } from "../../lib/watch";
-import { Badge, Button, Empty, ErrorBox, IconButton, Spinner, Tabs } from "../../components/ui";
+import { Badge, Button, Card, Empty, ErrorBox, IconButton, Spinner, Tabs } from "../../components/ui";
 import { ContextMenu } from "../../components/Menu";
 import { YamlEditor } from "../../components/YamlEditor";
 import { LogsView, type LogSource } from "../../components/LogsView";
@@ -19,6 +19,8 @@ import { canDo, noAccess, useAccessUpdates } from "../../lib/access";
 import { ResourceMapView, mapKinds } from "../ResourceMap";
 import { useRunbooksFor } from "../../lib/runbooks";
 import { RunbooksFor } from "../../components/Runbooks";
+import { matches, pluginTabPrefix, usePlugins, type ObjectContext } from "../../plugins/registry";
+import { PluginBoundary } from "../../plugins/Slot";
 
 const WIDTH_KEY = "details-width";
 
@@ -80,6 +82,14 @@ function DetailsContent({ cluster, detail, depth, watchNamespace }: { cluster: s
   useAccessUpdates();
   const mayExec = canDo(cluster, "create", detail.gvr, detail.namespace, "exec");
   const runbooks = useRunbooksFor(cluster, detail.namespace, detail.kind, detail.name);
+  const pluginTabs = usePlugins((s) => s.detailsTabs);
+  const pluginSections = usePlugins((s) => s.detailsSections);
+  // Plugins' actions in the header and menu follow plugins turned on or off.
+  usePlugins((s) => s.actions);
+  const ctx: ObjectContext | null = obj ? { cluster, gvr: detail.gvr, kind: detail.kind, object: obj } : null;
+  const tabsOfPlugins = ctx ? pluginTabs.filter((t) => matches(t, ctx)) : [];
+  const sectionsOfPlugins = ctx ? pluginSections.filter((t) => matches(t, ctx)) : [];
+  const pluginTab = tabId.startsWith(pluginTabPrefix) ? tabsOfPlugins.find((t) => pluginTabPrefix + t.key === tabId) : undefined;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -101,6 +111,7 @@ function DetailsContent({ cluster, detail, depth, watchNamespace }: { cluster: s
     ...(detail.kind !== "Event" ? [{ id: "history", label: "History" }] : []),
     ...(mapKinds.has(detail.kind) ? [{ id: "map", label: "Map" }] : []),
     ...(runbooks.length ? [{ id: "runbooks", label: `Runbook${runbooks.length > 1 ? `s (${runbooks.length})` : ""}` }] : []),
+    ...tabsOfPlugins.map((t) => ({ id: pluginTabPrefix + t.key, label: t.label })),
   ];
 
   return (
@@ -158,8 +169,25 @@ function DetailsContent({ cluster, detail, depth, watchNamespace }: { cluster: s
               {detail.kind} {detail.name} no longer exists{detail.namespace ? ` in ${detail.namespace}` : ""}.
             </Empty>
           )
+        ) : pluginTab && ctx ? (
+          <PluginBoundary key={pluginTab.key} plugin={pluginTab.plugin}>
+            <pluginTab.component {...ctx} />
+          </PluginBoundary>
         ) : tabId === "overview" ? (
-          <Overview cluster={cluster} kind={detail.kind} o={obj} />
+          <>
+            <Overview cluster={cluster} kind={detail.kind} o={obj} />
+            {ctx && sectionsOfPlugins.length > 0 && (
+              <div className="overview plugin-sections">
+                {sectionsOfPlugins.map((sec) => (
+                  <Card key={sec.key} title={sec.title}>
+                    <PluginBoundary plugin={sec.plugin}>
+                      <sec.component {...ctx} />
+                    </PluginBoundary>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </>
         ) : tabId === "logs" && isPod ? (
           <LogsView cluster={cluster} pod={obj} initialContainer={container} />
         ) : tabId === "logs" && workloadLogSource(detail.kind, obj) ? (

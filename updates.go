@@ -37,6 +37,10 @@ func setupUpdates() {
 			{Label: mygo.App.Name(), Submenu: []*mygo.MenuItem{
 				{Role: mygo.RoleAbout},
 				updater.MenuItem(),
+				{Label: "Plugins…", Click: func(*mygo.MenuItem, *mygo.Window) {
+					showMainWindow()
+					_ = OpenPlugins.Broadcast(PluginsRequest{})
+				}},
 				mygo.Separator(),
 				{Role: mygo.RoleServices},
 				mygo.Separator(),

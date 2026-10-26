@@ -3,6 +3,8 @@ import { BookOpen, ChevronDown, ChevronRight, Gauge, History, Network, Package, 
 import { customResourceDef, resourceGroups, resources } from "../lib/resources";
 import { useActiveView, useApp } from "../lib/store";
 import { useWatch } from "../lib/watch";
+import { pluginPagePrefix, usePlugins } from "../plugins/registry";
+import { pluginIcon } from "../plugins/Slot";
 
 const COLLAPSED_KEY = "sidebar-collapsed";
 
@@ -19,6 +21,7 @@ export function Sidebar({ cluster }: { cluster: string }) {
   const setSection = useApp((s) => s.setSection);
   const [collapsed, setCollapsed] = useState(loadCollapsed);
   const crds = useWatch(cluster, resources.find((r) => r.key === "crds")!.gvr);
+  const pluginPages = usePlugins((s) => s.pages);
 
   const crdGroups = useMemo(() => {
     const groups = new Map<string, { key: string; title: string }[]>();
@@ -56,6 +59,15 @@ export function Sidebar({ cluster }: { cluster: string }) {
         {item("map", "Map", Network)}
         {item("helm", "Helm", Package)}
         {item("runbooks", "Runbooks", BookOpen)}
+        {pluginPages.length > 0 && (
+          <div className="side-group">
+            <button className="side-group-title" onClick={() => toggle("Plugins")}>
+              {collapsed.Plugins ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+              Plugins
+            </button>
+            {!collapsed.Plugins && pluginPages.map((p) => item(pluginPagePrefix + p.key, p.title, ({ size }) => pluginIcon(p.plugin, p.icon, size ?? 15)))}
+          </div>
+        )}
         {resourceGroups.map((g) => (
           <div key={g} className="side-group">
             <button className="side-group-title" onClick={() => toggle(g)}>

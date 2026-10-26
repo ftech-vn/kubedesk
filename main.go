@@ -44,6 +44,11 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "mcp" {
 		os.Exit(runBridge(os.Args[2:]))
 	}
+	// One instance at a time: on Windows and Linux, links and files opened
+	// while the app runs start another, which hands them over and quits.
+	if !mygo.App.RequestSingleInstanceLock() {
+		return
+	}
 	clusters := newClusters()
 	timeline := newTimeline()
 	alerts := newAlerts(clusters, timeline, showMainWindow)
@@ -57,6 +62,8 @@ func main() {
 	mygo.Bind(alerts)
 	mygo.Bind(agents)
 	mygo.Bind(newAssistant(agents, clusters))
+	plugins := newPlugins(clusters)
+	mygo.Bind(plugins)
 	setupUpdates()
 
 	// The watchlist keeps working with the window closed, from the menu bar.
@@ -75,7 +82,18 @@ func main() {
 	// wait for the app's folders.
 	var openMu sync.Mutex
 	var ready bool
-	var opened []string
+	var opened, links []string
+	mygo.App.OnSecondInstance(func([]string, string) { go showMainWindow() })
+	// kubedesk://plugins links, from the marketplace on the website.
+	mygo.App.OnOpenURL(func(u string) {
+		openMu.Lock()
+		defer openMu.Unlock()
+		if !ready {
+			links = append(links, u)
+			return
+		}
+		go plugins.openPluginsURL(u)
+	})
 	mygo.App.OnOpenFile(func(path string) {
 		openMu.Lock()
 		defer openMu.Unlock()
@@ -98,8 +116,12 @@ func main() {
 		for _, p := range opened {
 			clusters.openSnapshotFile(p)
 		}
-		openMu.Unlock()
 		timeline.init(clusters.dir)
+		plugins.init()
+		for _, u := range links {
+			plugins.openPluginsURL(u)
+		}
+		openMu.Unlock()
 		// Read the login shell's PATH early: credential plugins need it.
 		go loadShellEnv()
 		showMainWindow()

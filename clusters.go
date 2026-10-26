@@ -148,6 +148,10 @@ type clusterStore struct {
 	RunbookDir string `json:"runbookDir,omitempty"`
 	// LastSeen is when each cluster was last reached, by ID.
 	LastSeen map[string]string `json:"lastSeen,omitempty"`
+	// Plugins are the plugins' settings and whether they are on, by ID.
+	Plugins map[string]PluginPrefs `json:"plugins,omitempty"`
+	// PluginDevDirs are the folders of plugins in development.
+	PluginDevDirs []string `json:"pluginDevDirs,omitempty"`
 }
 
 // conn is a connection to a cluster, reused until its kubeconfig changes.

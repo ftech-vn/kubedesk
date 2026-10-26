@@ -1,0 +1,37 @@
+{
+  "name": "kubedesk-plugin-cert-manager",
+  "version": "0.1.0",
+  "description": "cert-manager certificates: when they expire, which are not ready, and the secrets they make",
+  "keywords": [
+    "kubedesk-plugin",
+    "cert-manager",
+    "kubernetes"
+  ],
+  "author": "Kube Desk",
+  "license": "MIT",
+  "homepage": "https://github.com/ftech-vn/kubedesk/tree/main/plugin-sdk/examples/cert-manager",
+  "files": [
+    "dist",
+    "README.md",
+    "icon.png"
+  ],
+  "engines": {
+    "kubedesk": ">=0.8.0"
+  },
+  "kubedesk": {
+    "displayName": "cert-manager",
+    "main": "dist/main.js",
+    "icon": "icon.png",
+    "features": [
+      "A Certificates page: readiness, DNS names, issuer, and when each expires",
+      "A card on the overview of certificates not ready or expiring soon",
+      "An Expires column in the list of Certificates, and a section in their details",
+      "Open a certificate's secret; choose how many days before expiry to warn"
+    ]
+  },
+  "scripts": {
+    "build": "bun build src/index.tsx --outfile dist/main.js --format cjs --target browser --external react --external 'react/*' --external react-dom --external kubedesk --production",
+    "dev": "bun run build --watch",
+    "package": "bun run build && npm pack"
+  }
+}

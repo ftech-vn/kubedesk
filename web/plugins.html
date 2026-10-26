@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Plugins for Kube Desk</title>
+    <meta name="description" content="Plugins for Kube Desk, the Kubernetes desktop client: pages, tabs, columns, actions and commands that others wrote. Every plugin is reviewed, signed, and installs in one click." />
+    <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)" />
+    <link rel="canonical" href="https://kubedesk.cloud/plugins.html" />
+    <meta property="og:title" content="Plugins for Kube Desk" />
+    <meta property="og:description" content="Pages, tabs, columns, actions and commands for Kube Desk, reviewed and signed." />
+    <meta property="og:image" content="https://kubedesk.cloud/assets/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@75..125,200..900&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="bar">
+      <div class="wrap bar__in">
+        <a class="brand" href="./" aria-label="Kube Desk home">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <defs>
+              <linearGradient id="kd-g" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#4b7bf5" />
+                <stop offset="1" stop-color="#9b5cf5" />
+              </linearGradient>
+            </defs>
+            <rect x="2" y="2" width="28" height="28" rx="7" fill="url(#kd-g)" />
+            <circle cx="16" cy="16" r="7.8" fill="none" stroke="#fff" stroke-width="3.2" />
+          </svg>
+          Kube Desk
+        </a>
+        <button class="jump" type="button" data-palette aria-label="Jump to a section or page">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+          <span class="jump__label">Jump to…</span>
+          <kbd><span data-mod>⌘</span>K</kbd>
+        </button>
+        <nav class="links" aria-label="Main">
+          <a href="./#features">Features</a>
+          <a href="./#agents">AI agents</a>
+          <a href="plugins.html" aria-current="page">Plugins</a>
+          <a href="changelog.html">Changelog</a>
+          <a href="https://github.com/ftech-vn/kubedesk">GitHub</a>
+          <a class="only-sm" href="download.html">Download</a>
+        </nav>
+        <a class="btn btn--primary btn--sm" href="download.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+          Download
+        </a>
+        <button class="menu-btn" type="button" aria-label="Menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" x2="20" y1="7" y2="7" /><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="17" y2="17" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="page-head">
+        <div class="wrap hero-in">
+          <h1 class="display">Plugins.</h1>
+          <p class="lede">
+            Pages, tabs, columns, actions and commands that others added to Kube Desk. Each plugin here is reviewed, signed,
+            and checked again by Kube Desk before it installs.
+          </p>
+        </div>
+      </section>
+
+      <section class="market" data-palette-section="Find a plugin" id="find">
+        <div class="wrap">
+          <div class="market__bar">
+            <label class="market__search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+              <input type="search" placeholder="Search plugins" aria-label="Search plugins" data-market-search />
+            </label>
+            <div class="market__tags" data-market-tags></div>
+            <span class="market__count" data-market-count></span>
+          </div>
+          <div class="market__grid" data-market-grid aria-live="polite">
+            <div class="market__empty">Loading plugins…</div>
+          </div>
+          <article class="market__detail" data-market-detail hidden></article>
+        </div>
+      </section>
+
+      <section class="section" id="publish" data-palette-section="Publish a plugin">
+        <div class="wrap doc">
+          <nav class="toc" aria-label="On this page">
+            <h4>On this page</h4>
+            <ul>
+              <li><a href="#find">Find a plugin</a></li>
+              <li><a href="#install">Install one</a></li>
+              <li><a href="#publish">Publish yours</a></li>
+            </ul>
+          </nav>
+          <div class="prose">
+            <section id="install" data-palette-section="Install a plugin">
+              <h2>Install a plugin</h2>
+              <p>
+                <strong>Install in Kube Desk</strong> opens Kube Desk 0.8 or later, which shows the plugin and asks before it
+                installs it. Or, in Kube Desk, press <kbd>⌘K</kbd>, choose <strong>Plugins…</strong>, then
+                <strong>Find plugins</strong>. Kube Desk checks that the registry signed the plugin's archive, and keeps the
+                plugins you install up to date from <strong>Updates</strong>.
+              </p>
+              <p>
+                A plugin runs inside Kube Desk with the app's access, so install those you trust. The changes it asks for go
+                through Kube Desk's diff and confirmation, and read-only clusters refuse them.
+              </p>
+            </section>
+            <h2>Publish yours</h2>
+            <ol class="steps">
+              <li>
+                <b>Write it</b>
+                <p>
+                  A plugin is a React bundle and a <code>package.json</code>. Start from the template with
+                  <code>scripts/new-plugin.sh</code>, and load its folder in Kube Desk while you write it: the
+                  <a href="https://github.com/ftech-vn/kubedesk/blob/main/plugin-sdk/README.md">plugin guide</a> has the API and
+                  two examples.
+                </p>
+              </li>
+              <li>
+                <b>Describe it</b>
+                <p>
+                  Give it a <code>README.md</code>, an <code>icon.png</code> (256 px, square) as <code>kubedesk.icon</code>, a few
+                  <code>kubedesk.features</code>, and the Kube Desk versions it works with in <code>engines.kubedesk</code>.
+                </p>
+              </li>
+              <li>
+                <b>Send it</b>
+                <p>
+                  <a href="https://github.com/ftech-vn/kubedesk/issues/new?title=Plugin%3A%20&amp;labels=plugin">Open an issue</a>
+                  with a link to its source. Once it is reviewed, it is published here and in Kube Desk, signed by the registry.
+                </p>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="site.js"></script>
+    <script src="plugins.js"></script>
+  </body>
+</html>

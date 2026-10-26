@@ -187,6 +187,32 @@ export interface AssistantSettings {
   region?: string;
 }
 
+/** CatalogPlugin is a plugin of the registry. */
+export interface CatalogPlugin {
+  id: string;
+  name: string;
+  description?: string;
+  author?: string;
+  homepage?: string;
+  license?: string;
+  keywords?: string[];
+  features?: string[];
+  /** Icon is the address of its icon, if it has one. */
+  icon?: string;
+  /**
+   * Version is the newest version that works with this Kube Desk, "" when
+   * none does; Latest is the newest of all, and Engine what it needs.
+   */
+  version: string;
+  latest: string;
+  engine: string;
+  size: number;
+  published: string;
+  hasReadme: boolean;
+  /** Installed is the version installed, if any. */
+  installed?: string;
+}
+
 /** Change is something that happened in a watched namespace. */
 export interface Change {
   id: string;
@@ -524,6 +550,56 @@ export interface OpenRequest {
   kind: string;
   namespace: string;
   name: string;
+}
+
+/**
+ * Plugin is a plugin the app knows of: a folder with a package.json and the
+ * JavaScript bundle it names.
+ */
+export interface Plugin {
+  /** ID is the plugin's package name, such as "kubedesk-plugin-cert-manager". */
+  id: string;
+  name: string;
+  version: string;
+  description?: string;
+  author?: string;
+  homepage?: string;
+  /**
+   * Source is "installed" for plugins in the app's plugins folder and
+   * "dev" for folders the user loads while writing a plugin.
+   */
+  source: string;
+  path: string;
+  /**
+   * Origin is where an installed plugin came from: "registry:<id>", a URL,
+   * or a file.
+   */
+  origin?: string;
+  installedAt?: string;
+  /**
+   * Engine is the range of Kube Desk versions the plugin works with
+   * (engines.kubedesk in its package.json).
+   */
+  engine?: string;
+  enabled: boolean;
+  /** Error says why the plugin cannot load; the app does not run it. */
+  error?: string;
+}
+
+/** PluginUpdate is a newer version of an installed plugin, in the registry. */
+export interface PluginUpdate {
+  id: string;
+  current: string;
+  latest: string;
+}
+
+/**
+ * PluginsRequest asks the page to show the plugins, or to install one from
+ * the registry, from the app's menu or a kubedesk://plugins link.
+ */
+export interface PluginsRequest {
+  install?: string;
+  version?: string;
 }
 
 /** PortForward is a port of a pod forwarded to this machine. */
@@ -953,6 +1029,14 @@ export const Kube = {
     return call("Kube.Report", cluster, kind, namespace, name);
   },
   /**
+   * Request reads a path of the cluster's API with GET, such as
+   * /apis/metrics.k8s.io/v1beta1/nodes or a service's /proxy/, for plugins.
+   * It returns the body; it changes nothing.
+   */
+  request(cluster: string, path: string): Promise<string> {
+    return call("Kube.Request", cluster, path);
+  },
+  /**
    * Resources returns the kinds of resources the cluster serves, in their
    * preferred versions.
    */
@@ -1266,6 +1350,109 @@ export const Assistant = {
   },
 } as const;
 
+/** Plugins installs and loads the plugins that extend the app's pages. */
+export const Plugins = {
+  /**
+   * AddDevFolder asks for the folder of a plugin being written and loads it,
+   * turned on, reloading it whenever its build changes. Nil when the user
+   * canceled.
+   */
+  addDevFolder(): Promise<Plugin | null> {
+    return call("Plugins.AddDevFolder");
+  },
+  /**
+   * Catalog lists the registry's plugins, matching the words of query in
+   * their names, descriptions, keywords and authors.
+   */
+  catalog(query: string, refresh: boolean): Promise<CatalogPlugin[]> {
+    return call("Plugins.Catalog", query, refresh);
+  },
+  /**
+   * CheckUpdates lists the plugins installed from the registry that have a
+   * newer version working with this Kube Desk.
+   */
+  checkUpdates(): Promise<PluginUpdate[]> {
+    return call("Plugins.CheckUpdates");
+  },
+  /**
+   * InstallFile asks for a plugin archive (.tgz, .tar.gz or .zip, as
+   * npm pack makes) and installs it. It returns the plugin, turned off: the
+   * page asks the user to trust it before turning it on. Nil when the user
+   * canceled.
+   */
+  installFile(): Promise<Plugin | null> {
+    return call("Plugins.InstallFile");
+  },
+  /**
+   * InstallFromRegistry installs a plugin of the registry: version, or the
+   * newest that works with this Kube Desk when "". The archive must match the
+   * signed index. Like other installs, the plugin comes turned off.
+   */
+  installFromRegistry(id: string, version: string): Promise<Plugin | null> {
+    return call("Plugins.InstallFromRegistry", id, version);
+  },
+  /**
+   * InstallURL downloads a plugin archive over HTTPS and installs it. With a
+   * sha256 checksum, the archive must match it.
+   */
+  installURL(u: string, sha: string): Promise<Plugin | null> {
+    return call("Plugins.InstallURL", u, sha);
+  },
+  /**
+   * List returns the plugins: those in development first, which win over an
+   * installed plugin with the same ID.
+   */
+  list(): Promise<Plugin[]> {
+    return call("Plugins.List");
+  },
+  /** LoadDevFolder loads the plugin in a folder, as AddDevFolder does. */
+  loadDevFolder(dir: string): Promise<Plugin | null> {
+    return call("Plugins.LoadDevFolder", dir);
+  },
+  /** Readme returns the README of a plugin in the registry, as Markdown. */
+  readme(id: string): Promise<string> {
+    return call("Plugins.Readme", id);
+  },
+  /** RemoveDevFolder stops loading a plugin in development. */
+  removeDevFolder(dir: string): Promise<void> {
+    return call("Plugins.RemoveDevFolder", dir);
+  },
+  /** RevealFolder shows the plugins folder in the file manager. */
+  revealFolder(): Promise<void> {
+    return call("Plugins.RevealFolder");
+  },
+  /**
+   * SaveSettings keeps a plugin's settings, which must be JSON of at most
+   * 256 KB.
+   */
+  saveSettings(id: string, settings: Record<string, unknown>): Promise<void> {
+    return call("Plugins.SaveSettings", id, settings);
+  },
+  /** SetEnabled turns a plugin on or off; the page loads or unloads it. */
+  setEnabled(id: string, on: boolean): Promise<void> {
+    return call("Plugins.SetEnabled", id, on);
+  },
+  /** Settings returns what a plugin saved with KubeDesk.settings. */
+  settings(id: string): Promise<Record<string, unknown>> {
+    return call("Plugins.Settings", id);
+  },
+  /** Source returns the JavaScript of an enabled plugin, for the page to run. */
+  source(id: string): Promise<string> {
+    return call("Plugins.Source", id);
+  },
+  /** TakePendingOpen returns the request of a link that opened the app, once. */
+  takePendingOpen(): Promise<PluginsRequest | null> {
+    return call("Plugins.TakePendingOpen");
+  },
+  /**
+   * Uninstall removes an installed plugin and what the app kept for it, or
+   * stops loading a folder in development.
+   */
+  uninstall(id: string): Promise<void> {
+    return call("Plugins.Uninstall", id);
+  },
+} as const;
+
 /** AppInfo tells the page about the app and checks for new versions. */
 export const AppInfo = {
   /** About returns the version of the app and whether it can update itself. */
@@ -1296,6 +1483,14 @@ export const events = {
    * menu bar.
    */
   openObject: event<OpenRequest>("open-object"),
+  /**
+   * PluginsChanged is sent when plugins were added, removed, turned on or off,
+   * or when the files of a plugin in development changed; the payload is the
+   * plugin's ID, or "" when the list changed.
+   */
+  pluginsChanged: event<string>("plugins:changed"),
+  /** OpenPlugins asks the page to show the plugins. */
+  pluginsOpen: event<PluginsRequest>("plugins:open"),
   /** SnapshotOpened is sent when a snapshot was opened from the Finder. */
   snapshotOpened: event<Cluster>("snapshot:opened"),
   /** TimelineChanged tells pages that a cluster has new changes. */
