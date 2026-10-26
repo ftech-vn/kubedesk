@@ -56,7 +56,8 @@ kubectl --context azure-k3s apply -f web/k8s/kubedesk-web.yaml
 
 `plugins.html` reads `plugins/index.json` of the `kube-desk-releases` bucket from the browser, so publishing a plugin
 (`../scripts/publish-plugin.sh`, see `../plugin-sdk/README.md`) needs no new image. The bucket must let the site read
-it across origins, once:
+it across origins, once, and the site's Content-Security-Policy (`nginx.conf`) allows the bucket's address in
+`connect-src` and `img-src`:
 
 ```sh
 wrangler r2 bucket cors set kube-desk-releases --file web/r2-cors.json
