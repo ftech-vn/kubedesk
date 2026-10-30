@@ -3,22 +3,31 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kube Desk — a Kubernetes desktop client for many clusters</title>
-    <meta
-      name="description"
-      content="Kube Desk is a fast, free Kubernetes desktop client for macOS, Linux and Windows. Every cluster in your kubeconfig in one small app: switch in a keystroke, watch resources live, tail logs, open a shell, edit YAML, see Helm releases and a map of each app, and ask an AI assistant, with you approving every change."
-    />
+    <title>Kube Desk — free Kubernetes desktop client for many clusters</title>
+    <meta name="description" content="Free, open-source Kubernetes desktop client for macOS, Linux and Windows. Switch clusters in a keystroke, tail logs, open a shell, edit YAML, roll back Helm." />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)" />
     <link rel="canonical" href="https://kubedesk.cloud/" />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Kube Desk" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:url" content="https://kubedesk.cloud/" />
     <meta property="og:title" content="Kube Desk — every cluster, one keystroke away" />
     <meta property="og:description" content="A fast Kubernetes desktop client for people who juggle many clusters. Free and open source, for macOS, Linux and Windows." />
     <meta property="og:image" content="https://kubedesk.cloud/assets/og.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Kube Desk, a Kubernetes desktop client: every cluster, one keystroke away" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="icon" type="image/png" href="assets/favicon.png" />
-    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <meta name="twitter:title" content="Kube Desk — every cluster, one keystroke away" />
+    <meta name="twitter:description" content="A fast Kubernetes desktop client for people who juggle many clusters. Free and open source, for macOS, Linux and Windows." />
+    <meta name="twitter:image" content="https://kubedesk.cloud/assets/og.jpg" />
+    <meta name="twitter:image:alt" content="Kube Desk, a Kubernetes desktop client: every cluster, one keystroke away" />
+    <link rel="icon" type="image/png" sizes="64x64" href="assets/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
+    <link rel="manifest" href="site.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -29,14 +38,47 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Kube Desk",
-        "operatingSystem": "macOS 12 or later, Linux, Windows 10 or later",
-        "applicationCategory": "DeveloperApplication",
-        "softwareVersion": "0.8.0",
-        "license": "https://opensource.org/licenses/MIT",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "downloadUrl": "https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg"
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://kubedesk.cloud/#website",
+            "url": "https://kubedesk.cloud/",
+            "name": "Kube Desk",
+            "description": "A fast Kubernetes desktop client for people who juggle many clusters.",
+            "inLanguage": "en"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://kubedesk.cloud/#app",
+            "name": "Kube Desk",
+            "url": "https://kubedesk.cloud/",
+            "description": "Free, open-source Kubernetes desktop client for macOS, Linux and Windows. Every cluster in your kubeconfig in one small app: switch in a keystroke, watch resources live, tail logs, open a shell, edit YAML, see Helm releases and a map of each app, and ask an AI assistant, with you approving every change.",
+            "image": "https://kubedesk.cloud/assets/og.jpg",
+            "screenshot": [
+              "https://kubedesk.cloud/assets/screens/overview-light.webp",
+              "https://kubedesk.cloud/assets/screens/overview-dark.webp",
+              "https://kubedesk.cloud/assets/screens/logs.webp",
+              "https://kubedesk.cloud/assets/screens/palette.webp"
+            ],
+            "applicationCategory": "DeveloperApplication",
+            "applicationSubCategory": "Kubernetes client",
+            "operatingSystem": "macOS 12 or later, Linux, Windows 10 or later",
+            "softwareVersion": "0.8.0",
+            "dateModified": "2026-10-26",
+            "releaseNotes": "https://kubedesk.cloud/changelog.html",
+            "installUrl": "https://kubedesk.cloud/download.html",
+            "downloadUrl": [
+              "https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-arm64.dmg",
+              "https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-linux-amd64.deb",
+              "https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-latest-linux-arm64.deb",
+              "https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-Setup-latest-amd64.exe"
+            ],
+            "license": "https://opensource.org/licenses/MIT",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "sameAs": ["https://github.com/ftech-vn/kubedesk"]
+          }
+        ]
       }
     </script>
   </head>

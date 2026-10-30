@@ -68,8 +68,12 @@ To preview with a local registry, such as the `OUT` of `DRY_RUN=1 ../scripts/pub
 
 ## When releasing a new version
 
-- Update the version and date in `index.html` (hero badge, "At a glance", final download button, JSON-LD),
-  `download.html` (download card) and `changelog.html` (add the release on top, move the "Latest" badge).
-- The download links point at `Kube-Desk-latest-arm64.dmg`, so they need no change.
+- Update the version and date in `index.html` (hero badge, "At a glance", final download button, JSON-LD
+  `softwareVersion` and `dateModified`), `download.html` (title, description, Open Graph title, download card) and
+  `changelog.html` (description, add the release on top, move the "Latest" badge), and `lastmod` in `sitemap.xml`.
+- The download links point at the `Kube-Desk-latest-*` installers, which `../scripts/release.sh` replaces, so they
+  need no change.
+- The Open Graph images (`assets/og*.jpg`, 1200×630) carry no version. To change them, edit `og/og.html` and run
+  `og/render.sh` (needs Chrome and ImageMagick).
 - Screenshots in `assets/screens/` are WebP copies of `../docs/screenshots/`, 1600 px wide:
   `cwebp -q 82 -resize 1600 0 ../docs/screenshots/logs.png -o assets/screens/logs.webp`

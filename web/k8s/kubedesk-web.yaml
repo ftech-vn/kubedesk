@@ -47,7 +47,7 @@ spec:
               app: kubedesk-web
       containers:
         - name: web
-          image: ghcr.io/ftech-vn/kubedesk-web:20261026-3
+          image: ghcr.io/ftech-vn/kubedesk-web:20261030-1
           ports:
             - name: http
               containerPort: 8080

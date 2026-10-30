@@ -1,0 +1,49 @@
+<!doctype html>
+<!-- The Open Graph images in ../assets (og*.jpg), 1200×630. Render them with ./render.sh. -->
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@75..125,200..900&family=JetBrains+Mono:wght@500;600&display=block">
+<style>
+*{box-sizing:border-box;margin:0}
+html,body{width:1200px;height:630px;overflow:hidden}
+body{font-family:"Mona Sans",sans-serif;color:#eceaff;background:#12102a;position:relative}
+.glow{position:absolute;inset:0;background:
+  radial-gradient(700px 420px at 88% 110%, rgba(155,92,245,.55), transparent 70%),
+  radial-gradient(600px 380px at 0% 0%, rgba(75,123,245,.35), transparent 70%),
+  linear-gradient(180deg,#14112f,#100e26)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:40px 40px;mask-image:linear-gradient(120deg,#000 10%,transparent 60%)}
+.copy{position:absolute;left:72px;top:64px;width:560px}
+.brand{display:flex;align-items:center;gap:14px;font-weight:700;font-size:28px;letter-spacing:-.01em}
+.brand svg{width:46px;height:46px}
+.tag{display:inline-flex;gap:10px;align-items:center;margin-top:46px;font:600 17px "JetBrains Mono",monospace;color:#c9c4ff;background:rgba(138,130,255,.14);border:1px solid rgba(138,130,255,.35);padding:7px 14px;border-radius:999px}
+.tag b{color:#fff}
+h1{margin-top:22px;font-weight:800;font-stretch:112%;font-size:68px;line-height:1.0;letter-spacing:-.035em;color:#fff}
+h1 .soft{color:#a59fff}
+p{margin-top:24px;font-size:24px;line-height:1.38;color:#b8b4dd;width:520px}
+.foot{position:absolute;left:72px;bottom:54px;display:flex;gap:22px;font:500 17px "JetBrains Mono",monospace;color:#8f8bbf}
+.foot span+span::before{content:"·";margin-right:22px;color:#5c5890}
+.shot{position:absolute;left:676px;top:96px;width:900px;border-radius:14px;overflow:hidden;
+  box-shadow:0 0 0 1px rgba(255,255,255,.1),0 50px 100px -20px rgba(0,0,0,.75),0 20px 40px -20px rgba(0,0,0,.6)}
+.shot img{display:block;width:100%}
+.shot.light{box-shadow:0 0 0 1px rgba(255,255,255,.25),0 50px 100px -20px rgba(0,0,0,.75)}
+</style></head>
+<body>
+<div class="glow"></div><div class="grid"></div>
+<div class="copy">
+  <div class="brand"><svg viewBox="0 0 32 32"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4b7bf5"/><stop offset="1" stop-color="#9b5cf5"/></linearGradient></defs><rect x="2" y="2" width="28" height="28" rx="7" fill="url(#g)"/><circle cx="16" cy="16" r="7.8" fill="none" stroke="#fff" stroke-width="3.2"/></svg>Kube Desk</div>
+  <div class="tag" id="tag"></div>
+  <h1 id="h1"></h1>
+  <p id="p"></p>
+</div>
+<div class="foot"><span>Free &amp; open source</span><span>macOS</span><span>Linux</span><span>Windows</span></div>
+<div class="shot" id="shot"><img id="img"></div>
+<script>
+const V={
+ home:{tag:"Kubernetes desktop client",h1:'Every cluster, <span class="soft">one keystroke</span> away.',p:"Switch clusters, watch resources live, tail logs, open a shell, edit YAML — in one small app.",img:"overview-dark.webp"},
+ download:{tag:"Free download",h1:'Download <span class="soft">Kube Desk.</span>',p:"For macOS (Apple silicon), Linux (x64, arm64) and Windows (x64). Signed, small updates.",img:"overview-light.webp",light:1},
+ plugins:{tag:"Plugin marketplace",h1:'Plugins for <span class="soft">Kube Desk.</span>',p:"New pages, tabs, columns and commands. Reviewed, signed, one-click install.",img:"deployment.webp"},
+ changelog:{tag:"Changelog",h1:'What’s new in <span class="soft">Kube Desk.</span>',p:"Release notes for every version of the Kubernetes desktop client, from 0.1.0 on.",img:"palette.webp"},
+};
+const v=V[location.hash.slice(1)||"home"];
+tag.innerHTML=v.tag;h1.innerHTML=v.h1;p.textContent=v.p;img.src="../assets/screens/"+v.img;if(v.light)shot.classList.add("light");
+</script>
+</body></html>
