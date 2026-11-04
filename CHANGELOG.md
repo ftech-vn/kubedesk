@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.2
+
+- Where to point a stack's domains is right on clusters whose ingress controller listens on private addresses, as k3s's ServiceLB does with the nodes' internal IPs: the Run dialog says those addresses cannot be reached from the internet, and suggests the nodes' public addresses, or the one Kube Desk reaches the cluster at, with ports 80 and 443 open.
+
 ## 0.9.1
 
 **Domains for stacks.** Stacks with web pages (Grafana, Kibana, OpenSearch Dashboards, Argo CD, Prometheus, Alertmanager) now ask for a domain, in a section of its own. Fill one in to publish the page through the cluster's ingress controller: pick the ingress class and the cert-manager issuer for HTTPS from what the cluster has. The dialog shows where each page will be, the address to point their DNS at, and warns when the cluster has no ingress controller (with a button to install Traefik and cert-manager) or no issuer. Once the stack runs, its pages open at their domains.

@@ -9,6 +9,7 @@ biết.
 
 | Bản | Ngày | Điểm chính | Tải về (delta) |
 |---|---|---|---|
+| [0.9.2](#092--04112026) | 04/11/2026 | Gợi ý trỏ DNS đúng khi ingress controller chỉ có IP private (k3s ServiceLB): gợi ý IP public của node | xem trang Releases |
 | [0.9.1](#091--04112026) | 04/11/2026 | Stack hỏi domain cho các trang web (Grafana, Kibana, Argo CD…), gợi ý trỏ DNS; tham số chia nhóm, đánh dấu bắt buộc, chọn ingress class / issuer / storage class từ cluster | xem trang Releases |
 | [0.9.0](#090--04112026) | 04/11/2026 | Stacks: cài sẵn cả bộ (log, metrics, database, Kafka, Argo CD, ingress) vào một namespace chỉ bằng nút Run; tự định nghĩa stack của mình bằng YAML | xem trang Releases |
 | [0.8.0](#080--26102026) | 26/10/2026 | Plugin và marketplace (registry riêng trên R2, có chữ ký): thêm trang, tab, action, cột, lệnh ⌘K; bộ SDK và 2 plugin mẫu | xem trang Releases |
@@ -28,6 +29,18 @@ Tải bản mới nhất:
 (Linux x64; arm64: `...-linux-arm64.deb`, hoặc `curl -fsSL https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/install.sh | sh`)
 và <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-Setup-latest-amd64.exe> (Windows 10/11 x64). App đã cài sẽ tự cập nhật. Thường app chỉ
 tải phần thay đổi (delta), như ở cột cuối bảng trên.
+
+---
+
+## 0.9.2 · 04/11/2026
+
+### Sửa lỗi
+- Trên cluster mà ingress controller chỉ có IP private (k3s ServiceLB gán IP
+  nội bộ của node, hoặc load balancer nội bộ), dialog Run trước đây bảo trỏ
+  DNS về các IP private đó, internet không vào được. Giờ dialog nói rõ các
+  IP đó là private, gợi ý IP public của node (nếu node báo), hoặc địa chỉ
+  app đang kết nối tới cluster, và nhắc mở cổng 80/443 (cổng 80 cũng để
+  Let's Encrypt kiểm tra domain).
 
 ---
 

@@ -305,3 +305,14 @@ func fillAll(st Stack, values map[string]string) {
 		}
 	}
 }
+
+func TestPrivateAddress(t *testing.T) {
+	for addr, want := range map[string]bool{
+		"10.0.0.4": true, "172.16.3.1": true, "192.168.1.9": true, "100.72.0.1": true, "127.0.0.1": true, "fd00::1": true,
+		"172.173.76.191": false, "8.8.8.8": false, "lb.example.com": false, "ip-10-0-0-1.ec2.internal": true,
+	} {
+		if privateAddress(addr) != want {
+			t.Errorf("%s: private=%v", addr, !want)
+		}
+	}
+}

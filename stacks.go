@@ -12,7 +12,9 @@ import (
 	"io"
 	"io/fs"
 	"math/big"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -2180,12 +2182,32 @@ type StackClusterOptions struct {
 	// IngressAddresses are the external addresses of the load balancers
 	// of ingress controllers, where domains should point.
 	IngressAddresses []IngressAddress `json:"ingressAddresses"`
+	// NodeAddresses are the external addresses the nodes report, if any.
+	NodeAddresses []string `json:"nodeAddresses"`
+	// APIServerHost is the public address Kube Desk reaches the cluster
+	// at, often that of a node when the load balancer's are private.
+	APIServerHost string `json:"apiServerHost,omitempty"`
 }
 
-// IngressAddress is where an ingress controller is reached from outside.
+// IngressAddress is where an ingress controller is reached.
 type IngressAddress struct {
 	Service string `json:"service"`
 	Address string `json:"address"`
+	// Private says the address cannot be reached from the internet: one
+	// of a private network, as k3s's ServiceLB gives, or an internal load
+	// balancer.
+	Private bool `json:"private,omitempty"`
+}
+
+// privateAddress says whether an address cannot be reached from the
+// internet: private, shared (100.64.0.0/10), loopback or link-local.
+func privateAddress(addr string) bool {
+	ip := net.ParseIP(addr)
+	if ip == nil {
+		return strings.HasSuffix(addr, ".internal") || strings.HasSuffix(addr, ".local")
+	}
+	_, shared, _ := net.ParseCIDR("100.64.0.0/10")
+	return ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() || shared.Contains(ip)
 }
 
 var ingressControllerName = regexp.MustCompile(`ingress|traefik|nginx|gateway|envoy|haproxy|contour|kong|istio`)
@@ -2194,7 +2216,7 @@ var ingressControllerName = regexp.MustCompile(`ingress|traefik|nginx|gateway|en
 // storage classes of a cluster, and the addresses of its ingress
 // controllers. What cannot be read is left empty.
 func (s *Stacks) ClusterOptions(ctx context.Context, cluster string) (StackClusterOptions, error) {
-	out := StackClusterOptions{IngressClasses: []string{}, ClusterIssuers: []string{}, StorageClasses: []string{}, IngressAddresses: []IngressAddress{}}
+	out := StackClusterOptions{IngressClasses: []string{}, ClusterIssuers: []string{}, StorageClasses: []string{}, IngressAddresses: []IngressAddress{}, NodeAddresses: []string{}}
 	cn, err := s.kube.clusters.conn(cluster)
 	if err != nil {
 		return out, err
@@ -2232,10 +2254,22 @@ func (s *Stacks) ClusterOptions(ctx context.Context, cluster string) (StackClust
 					addr = in.Hostname
 				}
 				if addr != "" {
-					out.IngressAddresses = append(out.IngressAddresses, IngressAddress{Service: svc.Namespace + "/" + svc.Name, Address: addr})
+					out.IngressAddresses = append(out.IngressAddresses, IngressAddress{Service: svc.Namespace + "/" + svc.Name, Address: addr, Private: privateAddress(addr)})
 				}
 			}
 		}
+	}
+	if nodes, err := cn.cs.CoreV1().Nodes().List(ctx, metav1.ListOptions{}); err == nil {
+		for _, n := range nodes.Items {
+			for _, a := range n.Status.Addresses {
+				if a.Type == corev1.NodeExternalIP && !privateAddress(a.Address) {
+					out.NodeAddresses = append(out.NodeAddresses, a.Address)
+				}
+			}
+		}
+	}
+	if u, err := url.Parse(cn.cfg.Host); err == nil && u.Hostname() != "" && !privateAddress(u.Hostname()) {
+		out.APIServerHost = u.Hostname()
 	}
 	sort.Strings(out.IngressClasses)
 	sort.Strings(out.ClusterIssuers)

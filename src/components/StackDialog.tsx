@@ -288,7 +288,6 @@ function DomainSection({ st, values, errors, options, children }: { st: Stack; v
   const wantsTLS = (st.fields ?? []).some((f) => f.type === "clusterIssuer");
   const noController = options !== null && options.ingressClasses.length === 0;
   const noIssuer = options !== null && wantsTLS && options.clusterIssuers.length === 0;
-  const addresses = options?.ingressAddresses ?? [];
   return (
     <div className="stack-domain">
       <div className="stack-domain-head">
@@ -317,27 +316,56 @@ function DomainSection({ st, values, errors, options, children }: { st: Stack; v
               <span className="muted">{l.label} will be at</span> <span className="mono">{l.url}</span>
             </div>
           ))}
-          <div className="small muted">
-            {addresses.length > 0 ? (
-              <>
-                Point the DNS of {links.length === 1 ? "this domain" : "these domains"} (an A record, or a CNAME for a host name) at{" "}
-                {addresses.map((a, i) => (
-                  <span key={a.service + a.address}>
-                    {i > 0 && ", "}
-                    <span className="mono">{a.address}</span> <span className="faint">({a.service})</span>
-                  </span>
-                ))}
-                .
-              </>
-            ) : (
-              "Point the DNS of " + (links.length === 1 ? "this domain" : "these domains") + " at the external address of the cluster's ingress controller, or of its nodes."
-            )}
-          </div>
+          <DnsHint options={options} count={links.length} />
           {noIssuer && <div className="small tc tone-warn">No cert-manager issuer in this cluster: pages are served over plain HTTP. Traefik + cert-manager adds one.</div>}
         </div>
       )}
     </div>
   );
+}
+
+/**
+ * DnsHint says where to point the DNS of the domains: the public addresses
+ * of the ingress controllers, or, when those are private, as k3s's
+ * ServiceLB gives, the public address of a node.
+ */
+function DnsHint({ options, count }: { options: StackClusterOptions | null; count: number }) {
+  const these = count === 1 ? "this domain" : "these domains";
+  const list = (addrs: string[]) => addrs.map((a, i) => (
+    <span key={a}>
+      {i > 0 && ", "}
+      <span className="mono">{a}</span>
+    </span>
+  ));
+  const all = options?.ingressAddresses ?? [];
+  const pub = [...new Set(all.filter((a) => !a.private).map((a) => a.address))];
+  const priv = [...new Set(all.filter((a) => a.private).map((a) => a.address))];
+  if (pub.length > 0)
+    return (
+      <div className="small muted">
+        Point the DNS of {these} (an A record, or a CNAME for a host name) at {list(pub)} <span className="faint">({[...new Set(all.filter((a) => !a.private).map((a) => a.service))].join(", ")})</span>.
+      </div>
+    );
+  if (priv.length > 0)
+    return (
+      <div className="stack-dns-private small">
+        <div className="tc tone-warn">
+          The ingress controller listens on {list(priv)}: private addresses, which the internet cannot reach. k3s gives the nodes' internal addresses this way.
+        </div>
+        <div className="muted">
+          Point the DNS of {these} at the public IP of one of those nodes, or of the load balancer in front of them, and open ports 80 and 443 to it (port 80 also lets Let's Encrypt check the domain).
+          {options!.nodeAddresses.length > 0 ? (
+            <> The nodes report the public addresses {list(options!.nodeAddresses)}.</>
+          ) : options?.apiServerHost ? (
+            <>
+              {" "}
+              Kube Desk reaches this cluster at <span className="mono">{options.apiServerHost}</span>, probably the public IP of a node: try it first.
+            </>
+          ) : null}
+        </div>
+      </div>
+    );
+  return <div className="small muted">Point the DNS of {these} at the public address of the cluster's ingress controller, or of its nodes, with ports 80 and 443 open.</div>;
 }
 
 function FieldInput({ f, value, error, options, onChange }: { f: StackField; value: string; error?: string; options: StackClusterOptions | null; onChange(v: string): void }) {

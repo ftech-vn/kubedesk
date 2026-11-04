@@ -4244,3 +4244,8 @@ input.invalid {
   padding-top: 10px;
   border-top: 1px dashed var(--border);
 }
+.stack-dns-private {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

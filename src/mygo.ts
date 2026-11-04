@@ -489,10 +489,16 @@ export interface ImpactRequest {
 /** ImpactSeverity says how much an effect matters. */
 export type ImpactSeverity = "danger" | "warning" | "info";
 
-/** IngressAddress is where an ingress controller is reached from outside. */
+/** IngressAddress is where an ingress controller is reached. */
 export interface IngressAddress {
   service: string;
   address: string;
+  /**
+   * Private says the address cannot be reached from the internet: one
+   * of a private network, as k3s's ServiceLB gives, or an internal load
+   * balancer.
+   */
+  private?: boolean;
 }
 
 /** InstalledComponent is a component of an installed stack. */
@@ -863,6 +869,13 @@ export interface StackClusterOptions {
    * of ingress controllers, where domains should point.
    */
   ingressAddresses: IngressAddress[];
+  /** NodeAddresses are the external addresses the nodes report, if any. */
+  nodeAddresses: string[];
+  /**
+   * APIServerHost is the public address Kube Desk reaches the cluster
+   * at, often that of a node when the load balancer's are private.
+   */
+  apiServerHost?: string;
 }
 
 /**
