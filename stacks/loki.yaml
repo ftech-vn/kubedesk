@@ -33,17 +33,35 @@ fields:
     section: Domain
     placeholder: grafana.example.com
     hint: Where people open Grafana from outside the cluster. Empty keeps it inside; Kube Desk still opens it through a port forward.
+  - key: pushDomain
+    label: Domain for logs from other servers
+    type: domain
+    section: Domain
+    placeholder: loki.example.com
+    hint: For servers outside the cluster, such as apps run by pm2, systemd or Docker, to send their logs here. Only sending is published, behind a user and password. Empty keeps Loki inside the cluster.
+  - key: pushUser
+    label: User for sending logs
+    default: logs
+    required: true
+    section: Domain
+    showIf: pushDomain
+    pattern: '^[A-Za-z0-9._-]+$'
+  - key: pushPassword
+    label: Password for sending logs
+    type: password
+    generate: true
+    section: Domain
+    showIf: pushDomain
+    hint: Left empty, a password is made for you.
   - key: ingressClass
     label: Ingress class
     type: ingressClass
     section: Domain
-    showIf: grafanaDomain
   - key: tlsIssuer
     label: HTTPS certificate from
     type: clusterIssuer
     section: Domain
-    showIf: grafanaDomain
-    hint: A cert-manager ClusterIssuer, such as letsencrypt. Empty serves plain HTTP.
+    hint: A cert-manager ClusterIssuer, such as letsencrypt. Empty serves plain HTTP; use HTTPS when servers send logs over the internet.
   - key: storageClass
     label: Storage class
     type: storageClass
@@ -93,8 +111,41 @@ components:
           replicas: 0
         write:
           replicas: 0
+        {{- if .pushDomain }}
+        # Servers outside the cluster send logs through the gateway, which
+        # asks for the user and password; only the push path is published.
+        gateway:
+          enabled: true
+          basicAuth:
+            enabled: true
+            username: {{ quote .pushUser }}
+            password: {{ quote .pushPassword }}
+          ingress:
+            enabled: true
+            {{- if .ingressClass }}
+            ingressClassName: {{ .ingressClass }}
+            {{- end }}
+            {{- if .tlsIssuer }}
+            annotations:
+              cert-manager.io/cluster-issuer: {{ .tlsIssuer }}
+            {{- end }}
+            hosts:
+              - host: {{ .pushDomain }}
+                paths:
+                  - path: /loki/api/v1/push
+                    pathType: Prefix
+            {{- if .tlsIssuer }}
+            tls:
+              - secretName: loki-push-tls
+                hosts:
+                  - {{ .pushDomain }}
+            {{- else }}
+            tls: []
+            {{- end }}
+        {{- else }}
         gateway:
           enabled: false
+        {{- end }}
         chunksCache:
           enabled: false
         resultsCache:
@@ -207,6 +258,14 @@ access:
     password: grafanaPassword
     domain: grafanaDomain
     tls: tlsIssuer
+  - label: Log push
+    service: loki-gateway
+    port: 80
+    path: /loki/api/v1/push
+    noOpen: true
+    password: pushPassword
+    domain: pushDomain
+    tls: tlsIssuer
 notes: |
   Logs of every pod go to Loki, kept for {{ .retentionDays }} days.
   {{- if .grafanaDomain }}
@@ -219,4 +278,38 @@ notes: |
   **Drilldown → Logs** and pick the Loki data source. Try
   `{namespace="default"}`.
 
-  Other apps can push logs to `http://loki.{{ .Namespace }}.svc:3100`.
+  Apps in the cluster can push logs to `http://loki.{{ .Namespace }}.svc:3100`.
+  {{- if .pushDomain }}
+
+  **Logs from other servers.** Point the DNS of `{{ .pushDomain }}` at the
+  ingress controller, then install [Grafana Alloy](https://grafana.com/docs/alloy/latest/set-up/install/)
+  on each server and give it a config such as this one, here for pm2 (copy
+  the password with the key button of **Log push**):
+
+  ```alloy
+  local.file_match "pm2" {
+    path_targets = [{
+      __path__ = "/home/USER/.pm2/logs/*.log",
+      job      = "pm2",
+      host     = constants.hostname,
+    }]
+  }
+
+  loki.source.file "pm2" {
+    targets    = local.file_match.pm2.targets
+    forward_to = [loki.write.default.receiver]
+  }
+
+  loki.write "default" {
+    endpoint {
+      url = "{{ if .tlsIssuer }}https{{ else }}http{{ end }}://{{ .pushDomain }}/loki/api/v1/push"
+      basic_auth {
+        username = "{{ .pushUser }}"
+        password = "PASSWORD"
+      }
+    }
+  }
+  ```
+
+  In Grafana, `{job="pm2"}` shows them; `filename` tells the apps apart.
+  {{- end }}

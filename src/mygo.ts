@@ -835,6 +835,11 @@ export interface StackAccess {
    */
   domain?: string;
   tls?: string;
+  /**
+   * NoOpen marks an address that is not a page, such as where servers
+   * send logs: it is copied, not opened, and shows only with a domain.
+   */
+  noOpen?: boolean;
   user?: string;
   /**
    * Password is the password field that signs in; PasswordSecret is
@@ -971,6 +976,8 @@ export interface StackJob {
 export interface StackLink {
   label: string;
   url: string;
+  /** Copy says the address is for programs, to copy rather than open. */
+  copy?: boolean;
 }
 
 /** StackPlan is what running a stack does, without doing it. */

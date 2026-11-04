@@ -9,6 +9,7 @@ biết.
 
 | Bản | Ngày | Điểm chính | Tải về (delta) |
 |---|---|---|---|
+| [0.9.4](#094--04112026) | 04/11/2026 | Stack Loki nhận log từ server ngoài cluster (pm2, systemd, Docker) qua domain có mật khẩu; có sẵn config Alloy | xem trang Releases |
 | [0.9.3](#093--04112026) | 04/11/2026 | Sửa lỗi cài stack dùng Helm báo "no cached repo found" khi cache repo Helm trên máy bị thiếu | xem trang Releases |
 | [0.9.2](#092--04112026) | 04/11/2026 | Gợi ý trỏ DNS đúng khi ingress controller chỉ có IP private (k3s ServiceLB): gợi ý IP public của node | xem trang Releases |
 | [0.9.1](#091--04112026) | 04/11/2026 | Stack hỏi domain cho các trang web (Grafana, Kibana, Argo CD…), gợi ý trỏ DNS; tham số chia nhóm, đánh dấu bắt buộc, chọn ingress class / issuer / storage class từ cluster | xem trang Releases |
@@ -30,6 +31,30 @@ Tải bản mới nhất:
 (Linux x64; arm64: `...-linux-arm64.deb`, hoặc `curl -fsSL https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/install.sh | sh`)
 và <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-Setup-latest-amd64.exe> (Windows 10/11 x64). App đã cài sẽ tự cập nhật. Thường app chỉ
 tải phần thay đổi (delta), như ở cột cuối bảng trên.
+
+---
+
+## 0.9.4 · 04/11/2026
+
+### Tính năng mới
+
+**Nhận log từ server ngoài cluster**
+- Stack **Loki + Grafana** có thêm ô **Domain for logs from other servers**
+  trong nhóm Domain (tuỳ chọn). Nhập domain thì hiện thêm user (mặc định
+  `logs`) và mật khẩu (để trống thì app tự tạo).
+- Stack bật gateway của Loki có đăng nhập và chỉ public đường nhận log
+  (`/loki/api/v1/push`), qua ingress, có HTTPS nếu chọn issuer; đường đọc log
+  không ra ngoài, xem log vẫn trong Grafana. Không phụ thuộc loại ingress
+  controller.
+- Dialog cho xem trước địa chỉ server ngoài gửi log tới và địa chỉ cần trỏ
+  DNS.
+- Cài xong, phần ghi chú có sẵn config Grafana Alloy cho pm2 (đã điền domain
+  và user); mục **Log push** có nút copy địa chỉ và copy mật khẩu.
+
+### Cho người viết stack
+- Access có thể đánh dấu `noOpen: true` cho địa chỉ dành cho chương trình
+  (không phải trang web): app cho copy thay vì mở, và chỉ hiện khi đã nhập
+  domain.
 
 ---
 

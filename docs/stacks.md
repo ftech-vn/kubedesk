@@ -93,6 +93,9 @@ access:                      # web pages, opened through a port forward
     # passwordSecret: secret-name/key
     domain: domain           # the domain field it is published at
     tls: tlsIssuer           # the issuer field that makes it https
+    # noOpen: true           # an address for programs, such as where
+    #                          servers send logs: copied, not opened, and
+    #                          shown only once its domain is filled in
 notes: |
   Markdown shown once the stack runs. {{ .Namespace }} works here too.
 ```
@@ -143,7 +146,10 @@ In the Run dialog, the section of the domain fields says where each page will
 be, and where to point their DNS: the external addresses of the cluster's
 ingress controllers. It warns when the cluster has no ingress controller, or
 no issuer for HTTPS. An access entry with `domain` (and `tls`) links to its
-page at the domain once the stack runs.
+page at the domain once the stack runs. One with `noOpen: true` is an address
+for programs rather than people, such as the push endpoint the Loki stack
+publishes for servers outside the cluster: Kube Desk offers to copy it, and its
+password, instead of opening it.
 
 ### Components
 

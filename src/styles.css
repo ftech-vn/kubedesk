@@ -4249,3 +4249,6 @@ input.invalid {
   flex-direction: column;
   gap: 4px;
 }
+.access-label {
+  padding: 0 4px 0 6px;
+}

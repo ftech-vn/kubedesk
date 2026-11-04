@@ -315,9 +315,9 @@ function InstalledRow({ cluster, is, now, category, onRun, onChanged }: { cluste
         {is.links.length > 0 && <DomainLinks links={is.links} />}
       </div>
       <div className="installed-actions">
-        {is.access.map((a, i) => (
-          <AccessButtons key={i} cluster={cluster} namespace={is.namespace} stack={is.id} index={i} label={a.label} hasPassword={!!(a.password || a.passwordSecret)} />
-        ))}
+        {is.access.map((a, i) =>
+          accessShown(a, is.links) ? <AccessButtons key={i} cluster={cluster} namespace={is.namespace} stack={is.id} index={i} label={a.label} hasPassword={!!(a.password || a.passwordSecret)} noOpen={a.noOpen} /> : null,
+        )}
         {is.inCatalog && (
           <IconButton label="Change its settings and run again" onClick={onRun}>
             <Pencil size={14} />
@@ -331,8 +331,8 @@ function InstalledRow({ cluster, is, now, category, onRun, onChanged }: { cluste
   );
 }
 
-/** AccessButtons open a page of a stack and copy its password. */
-export function AccessButtons({ cluster, namespace, stack, index, label, hasPassword }: { cluster: string; namespace: string; stack: string; index: number; label: string; hasPassword: boolean }) {
+/** AccessButtons open a page of a stack and copy its password; with noOpen, only the password. */
+export function AccessButtons({ cluster, namespace, stack, index, label, hasPassword, noOpen }: { cluster: string; namespace: string; stack: string; index: number; label: string; hasPassword: boolean; noOpen?: boolean }) {
   const [busy, setBusy] = useState(false);
   const open = async () => {
     setBusy(true);
@@ -346,9 +346,13 @@ export function AccessButtons({ cluster, namespace, stack, index, label, hasPass
   };
   return (
     <span className="access-buttons">
-      <Button size="sm" busy={busy} icon={<ExternalLink size={13} />} onClick={open}>
-        {label}
-      </Button>
+      {noOpen ? (
+        <span className="small muted access-label">{label}</span>
+      ) : (
+        <Button size="sm" busy={busy} icon={<ExternalLink size={13} />} onClick={open}>
+          {label}
+        </Button>
+      )}
       {hasPassword && (
         <IconButton label={`Copy the password of ${label}`} onClick={copy}>
           <KeyRound size={14} />
@@ -358,15 +362,25 @@ export function AccessButtons({ cluster, namespace, stack, index, label, hasPass
   );
 }
 
-/** DomainLinks open the pages of a stack at their domains. */
+/** DomainLinks open the pages of a stack at their domains, or copy the addresses meant for programs. */
 export function DomainLinks({ links }: { links: StackLink[] }) {
+  const copy = (l: StackLink) => navigator.clipboard.writeText(l.url).then(() => toast.ok(`Copied the address of ${l.label}`, l.url));
   return (
     <div className="row gap wrap">
-      {links.map((l) => (
-        <Button key={l.url} size="sm" variant="ghost" icon={<Globe size={13} />} onClick={() => Kube.openURL(l.url)} title={`Open ${l.url} in the browser`}>
-          {l.url.replace(/^https?:\/\//, "")} <ExternalLink size={11} className="faint" />
-        </Button>
-      ))}
+      {links.map((l) =>
+        l.copy ? (
+          <Button key={l.url} size="sm" variant="ghost" icon={<Copy size={13} />} onClick={() => copy(l)} title={`${l.label}: copy the address`}>
+            {l.url.replace(/^https?:\/\//, "")}
+          </Button>
+        ) : (
+          <Button key={l.url} size="sm" variant="ghost" icon={<Globe size={13} />} onClick={() => Kube.openURL(l.url)} title={`Open ${l.url} in the browser`}>
+            {l.url.replace(/^https?:\/\//, "")} <ExternalLink size={11} className="faint" />
+          </Button>
+        ),
+      )}
     </div>
   );
 }
+
+/** accessShown says whether an access entry of a stack shows: an address that is not a page shows only with its domain. */
+export const accessShown = (a: { label: string; noOpen?: boolean }, links: StackLink[]) => !a.noOpen || links.some((l) => l.label === a.label);

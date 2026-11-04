@@ -46,6 +46,7 @@ func TestDemoStacks(t *testing.T) {
 	}
 	values := map[string]map[string]string{
 		"ingress": {"ingressClass": "traefik-stack", "serviceType": "NodePort"},
+		"loki":    {"pushDomain": "loki.kd-test.dev", "pushPassword": "Push-Secret-123"},
 	}
 	for _, sid := range strings.Split(os.Getenv("KD_STACKS"), ",") {
 		start := time.Now()

@@ -150,6 +150,9 @@ type StackAccess struct {
 	// is the clusterIssuer field whose certificate makes it https.
 	Domain string `json:"domain,omitempty"`
 	TLS    string `json:"tls,omitempty"`
+	// NoOpen marks an address that is not a page, such as where servers
+	// send logs: it is copied, not opened, and shows only with a domain.
+	NoOpen bool   `json:"noOpen,omitempty"`
 	User   string `json:"user,omitempty"`
 	// Password is the password field that signs in; PasswordSecret is
 	// "secret/key", for passwords made by what the stack runs.
@@ -431,6 +434,9 @@ func checkStack(st *Stack) error {
 		}
 		if a.Domain != "" && fields[a.Domain].Type != "domain" {
 			return fmt.Errorf("access %q: domain must name a domain field", a.Label)
+		}
+		if a.NoOpen && a.Domain == "" {
+			return fmt.Errorf("access %q: noOpen needs a domain", a.Label)
 		}
 		if a.TLS != "" && fields[a.TLS].Type != "clusterIssuer" {
 			return fmt.Errorf("access %q: tls must name a clusterIssuer field", a.Label)
@@ -737,6 +743,8 @@ func fieldShown(st Stack, f StackField, values map[string]string) bool {
 type StackLink struct {
 	Label string `json:"label"`
 	URL   string `json:"url"`
+	// Copy says the address is for programs, to copy rather than open.
+	Copy bool `json:"copy,omitempty"`
 }
 
 // stackLinks are the pages of a stack published at the domains given.
@@ -753,7 +761,7 @@ func stackLinks(st Stack, values map[string]string) []StackLink {
 			scheme = "https"
 		}
 		path, _ := renderStackTemplate("path", a.Path, data)
-		out = append(out, StackLink{Label: a.Label, URL: scheme + "://" + domain + path})
+		out = append(out, StackLink{Label: a.Label, URL: scheme + "://" + domain + path, Copy: a.NoOpen})
 	}
 	return out
 }

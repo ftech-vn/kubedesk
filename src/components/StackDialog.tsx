@@ -8,7 +8,7 @@ import { byKey } from "../lib/resources";
 import { ask, useApp } from "../lib/store";
 import { useStacks } from "../lib/stacks";
 import { useNow, useWatch } from "../lib/watch";
-import { AccessButtons, DomainLinks, stackIcon } from "../views/StacksView";
+import { AccessButtons, DomainLinks, accessShown, stackIcon } from "../views/StacksView";
 import { Badge, Button, ErrorBox, Field, Modal, Spinner } from "./ui";
 import { ClusterTile } from "./ClusterRail";
 import { Markdown } from "./Markdown";
@@ -270,7 +270,7 @@ function linksOf(st: Stack, values: Record<string, string>, errors: Record<strin
     const domain = a.domain ? values[a.domain] : "";
     if (!domain || errors[a.domain!]) continue;
     const scheme = a.tls && values[a.tls] ? "https" : "http";
-    out.push({ label: a.label, url: `${scheme}://${domain.toLowerCase()}${a.path && !a.path.includes("{{") ? a.path : ""}` });
+    out.push({ label: a.label, url: `${scheme}://${domain.toLowerCase()}${a.path && !a.path.includes("{{") ? a.path : ""}`, copy: a.noOpen });
   }
   return out;
 }
@@ -313,7 +313,7 @@ function DomainSection({ st, values, errors, options, children }: { st: Stack; v
         <div className="stack-domain-links">
           {links.map((l) => (
             <div key={l.url} className="small">
-              <span className="muted">{l.label} will be at</span> <span className="mono">{l.url}</span>
+              <span className="muted">{l.copy ? `${l.label}: servers send to` : `${l.label} will be at`}</span> <span className="mono">{l.url}</span>
             </div>
           ))}
           <DnsHint options={options} count={links.length} />
@@ -606,9 +606,11 @@ function JobView({ cluster, stack, id, onClose }: { cluster: string; stack?: Sta
               {job.links && job.links.length > 0 && <DomainLinks links={job.links} />}
               {stack.access && stack.access.length > 0 && (
                 <div className="row gap wrap">
-                  {stack.access.map((a, i) => (
-                    <AccessButtons key={i} cluster={cluster} namespace={job.namespace} stack={job.stack} index={i} label={`Open ${a.label}`} hasPassword={!!(a.password || a.passwordSecret)} />
-                  ))}
+                  {stack.access.map((a, i) =>
+                    accessShown(a, job.links ?? []) ? (
+                      <AccessButtons key={i} cluster={cluster} namespace={job.namespace} stack={job.stack} index={i} label={a.noOpen ? a.label : `Open ${a.label}`} hasPassword={!!(a.password || a.passwordSecret)} noOpen={a.noOpen} />
+                    ) : null,
+                  )}
                 </div>
               )}
               {job.notes && <Markdown text={job.notes} />}

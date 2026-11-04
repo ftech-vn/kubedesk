@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.4
+
+**Logs from other servers.** The Loki + Grafana stack takes a domain for servers outside the cluster, such as apps run by pm2, systemd or Docker, to send their logs, with a user and a password made for you. Only the path that receives logs is published, through Loki's gateway, which asks for them; reading the logs stays in Grafana. Once it runs, the stack's notes give a Grafana Alloy config for pm2 with the address filled in, and the stack offers to copy the address and the password.
+
+- An access entry of a stack can be an address for programs (noOpen): Kube Desk copies it instead of opening it, and shows it only once its domain is given.
+
 ## 0.9.3
 
 - Stacks with Helm charts install whatever the helm repositories of your machine are. Helm used to stop with "no cached repo found" when a repository added with helm repo add had no cached index, even one the stack does not use; Kube Desk now gives helm repositories of its own, and keeps your registry logins for oci:// charts.
