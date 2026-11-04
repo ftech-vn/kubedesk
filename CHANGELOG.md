@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.3
+
+- Stacks with Helm charts install whatever the helm repositories of your machine are. Helm used to stop with "no cached repo found" when a repository added with helm repo add had no cached index, even one the stack does not use; Kube Desk now gives helm repositories of its own, and keeps your registry logins for oci:// charts.
+
 ## 0.9.2
 
 - Where to point a stack's domains is right on clusters whose ingress controller listens on private addresses, as k3s's ServiceLB does with the nodes' internal IPs: the Run dialog says those addresses cannot be reached from the internet, and suggests the nodes' public addresses, or the one Kube Desk reaches the cluster at, with ports 80 and 443 open.

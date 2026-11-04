@@ -1530,7 +1530,16 @@ func (s *Stacks) helmRun(ctx context.Context, j *stackJob, cn *conn, args ...str
 	args = append(args, "--kube-context", cn.cluster.Context)
 	s.log(j, "$ helm "+strings.Join(args, " "))
 	cmd := exec.CommandContext(ctx, helm, args...)
-	cmd.Env = append(os.Environ(), "KUBECONFIG="+strings.Join(cn.src.files, string(os.PathListSeparator)))
+	// Stacks name their charts' repositories, so helm gets repositories of
+	// its own: with the user's, a repository whose index is not cached
+	// fails every install ("no cached repo found"). Registry logins, for
+	// oci:// charts, stay the user's.
+	dir := filepath.Join(s.kube.clusters.dir, "helm")
+	cmd.Env = append(os.Environ(),
+		"KUBECONFIG="+strings.Join(cn.src.files, string(os.PathListSeparator)),
+		"HELM_REPOSITORY_CONFIG="+filepath.Join(dir, "repositories.yaml"),
+		"HELM_REPOSITORY_CACHE="+filepath.Join(dir, "cache"),
+	)
 	pr, pw := io.Pipe()
 	cmd.Stdout, cmd.Stderr = pw, pw
 	if err := cmd.Start(); err != nil {

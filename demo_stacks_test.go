@@ -207,3 +207,67 @@ access:
 		}
 	}
 }
+
+// TestDemoStackHelm installs a stack with a small chart, whatever the
+// user's helm repositories are. Run it with K8S_DEMO=1.
+func TestDemoStackHelm(t *testing.T) {
+	if os.Getenv("K8S_DEMO") == "" {
+		t.Skip("set K8S_DEMO=1, and KUBECONFIG to a throwaway cluster")
+	}
+	c := newClusters()
+	c.dir = t.TempDir()
+	c.store.Prefs = map[string]ClusterPrefs{}
+	c.store.Namespaces = map[string]string{}
+	_ = os.MkdirAll(c.storedDir(), 0o700)
+	var id string
+	for _, cl := range c.List().Clusters {
+		if cl.Current {
+			id = cl.ID
+		}
+	}
+	s := newStacks(&Kube{clusters: c, timeline: newTimeline()})
+	if _, err := s.Save(`id: helm-demo
+name: Helm demo
+components:
+  - name: podinfo
+    helm:
+      repo: https://stefanprodan.github.io/podinfo
+      chart: podinfo
+      version: 6.9.2
+      values: |
+        replicaCount: 1
+`, ""); err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	job, err := s.Install(ctx, id, StackRequest{Stack: "helm-demo"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for {
+		var j *StackJob
+		for _, x := range s.Jobs() {
+			if x.ID == job && x.State != "running" {
+				j = &x
+			}
+		}
+		if j != nil {
+			if j.State != "done" {
+				s.mu.Lock()
+				out := s.jobs[job].Output
+				s.mu.Unlock()
+				t.Fatalf("%s: %s\n%s", j.State, j.Error, strings.Join(out, "\n"))
+			}
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	job, _ = s.Uninstall(ctx, id, "helm-demo", "helm-demo", true)
+	for done := false; !done; time.Sleep(500 * time.Millisecond) {
+		for _, x := range s.Jobs() {
+			if x.ID == job && x.State != "running" {
+				done = true
+			}
+		}
+	}
+}

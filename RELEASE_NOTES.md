@@ -9,6 +9,7 @@ biết.
 
 | Bản | Ngày | Điểm chính | Tải về (delta) |
 |---|---|---|---|
+| [0.9.3](#093--04112026) | 04/11/2026 | Sửa lỗi cài stack dùng Helm báo "no cached repo found" khi cache repo Helm trên máy bị thiếu | xem trang Releases |
 | [0.9.2](#092--04112026) | 04/11/2026 | Gợi ý trỏ DNS đúng khi ingress controller chỉ có IP private (k3s ServiceLB): gợi ý IP public của node | xem trang Releases |
 | [0.9.1](#091--04112026) | 04/11/2026 | Stack hỏi domain cho các trang web (Grafana, Kibana, Argo CD…), gợi ý trỏ DNS; tham số chia nhóm, đánh dấu bắt buộc, chọn ingress class / issuer / storage class từ cluster | xem trang Releases |
 | [0.9.0](#090--04112026) | 04/11/2026 | Stacks: cài sẵn cả bộ (log, metrics, database, Kafka, Argo CD, ingress) vào một namespace chỉ bằng nút Run; tự định nghĩa stack của mình bằng YAML | xem trang Releases |
@@ -29,6 +30,18 @@ Tải bản mới nhất:
 (Linux x64; arm64: `...-linux-arm64.deb`, hoặc `curl -fsSL https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/install.sh | sh`)
 và <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-Setup-latest-amd64.exe> (Windows 10/11 x64). App đã cài sẽ tự cập nhật. Thường app chỉ
 tải phần thay đổi (delta), như ở cột cuối bảng trên.
+
+---
+
+## 0.9.3 · 04/11/2026
+
+### Sửa lỗi
+- Cài stack có Helm chart bị dừng với lỗi `no cached repo found (try 'helm
+  repo update')` khi một repo đã thêm bằng `helm repo add` (ví dụ
+  `jetstack`) không có file index trong cache, dù stack không dùng repo đó.
+  Giờ app chạy Helm với danh sách repo và cache riêng trong thư mục dữ liệu
+  của app, không phụ thuộc cấu hình `helm repo` trên máy; đăng nhập registry
+  cho chart `oci://` vẫn dùng của người dùng.
 
 ---
 

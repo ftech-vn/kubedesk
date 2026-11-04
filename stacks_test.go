@@ -80,7 +80,10 @@ func TestBuiltinStackCharts(t *testing.T) {
 			if h.Version != "" {
 				args = append(args, "--version", h.Version)
 			}
-			out, err := exec.Command("helm", args...).CombinedOutput()
+			// As the app runs it: repositories of its own, not the user's.
+			cmd := exec.Command("helm", args...)
+			cmd.Env = append(os.Environ(), "HELM_REPOSITORY_CONFIG="+t.TempDir()+"/repositories.yaml", "HELM_REPOSITORY_CACHE="+t.TempDir())
+			out, err := cmd.CombinedOutput()
 			if err != nil {
 				t.Errorf("%s/%s: %s", st.ID, c.Name, out)
 			}
