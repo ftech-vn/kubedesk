@@ -1,0 +1,248 @@
+id: elk
+name: Elastic Stack (ELK)
+category: Logging
+description: >-
+  Elasticsearch, Kibana, Logstash and Filebeat, run by the Elastic operator
+  (ECK). Filebeat ships the logs of every pod, through Logstash or straight
+  to Elasticsearch, and Kibana searches them. No Helm needed.
+namespace: elk
+requires: About 4 GB of memory, and a volume for Elasticsearch.
+tags: [logs, elasticsearch, kibana, logstash, filebeat, eck]
+fields:
+  - key: version
+    label: Elastic version
+    default: 9.5.0
+  - key: storage
+    label: Elasticsearch volume size
+    default: 20Gi
+  - key: memory
+    label: Elasticsearch memory
+    default: 2Gi
+  - key: logstash
+    label: Route logs through Logstash
+    type: bool
+    default: "true"
+    hint: Off, Filebeat sends logs straight to Elasticsearch.
+  - key: eckVersion
+    label: ECK operator version
+    default: 3.5.0
+    advanced: true
+  - key: storageClass
+    label: Storage class
+    hint: Empty for the cluster's default.
+    advanced: true
+components:
+  - name: eck-operator
+    title: Elastic operator (ECK)
+    namespace: elastic-system
+    urls:
+      - https://download.elastic.co/downloads/eck/{{ .eckVersion }}/crds.yaml
+      - https://download.elastic.co/downloads/eck/{{ .eckVersion }}/operator.yaml
+  - name: elasticsearch
+    title: Elasticsearch
+    timeout: 20m
+    manifest: |
+      apiVersion: elasticsearch.k8s.elastic.co/v1
+      kind: Elasticsearch
+      metadata:
+        name: elasticsearch
+      spec:
+        version: {{ .version }}
+        nodeSets:
+          - name: default
+            count: 1
+            config:
+              node.store.allow_mmap: false
+            podTemplate:
+              spec:
+                containers:
+                  - name: elasticsearch
+                    resources:
+                      requests:
+                        memory: {{ .memory }}
+                      limits:
+                        memory: {{ .memory }}
+            volumeClaimTemplates:
+              - metadata:
+                  name: elasticsearch-data
+                spec:
+                  accessModes: [ReadWriteOnce]
+                  resources:
+                    requests:
+                      storage: {{ .storage }}
+                  {{- if .storageClass }}
+                  storageClassName: {{ quote .storageClass }}
+                  {{- end }}
+  - name: kibana
+    title: Kibana
+    manifest: |
+      apiVersion: kibana.k8s.elastic.co/v1
+      kind: Kibana
+      metadata:
+        name: kibana
+      spec:
+        version: {{ .version }}
+        count: 1
+        elasticsearchRef:
+          name: elasticsearch
+  - name: logstash
+    title: Logstash
+    when: logstash
+    manifest: |
+      apiVersion: logstash.k8s.elastic.co/v1alpha1
+      kind: Logstash
+      metadata:
+        name: logstash
+      spec:
+        version: {{ .version }}
+        count: 1
+        elasticsearchRefs:
+          - name: elasticsearch
+            clusterName: es
+        pipelines:
+          - pipeline.id: main
+            config.string: |
+              input {
+                beats { port => 5044 }
+              }
+              output {
+                elasticsearch {
+                  hosts => [ "${ES_ES_HOSTS}" ]
+                  user => "${ES_ES_USER}"
+                  password => "${ES_ES_PASSWORD}"
+                  ssl_certificate_authorities => "${ES_ES_SSL_CERTIFICATE_AUTHORITY}"
+                  data_stream => true
+                }
+              }
+        services:
+          - name: beats
+            service:
+              spec:
+                type: ClusterIP
+                ports:
+                  - port: 5044
+                    name: beats
+                    protocol: TCP
+                    targetPort: 5044
+  - name: filebeat
+    title: Filebeat (collects the logs)
+    manifest: |
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: filebeat
+      ---
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        name: {{ .Namespace }}-filebeat
+      rules:
+        - apiGroups: [""]
+          resources: [namespaces, pods, nodes]
+          verbs: [get, watch, list]
+        - apiGroups: [apps]
+          resources: [replicasets]
+          verbs: [get, list, watch]
+        - apiGroups: [batch]
+          resources: [jobs]
+          verbs: [get, list, watch]
+      ---
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: {{ .Namespace }}-filebeat
+      subjects:
+        - kind: ServiceAccount
+          name: filebeat
+          namespace: {{ .Namespace }}
+      roleRef:
+        kind: ClusterRole
+        name: {{ .Namespace }}-filebeat
+        apiGroup: rbac.authorization.k8s.io
+      ---
+      apiVersion: beat.k8s.elastic.co/v1beta1
+      kind: Beat
+      metadata:
+        name: filebeat
+      spec:
+        type: filebeat
+        version: {{ .version }}
+        {{- if not .logstash }}
+        elasticsearchRef:
+          name: elasticsearch
+        {{- end }}
+        config:
+          filebeat.autodiscover.providers:
+            - type: kubernetes
+              node: ${NODE_NAME}
+              hints.enabled: true
+              hints.default_config:
+                type: filestream
+                id: kubernetes-container-logs-${data.kubernetes.pod.name}-${data.kubernetes.container.id}
+                paths:
+                  - /var/log/containers/*${data.kubernetes.container.id}.log
+                parsers:
+                  - container: ~
+                prospector.scanner.symlinks: true
+          {{- if .logstash }}
+          output.logstash:
+            hosts: ["logstash-ls-beats.{{ .Namespace }}.svc:5044"]
+          {{- end }}
+          processors:
+            - add_host_metadata: {}
+        daemonSet:
+          podTemplate:
+            spec:
+              serviceAccountName: filebeat
+              automountServiceAccountToken: true
+              terminationGracePeriodSeconds: 30
+              dnsPolicy: ClusterFirstWithHostNet
+              hostNetwork: true
+              securityContext:
+                runAsUser: 0
+              containers:
+                - name: filebeat
+                  env:
+                    - name: NODE_NAME
+                      valueFrom:
+                        fieldRef:
+                          fieldPath: spec.nodeName
+                  volumeMounts:
+                    - name: varlogcontainers
+                      mountPath: /var/log/containers
+                    - name: varlogpods
+                      mountPath: /var/log/pods
+                    - name: varlibdockercontainers
+                      mountPath: /var/lib/docker/containers
+              volumes:
+                - name: varlogcontainers
+                  hostPath:
+                    path: /var/log/containers
+                - name: varlogpods
+                  hostPath:
+                    path: /var/log/pods
+                - name: varlibdockercontainers
+                  hostPath:
+                    path: /var/lib/docker/containers
+access:
+  - label: Kibana
+    service: kibana-kb-http
+    port: 5601
+    scheme: https
+    user: elastic
+    passwordSecret: elasticsearch-es-elastic-user/elastic
+  - label: Elasticsearch
+    service: elasticsearch-es-http
+    port: 9200
+    scheme: https
+    user: elastic
+    passwordSecret: elasticsearch-es-elastic-user/elastic
+notes: |
+  Filebeat ships the logs of every pod{{ if .logstash }} through Logstash{{ end }} to Elasticsearch.
+
+  Open **Kibana** (its certificate is self-signed: let the browser go on),
+  sign in as `elastic` with the password from **Copy password**, then go to
+  **Discover** and pick the `logs-*` data view{{ if not .logstash }} or `filebeat-*`{{ end }}.
+
+  Inside the cluster, Elasticsearch is at
+  `https://elasticsearch-es-http.{{ .Namespace }}.svc:9200`.

@@ -1,0 +1,101 @@
+id: prometheus
+name: Prometheus + Grafana
+category: Monitoring
+description: >-
+  kube-prometheus-stack: Prometheus, Alertmanager, node exporter and
+  kube-state-metrics, with Grafana dashboards and alerts for the cluster
+  ready to use.
+namespace: monitoring
+requires: About 2 GB of memory, and a volume for the metrics.
+tags: [metrics, prometheus, grafana, alertmanager]
+fields:
+  - key: retention
+    label: Keep metrics for
+    default: 15d
+    hint: A duration such as 15d or 12h.
+  - key: storage
+    label: Metrics volume size
+    default: 20Gi
+  - key: grafanaPassword
+    label: Grafana admin password
+    type: password
+    generate: true
+    hint: Left empty, a password is made for you.
+  - key: alertmanager
+    label: Alertmanager
+    type: bool
+    default: "true"
+  - key: controlPlane
+    label: Watch the control plane (etcd, scheduler, controller manager)
+    type: bool
+    hint: Off for managed clusters such as GKE, EKS and AKS, where it cannot be reached.
+    advanced: true
+  - key: storageClass
+    label: Storage class
+    hint: Empty for the cluster's default.
+    advanced: true
+components:
+  - name: kube-prometheus-stack
+    title: kube-prometheus-stack
+    timeout: 20m
+    helm:
+      repo: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      version: 92.17.1
+      values: |
+        grafana:
+          adminUser: admin
+          adminPassword: {{ quote .grafanaPassword }}
+          persistence:
+            enabled: true
+            size: 2Gi
+            {{- if .storageClass }}
+            storageClassName: {{ quote .storageClass }}
+            {{- end }}
+        alertmanager:
+          enabled: {{ .alertmanager }}
+        prometheus:
+          prometheusSpec:
+            retention: {{ .retention }}
+            # Rules and monitors of every release, not only this one.
+            ruleSelectorNilUsesHelmValues: false
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorSelectorNilUsesHelmValues: false
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: [ReadWriteOnce]
+                  resources:
+                    requests:
+                      storage: {{ .storage }}
+                  {{- if .storageClass }}
+                  storageClassName: {{ quote .storageClass }}
+                  {{- end }}
+        kubeEtcd:
+          enabled: {{ .controlPlane }}
+        kubeControllerManager:
+          enabled: {{ .controlPlane }}
+        kubeScheduler:
+          enabled: {{ .controlPlane }}
+        kubeProxy:
+          enabled: {{ .controlPlane }}
+access:
+  - label: Grafana
+    service: kube-prometheus-stack-grafana
+    port: 80
+    user: admin
+    password: grafanaPassword
+  - label: Prometheus
+    service: kube-prometheus-stack-prometheus
+    port: 9090
+  - label: Alertmanager
+    service: kube-prometheus-stack-alertmanager
+    port: 9093
+notes: |
+  Prometheus keeps metrics for {{ .retention }}.
+
+  Open **Grafana**, sign in as `admin`, and look under **Dashboards →
+  Kubernetes** for the cluster, its nodes, namespaces and pods.
+
+  Prometheus picks up the ServiceMonitors and PodMonitors of every
+  namespace, so apps can add their own.

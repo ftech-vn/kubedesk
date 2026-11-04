@@ -1,0 +1,115 @@
+id: opensearch
+name: OpenSearch + Fluent Bit
+category: Logging
+description: >-
+  Logs of every pod, collected by Fluent Bit into OpenSearch and searched
+  in OpenSearch Dashboards. Open source, Elasticsearch compatible.
+namespace: opensearch
+requires: About 3 GB of memory, and a volume for OpenSearch.
+tags: [logs, opensearch, fluent-bit, dashboards]
+fields:
+  - key: adminPassword
+    label: Admin password
+    type: password
+    generate: true
+    hint: At least 8 characters with upper and lower case letters, a digit and a symbol. Left empty, one is made for you.
+  - key: storage
+    label: OpenSearch volume size
+    default: 20Gi
+  - key: heap
+    label: OpenSearch heap
+    default: 1g
+    advanced: true
+  - key: storageClass
+    label: Storage class
+    hint: Empty for the cluster's default.
+    advanced: true
+components:
+  - name: account
+    title: Admin account
+    manifest: |
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: opensearch-admin
+      type: Opaque
+      stringData:
+        username: admin
+        password: {{ quote .adminPassword }}
+  - name: opensearch
+    title: OpenSearch
+    timeout: 20m
+    helm:
+      repo: https://opensearch-project.github.io/helm-charts
+      chart: opensearch
+      version: 3.9.0
+      values: |
+        singleNode: true
+        opensearchJavaOpts: "-Xms{{ .heap }} -Xmx{{ .heap }}"
+        extraEnvs:
+          - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: opensearch-admin
+                key: password
+        persistence:
+          size: {{ .storage }}
+          {{- if .storageClass }}
+          storageClass: {{ quote .storageClass }}
+          {{- end }}
+        sysctlInit:
+          enabled: true
+  - name: dashboards
+    title: OpenSearch Dashboards
+    helm:
+      repo: https://opensearch-project.github.io/helm-charts
+      chart: opensearch-dashboards
+      version: 3.9.0
+      values: |
+        opensearchAccount:
+          secret: opensearch-admin
+  - name: fluent-bit
+    title: Fluent Bit (collects the logs)
+    helm:
+      repo: https://fluent.github.io/helm-charts
+      chart: fluent-bit
+      version: 0.58.3
+      values: |
+        env:
+          - name: OPENSEARCH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: opensearch-admin
+                key: password
+        config:
+          outputs: |
+            [OUTPUT]
+                Name opensearch
+                Match kube.*
+                Host opensearch-cluster-master
+                Port 9200
+                HTTP_User admin
+                HTTP_Passwd ${OPENSEARCH_PASSWORD}
+                tls On
+                tls.verify Off
+                Logstash_Format On
+                Logstash_Prefix logs
+                Replace_Dots On
+                Suppress_Type_Name On
+                Trace_Error On
+access:
+  - label: OpenSearch Dashboards
+    service: dashboards-opensearch-dashboards
+    port: 5601
+    user: admin
+    password: adminPassword
+notes: |
+  Fluent Bit ships the logs of every pod to OpenSearch, into daily
+  `logs-*` indices.
+
+  Open **OpenSearch Dashboards**, sign in as `admin`, create the index
+  pattern `logs-*` with `@timestamp` under **Dashboards Management**, then
+  search in **Discover**.
+
+  Inside the cluster, OpenSearch is at
+  `https://opensearch-cluster-master.{{ .Namespace }}.svc:9200`.

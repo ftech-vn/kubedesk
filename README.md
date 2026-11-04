@@ -98,6 +98,16 @@ clusters the core of the app:
 - Diff two revisions; roll back, with what changes and what Helm deletes
   shown first
 
+**Stacks**
+- Ready-made stacks installed into a namespace in one go: logs (Loki +
+  Grafana, the Elastic Stack, OpenSearch + Fluent Bit), metrics (Prometheus
+  + Grafana), PostgreSQL, Valkey, Kafka, Argo CD, Traefik with cert-manager
+- Components are Helm charts, manifests from URLs, or manifests written in
+  the stack, applied by Kube Desk without any tool
+- Write your own stacks in YAML, in the app; see [docs/stacks.md](docs/stacks.md)
+- Live progress, then buttons that open each web page through a port
+  forward and copy its password
+
 **A map of how things connect**
 - Each app of a namespace, left to right: ingresses, services, workloads,
   pods, and the config maps, secrets and claims they use, with their state
@@ -347,6 +357,7 @@ bunx tsc --noEmit             # type-check the frontend
 | `assistant.go`, `overview.go` | The assistant: Claude in Microsoft Foundry or Google Vertex AI, its tool loop, saved chats, the cluster overview |
 | `promote.go`, `snapshot.go`, `runbook.go` | Promoting between clusters, namespace snapshots (served through fake clients), runbooks |
 | `helm.go` | Helm releases, read from the Secrets Helm keeps; rollbacks through the helm command |
+| `stacks.go`, `stacks/` | Stacks: the catalog, rendering, installs and uninstalls in the background, server-side apply and readiness |
 | `access.go`, `health.go` | What the user may do (SelfSubjectAccessReview), and kubeconfig health checks |
 | `src/lib/graph.ts`, `src/views/ResourceMap.tsx` | The resource map: how objects connect, and its layout |
 | `agents.go`, `mcp_bridge.go` | The MCP server, its tools and approvals, and the stdio bridge |
@@ -401,6 +412,7 @@ for 90 seconds after its last view closes.
 - [x] Runbooks attached to workloads (0.7)
 - [ ] Cost estimates per namespace and app
 - [x] Plugins and a marketplace: pages, tabs, actions, columns and commands (0.8)
+- [x] Stacks: logging, monitoring, databases and more in one go, and your own
 
 ## Contributing
 

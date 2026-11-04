@@ -1,0 +1,168 @@
+id: loki
+name: Loki + Grafana
+category: Logging
+description: >-
+  Logs of every pod, collected by Grafana Alloy into Loki and searched in
+  Grafana. Light: one Loki process keeps the logs on a volume.
+namespace: logging
+requires: About 1 GB of memory, and volumes for the logs and Grafana.
+tags: [logs, loki, grafana, alloy]
+fields:
+  - key: retentionDays
+    label: Keep logs for (days)
+    type: number
+    default: "7"
+  - key: lokiStorage
+    label: Log volume size
+    default: 10Gi
+  - key: grafanaPassword
+    label: Grafana admin password
+    type: password
+    generate: true
+    hint: Left empty, a password is made for you.
+  - key: storageClass
+    label: Storage class
+    hint: Empty for the cluster's default.
+    advanced: true
+components:
+  - name: loki
+    title: Loki
+    helm:
+      repo: https://grafana-community.github.io/helm-charts
+      chart: loki
+      version: 20.4.1
+      values: |
+        deploymentMode: Monolithic
+        loki:
+          auth_enabled: false
+          commonConfig:
+            replication_factor: 1
+          storage:
+            type: filesystem
+          schemaConfig:
+            configs:
+              - from: "2024-04-01"
+                store: tsdb
+                object_store: filesystem
+                schema: v13
+                index:
+                  prefix: loki_index_
+                  period: 24h
+          limits_config:
+            retention_period: {{ .retentionDays }}d
+            allow_structured_metadata: true
+            volume_enabled: true
+          compactor:
+            retention_enabled: true
+            delete_request_store: filesystem
+        singleBinary:
+          replicas: 1
+          persistence:
+            size: {{ .lokiStorage }}
+            {{- if .storageClass }}
+            storageClass: {{ quote .storageClass }}
+            {{- end }}
+        backend:
+          replicas: 0
+        read:
+          replicas: 0
+        write:
+          replicas: 0
+        gateway:
+          enabled: false
+        chunksCache:
+          enabled: false
+        resultsCache:
+          enabled: false
+        lokiCanary:
+          enabled: false
+        test:
+          enabled: false
+  - name: alloy
+    title: Grafana Alloy (collects the logs)
+    helm:
+      repo: https://grafana.github.io/helm-charts
+      chart: alloy
+      version: 1.15.0
+      values: |
+        controller:
+          type: deployment
+          replicas: 1
+        alloy:
+          configMap:
+            content: |
+              discovery.kubernetes "pods" {
+                role = "pod"
+              }
+              discovery.relabel "pods" {
+                targets = discovery.kubernetes.pods.targets
+                rule {
+                  source_labels = ["__meta_kubernetes_namespace"]
+                  target_label  = "namespace"
+                }
+                rule {
+                  source_labels = ["__meta_kubernetes_pod_name"]
+                  target_label  = "pod"
+                }
+                rule {
+                  source_labels = ["__meta_kubernetes_pod_container_name"]
+                  target_label  = "container"
+                }
+                rule {
+                  source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name", "__meta_kubernetes_pod_label_app"]
+                  regex         = "^;*([^;]+)(;.*)?$"
+                  target_label  = "app"
+                }
+                rule {
+                  source_labels = ["__meta_kubernetes_pod_node_name"]
+                  target_label  = "node"
+                }
+              }
+              loki.source.kubernetes "pods" {
+                targets    = discovery.relabel.pods.output
+                forward_to = [loki.write.default.receiver]
+              }
+              loki.write "default" {
+                endpoint {
+                  url = "http://loki.{{ .Namespace }}.svc:3100/loki/api/v1/push"
+                }
+              }
+  - name: grafana
+    title: Grafana
+    helm:
+      repo: https://grafana-community.github.io/helm-charts
+      chart: grafana
+      version: 14.3.1
+      values: |
+        adminUser: admin
+        adminPassword: {{ quote .grafanaPassword }}
+        persistence:
+          enabled: true
+          size: 2Gi
+          {{- if .storageClass }}
+          storageClassName: {{ quote .storageClass }}
+          {{- end }}
+        datasources:
+          datasources.yaml:
+            apiVersion: 1
+            datasources:
+              - name: Loki
+                type: loki
+                uid: loki
+                url: http://loki.{{ .Namespace }}.svc:3100
+                access: proxy
+                isDefault: true
+access:
+  - label: Grafana
+    service: grafana
+    port: 80
+    user: admin
+    password: grafanaPassword
+notes: |
+  Logs of every pod go to Loki, kept for {{ .retentionDays }} days.
+
+  Open **Grafana**, sign in as `admin`, then go to **Explore** or
+  **Drilldown → Logs** and pick the Loki data source. Try
+  `{namespace="default"}`.
+
+  Other apps can push logs to `http://loki.{{ .Namespace }}.svc:3100`.

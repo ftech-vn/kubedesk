@@ -1,0 +1,72 @@
+id: postgres
+name: PostgreSQL (CloudNativePG)
+category: Database
+description: >-
+  A PostgreSQL cluster run by the CloudNativePG operator: replicas with
+  automatic failover, a database and its user made for you, and a
+  connection string in a Secret.
+namespace: databases
+requires: About 512 MB of memory per instance, and a volume each.
+tags: [database, postgres, postgresql, cnpg]
+fields:
+  - key: name
+    label: Cluster name
+    default: postgres
+  - key: instances
+    label: Instances
+    type: number
+    default: "1"
+    hint: Three gives a primary and two replicas that take over.
+  - key: database
+    label: Database
+    default: app
+  - key: owner
+    label: Database user
+    default: app
+  - key: storage
+    label: Volume size
+    default: 10Gi
+  - key: image
+    label: PostgreSQL image
+    hint: Empty for the operator's default version.
+    advanced: true
+  - key: storageClass
+    label: Storage class
+    hint: Empty for the cluster's default.
+    advanced: true
+components:
+  - name: cnpg
+    title: CloudNativePG operator
+    namespace: cnpg-system
+    helm:
+      repo: https://cloudnative-pg.github.io/charts
+      chart: cloudnative-pg
+      version: 0.29.1
+  - name: cluster
+    title: PostgreSQL cluster
+    manifest: |
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      metadata:
+        name: {{ .name }}
+      spec:
+        instances: {{ .instances }}
+        {{- if .image }}
+        imageName: {{ quote .image }}
+        {{- end }}
+        storage:
+          size: {{ .storage }}
+          {{- if .storageClass }}
+          storageClass: {{ quote .storageClass }}
+          {{- end }}
+        bootstrap:
+          initdb:
+            database: {{ .database }}
+            owner: {{ .owner }}
+notes: |
+  Apps connect to `{{ .name }}-rw.{{ .Namespace }}.svc:5432` (the primary)
+  or `{{ .name }}-ro` (the replicas), database `{{ .database }}`.
+
+  The password of `{{ .owner }}` and a ready connection string are in the
+  Secret `{{ .name }}-app`, under `password` and `uri`. Mount it into your
+  app, or read it from the Secret's page.

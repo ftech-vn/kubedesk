@@ -42,6 +42,8 @@ interface AppStore {
     | { kind: "runbook"; id?: string; target?: RunbookTarget }
     | { kind: "search"; query?: string }
     | { kind: "plugins"; plugin?: string; install?: string; version?: string }
+    | { kind: "stack"; cluster: string; stack: string; namespace?: string; job?: string }
+    | { kind: "stack-editor"; id?: string; source?: string; readOnly?: boolean }
     | { kind: "compare"; gvr: GVR; object: string; namespace: string; name: string };
 
   load(): Promise<void>;

@@ -489,6 +489,31 @@ export interface ImpactRequest {
 /** ImpactSeverity says how much an effect matters. */
 export type ImpactSeverity = "danger" | "warning" | "info";
 
+/** InstalledComponent is a component of an installed stack. */
+export interface InstalledComponent {
+  name: string;
+  kind: string;
+  source: string;
+  objects: number;
+}
+
+/** InstalledStack is a stack run in a namespace, as the cluster records it. */
+export interface InstalledStack {
+  id: string;
+  name: string;
+  namespace: string;
+  status: string;
+  error?: string;
+  installed: string;
+  updated: string;
+  components: InstalledComponent[];
+  /** Values are the settings it ran with, passwords left out. */
+  values: Record<string, string>;
+  /** InCatalog is false when the stack's definition is gone. */
+  inCatalog: boolean;
+  access: StackAccess[];
+}
+
 /**
  * KubeconfigCandidate is a kubeconfig file found on the machine that the app
  * does not read yet.
@@ -550,6 +575,21 @@ export interface OpenRequest {
   kind: string;
   namespace: string;
   name: string;
+}
+
+/** PlannedComponent is a component as it will run. */
+export interface PlannedComponent {
+  name: string;
+  title: string;
+  /** Kind is helm, urls or manifest. */
+  kind: string;
+  source: string;
+  namespace: string;
+  /** Content is the rendered values of a chart, or the manifest. */
+  content: string;
+  overridden?: boolean;
+  skipped?: boolean;
+  error?: string;
 }
 
 /**
@@ -742,6 +782,170 @@ export interface SourceError {
 
 /** SourceKind tells where the kubeconfig of a cluster comes from. */
 export type SourceKind = "default" | "file" | "stored" | "snapshot";
+
+/**
+ * Stack is a set of components that run together in a namespace, such as
+ * Loki, Alloy and Grafana for logs, installed in one go.
+ */
+export interface Stack {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  /** Namespace is where the stack goes unless the user picks another. */
+  namespace: string;
+  /** Requires says what the stack needs from the cluster, for people. */
+  requires?: string;
+  tags?: string[];
+  fields?: StackField[];
+  components: StackComponent[];
+  access?: StackAccess[];
+  /** Notes is Markdown shown once the stack runs, a template of the fields. */
+  notes?: string;
+  /** Source is "builtin" or "user"; the app sets it. */
+  source?: string;
+  /** NeedsHelm says a component installs a Helm chart; the app sets it. */
+  needsHelm?: boolean;
+}
+
+/** StackAccess is a web page a stack serves, opened through a port forward. */
+export interface StackAccess {
+  label: string;
+  service: string;
+  port: number;
+  scheme?: string;
+  path?: string;
+  user?: string;
+  /**
+   * Password is the password field that signs in; PasswordSecret is
+   * "secret/key", for passwords made by what the stack runs.
+   */
+  password?: string;
+  passwordSecret?: string;
+}
+
+/** StackCatalog is the stacks the app knows of. */
+export interface StackCatalog {
+  stacks: Stack[];
+  /** Errors are the user's stack files that could not be read. */
+  errors: string[];
+  folder: string;
+  /** HelmInstalled says the helm command was found. */
+  helmInstalled: boolean;
+}
+
+/**
+ * StackComponent is a part of a stack: a Helm chart, manifests at URLs or
+ * manifests written in the stack, all templates of the fields.
+ */
+export interface StackComponent {
+  /** Name names the component, and the Helm release of a chart. */
+  name: string;
+  title?: string;
+  /** When is a bool field that turns the component on. */
+  when?: string;
+  /**
+   * Namespace puts the component elsewhere than the stack, such as an
+   * operator others share; uninstalling a stack keeps what another
+   * installed stack also has.
+   */
+  namespace?: string;
+  helm?: StackHelm;
+  urls?: string[];
+  manifest?: string;
+  /** NoWait goes on without waiting for what the component runs to be ready. */
+  noWait?: boolean;
+  /** NoTemplate takes the manifest as it is, for those with {{ }} of their own. */
+  noTemplate?: boolean;
+  /** Timeout bounds the wait, as a Go duration; 15m by default. */
+  timeout?: string;
+}
+
+/** StackField is a setting asked before running a stack. */
+export interface StackField {
+  key: string;
+  label: string;
+  /** Type is text, password, number, bool or select. */
+  type?: string;
+  default?: string;
+  hint?: string;
+  options?: string[];
+  /** Required refuses an empty value. */
+  required?: boolean;
+  /** Generate makes a random password when the value is left empty. */
+  generate?: boolean;
+  /** Advanced fields are folded away until asked for. */
+  advanced?: boolean;
+}
+
+/** StackHelm is a chart, from a repository or an oci:// reference. */
+export interface StackHelm {
+  repo?: string;
+  chart: string;
+  version?: string;
+  /** Values are the chart's values, as a YAML template of the fields. */
+  values?: string;
+}
+
+/**
+ * StackJob is a stack being installed or uninstalled; it goes on when the
+ * page stops watching it.
+ */
+export interface StackJob {
+  id: string;
+  cluster: string;
+  namespace: string;
+  stack: string;
+  name: string;
+  action: string;
+  state: string;
+  error?: string;
+  notes?: string;
+  started: string;
+  finished?: string;
+  steps: StackStep[];
+  /** Output is what the steps printed; only Follow sends it. */
+  output?: string[];
+}
+
+/** StackPlan is what running a stack does, without doing it. */
+export interface StackPlan {
+  /**
+   * Values are the request's values with defaults and generated
+   * passwords filled in, or those of the stack already installed.
+   */
+  values: Record<string, string>;
+  fieldErrors: Record<string, string>;
+  components: PlannedComponent[];
+  warnings: string[];
+  helmMissing: boolean;
+  /**
+   * Installed is the stack already in the namespace, which running
+   * again updates.
+   */
+  installed?: InstalledStack;
+}
+
+/** StackRequest asks to run a stack. */
+export interface StackRequest {
+  stack: string;
+  namespace: string;
+  values: Record<string, string>;
+  /**
+   * Overrides replace what a component renders, by component name: the
+   * values of a chart, or the manifest of the others.
+   */
+  overrides?: Record<string, string>;
+}
+
+/** StackStep is a step of a stack job. */
+export interface StackStep {
+  name: string;
+  title: string;
+  /** Status is waiting, running, done, failed or skipped. */
+  status: string;
+  detail?: string;
+}
 
 /** Theme is the appearance the user chose. */
 export type Theme = "system" | "light" | "dark";
@@ -1350,6 +1554,97 @@ export const Assistant = {
   },
 } as const;
 
+/**
+ * Stacks installs ready-made stacks into clusters: Helm charts and
+ * manifests that run together, from the app's catalog or the user's.
+ */
+export const Stacks = {
+  /** Cancel stops a running job; what its steps already did stays. */
+  cancel(id: string): Promise<void> {
+    return call("Stacks.Cancel", id);
+  },
+  /**
+   * Catalog returns the stacks of the app and the user's; a user's stack
+   * with the id of a built-in one replaces it.
+   */
+  catalog(): Promise<StackCatalog> {
+    return call("Stacks.Catalog");
+  },
+  /** Check reads a stack's YAML, as Save would, without saving it. */
+  check(source: string): Promise<Stack> {
+    return call("Stacks.Check", source);
+  },
+  /**
+   * Delete deletes one of the user's stacks; a built-in one it replaced
+   * comes back.
+   */
+  delete(id: string): Promise<void> {
+    return call("Stacks.Delete", id);
+  },
+  /**
+   * Follow streams a job, output included, as it changes, until it ends or
+   * the page stops listening.
+   */
+  follow(id: string, job: Channel<StackJob>): Promise<void> {
+    return call("Stacks.Follow", id, job);
+  },
+  /**
+   * Install runs a stack in a namespace of a cluster, making the namespace
+   * when it is missing, or updates the stack already there. It returns the
+   * job, which goes on in the background.
+   */
+  install(cluster: string, req: StackRequest): Promise<string> {
+    return call("Stacks.Install", cluster, req);
+  },
+  /** Installed returns the stacks installed in a cluster. */
+  installed(cluster: string): Promise<InstalledStack[]> {
+    return call("Stacks.Installed", cluster);
+  },
+  /** Jobs returns the stack jobs of this session, the latest first. */
+  jobs(): Promise<StackJob[]> {
+    return call("Stacks.Jobs");
+  },
+  /**
+   * Open opens a page of a stack in the browser, forwarding a local port to
+   * a ready pod of its service, and returns its address.
+   */
+  open(cluster: string, namespace: string, id: string, index: number): Promise<string> {
+    return call("Stacks.Open", cluster, namespace, id, index);
+  },
+  /** Password returns the password that signs in to a page of a stack. */
+  password(cluster: string, namespace: string, id: string, index: number): Promise<string> {
+    return call("Stacks.Password", cluster, namespace, id, index);
+  },
+  /**
+   * Plan works out what running a stack does: its values with defaults and
+   * generated passwords, and what each component renders.
+   */
+  plan(cluster: string, req: StackRequest): Promise<StackPlan> {
+    return call("Stacks.Plan", cluster, req);
+  },
+  /** Reveal shows the folder of the user's stacks in the file manager. */
+  reveal(): Promise<void> {
+    return call("Stacks.Reveal");
+  },
+  /** Save writes one of the user's stacks; renaming its id moves the file. */
+  save(source: string, previousID: string): Promise<Stack> {
+    return call("Stacks.Save", source, previousID);
+  },
+  /** Source returns the YAML of a stack, to edit it or make a copy. */
+  source(id: string): Promise<string> {
+    return call("Stacks.Source", id);
+  },
+  /**
+   * Uninstall removes a stack from a namespace: its Helm releases and the
+   * objects it applied, last first. Custom resource definitions stay, as
+   * deleting them would delete every object of their kinds. With
+   * deleteNamespace, the namespace goes too, with its volumes.
+   */
+  uninstall(cluster: string, namespace: string, id: string, deleteNamespace: boolean): Promise<string> {
+    return call("Stacks.Uninstall", cluster, namespace, id, deleteNamespace);
+  },
+} as const;
+
 /** Plugins installs and loads the plugins that extend the app's pages. */
 export const Plugins = {
   /**
@@ -1493,6 +1788,8 @@ export const events = {
   pluginsOpen: event<PluginsRequest>("plugins:open"),
   /** SnapshotOpened is sent when a snapshot was opened from the Finder. */
   snapshotOpened: event<Cluster>("snapshot:opened"),
+  /** StacksChanged is sent when a stack job starts, moves on or ends. */
+  stacksChanged: event<StackJob[]>("stacks:changed"),
   /** TimelineChanged tells pages that a cluster has new changes. */
   timelineChanged: event<string>("timeline:changed"),
 } as const;

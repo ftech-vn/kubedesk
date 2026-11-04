@@ -1,0 +1,107 @@
+id: kafka
+name: Kafka (Strimzi)
+category: Messaging
+description: >-
+  Apache Kafka in KRaft mode, run by the Strimzi operator, with operators
+  that manage topics and users as Kubernetes objects.
+namespace: kafka
+requires: About 2 GB of memory per node, and a volume each.
+tags: [kafka, messaging, streaming, strimzi]
+fields:
+  - key: name
+    label: Cluster name
+    default: kafka
+  - key: replicas
+    label: Nodes
+    type: number
+    default: "1"
+    hint: Three or more for replication.
+  - key: replication
+    label: Replication factor
+    type: number
+    default: "1"
+    hint: At most the number of nodes.
+  - key: storage
+    label: Volume size per node
+    default: 20Gi
+  - key: storageClass
+    label: Storage class
+    hint: Empty for the cluster's default.
+    advanced: true
+components:
+  - name: strimzi
+    title: Strimzi operator
+    namespace: strimzi
+    helm:
+      repo: https://strimzi.io/charts/
+      chart: strimzi-kafka-operator
+      version: 1.3.0
+      values: |
+        watchAnyNamespace: true
+  - name: cluster
+    title: Kafka cluster
+    timeout: 20m
+    manifest: |
+      apiVersion: kafka.strimzi.io/v1
+      kind: KafkaNodePool
+      metadata:
+        name: {{ .name }}-nodes
+        labels:
+          strimzi.io/cluster: {{ .name }}
+      spec:
+        replicas: {{ .replicas }}
+        roles: [controller, broker]
+        storage:
+          type: jbod
+          volumes:
+            - id: 0
+              type: persistent-claim
+              size: {{ .storage }}
+              deleteClaim: false
+              kraftMetadata: shared
+              {{- if .storageClass }}
+              class: {{ quote .storageClass }}
+              {{- end }}
+      ---
+      apiVersion: kafka.strimzi.io/v1
+      kind: Kafka
+      metadata:
+        name: {{ .name }}
+      spec:
+        kafka:
+          listeners:
+            - name: plain
+              port: 9092
+              type: internal
+              tls: false
+            - name: tls
+              port: 9093
+              type: internal
+              tls: true
+          config:
+            offsets.topic.replication.factor: {{ .replication }}
+            transaction.state.log.replication.factor: {{ .replication }}
+            transaction.state.log.min.isr: 1
+            default.replication.factor: {{ .replication }}
+            min.insync.replicas: 1
+        entityOperator:
+          topicOperator: {}
+          userOperator: {}
+notes: |
+  Apps connect to `{{ .name }}-kafka-bootstrap.{{ .Namespace }}.svc:9092`,
+  or `:9093` with TLS.
+
+  Make topics as objects:
+
+  ```yaml
+  apiVersion: kafka.strimzi.io/v1
+  kind: KafkaTopic
+  metadata:
+    name: orders
+    namespace: {{ .Namespace }}
+    labels:
+      strimzi.io/cluster: {{ .name }}
+  spec:
+    partitions: 3
+    replicas: {{ .replication }}
+  ```

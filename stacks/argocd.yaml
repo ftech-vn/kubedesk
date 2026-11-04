@@ -1,0 +1,42 @@
+id: argocd
+name: Argo CD
+category: CI/CD
+description: >-
+  GitOps continuous delivery: Argo CD keeps the cluster in step with
+  manifests, Helm charts and Kustomize apps in Git repositories.
+namespace: argocd
+requires: About 1 GB of memory.
+tags: [gitops, argocd, cd]
+fields:
+  - key: ha
+    label: Redis with high availability
+    type: bool
+    hint: Needs three nodes or more.
+    advanced: true
+components:
+  - name: argocd
+    title: Argo CD
+    helm:
+      repo: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      version: 10.11.7
+      values: |
+        configs:
+          params:
+            # The app reaches the server through a port forward.
+            server.insecure: true
+        redis-ha:
+          enabled: {{ .ha }}
+access:
+  - label: Argo CD
+    service: argocd-server
+    port: 80
+    user: admin
+    passwordSecret: argocd-initial-admin-secret/password
+notes: |
+  Open **Argo CD** and sign in as `admin` with the password from **Copy
+  password**. Change it under **User Info**, then delete the secret
+  `argocd-initial-admin-secret`.
+
+  Add a repository under **Settings → Repositories**, then a first
+  application with **New app**.

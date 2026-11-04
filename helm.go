@@ -481,7 +481,7 @@ func helmCommand() (string, error) {
 	loadShellEnv()
 	p, err := exec.LookPath("helm")
 	if err != nil {
-		return "", errors.New("rolling back needs the helm command: install it (brew install helm), then try again")
+		return "", errors.New("this needs the helm command: install it (brew install helm), then try again")
 	}
 	return p, nil
 }

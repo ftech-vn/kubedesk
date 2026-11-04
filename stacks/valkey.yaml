@@ -1,0 +1,102 @@
+id: valkey
+name: Valkey (Redis)
+category: Database
+description: >-
+  An in-memory key-value store that speaks the Redis protocol, kept on a
+  volume. Plain manifests: no operator, no Helm.
+namespace: cache
+requires: About 128 MB of memory and a small volume.
+tags: [cache, redis, valkey, key-value]
+fields:
+  - key: password
+    label: Password
+    type: password
+    generate: true
+    hint: Left empty, a password is made for you.
+  - key: maxMemory
+    label: Memory limit
+    default: 256Mi
+  - key: storage
+    label: Volume size
+    default: 2Gi
+  - key: version
+    label: Valkey version
+    default: 9.0-alpine
+    advanced: true
+components:
+  - name: valkey
+    title: Valkey
+    manifest: |
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: valkey
+      type: Opaque
+      stringData:
+        password: {{ quote .password }}
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: valkey
+      spec:
+        selector:
+          app.kubernetes.io/name: valkey
+        ports:
+          - name: valkey
+            port: 6379
+            targetPort: valkey
+      ---
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: valkey
+      spec:
+        serviceName: valkey
+        replicas: 1
+        selector:
+          matchLabels:
+            app.kubernetes.io/name: valkey
+        template:
+          metadata:
+            labels:
+              app.kubernetes.io/name: valkey
+          spec:
+            containers:
+              - name: valkey
+                image: valkey/valkey:{{ .version }}
+                args: ["--requirepass", "$(VALKEY_PASSWORD)", "--appendonly", "yes", "--maxmemory-policy", "allkeys-lru"]
+                env:
+                  - name: VALKEY_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: valkey
+                        key: password
+                ports:
+                  - name: valkey
+                    containerPort: 6379
+                readinessProbe:
+                  tcpSocket:
+                    port: valkey
+                  periodSeconds: 5
+                resources:
+                  requests:
+                    cpu: 50m
+                    memory: {{ .maxMemory }}
+                  limits:
+                    memory: {{ .maxMemory }}
+                volumeMounts:
+                  - name: data
+                    mountPath: /data
+        volumeClaimTemplates:
+          - metadata:
+              name: data
+            spec:
+              accessModes: [ReadWriteOnce]
+              resources:
+                requests:
+                  storage: {{ .storage }}
+notes: |
+  Apps connect to `valkey.{{ .Namespace }}.svc:6379` with the password in
+  the Secret `valkey`, under `password`: for example
+  `redis://:PASSWORD@valkey.{{ .Namespace }}.svc:6379`.

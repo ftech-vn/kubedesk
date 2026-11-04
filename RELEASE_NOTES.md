@@ -9,6 +9,7 @@ biết.
 
 | Bản | Ngày | Điểm chính | Tải về (delta) |
 |---|---|---|---|
+| [0.9.0](#090--04112026) | 04/11/2026 | Stacks: cài sẵn cả bộ (log, metrics, database, Kafka, Argo CD, ingress) vào một namespace chỉ bằng nút Run; tự định nghĩa stack của mình bằng YAML | xem trang Releases |
 | [0.8.0](#080--26102026) | 26/10/2026 | Plugin và marketplace (registry riêng trên R2, có chữ ký): thêm trang, tab, action, cột, lệnh ⌘K; bộ SDK và 2 plugin mẫu | xem trang Releases |
 | [0.7.1](#071--26102026) | 26/10/2026 | Có bản cho Linux (x64, arm64: gói .deb hoặc install.sh) và Windows (x64, bộ cài .exe) | 0.7.0 → 0.7.1 trên macOS: 1 MB |
 | [0.7.0](#070--24102026) | 24/10/2026 | Promote giữa các cluster, ảnh chụp namespace (file .kubedesk), runbook gắn vào resource, Gateway API trên Map | xem trang Releases |
@@ -26,6 +27,58 @@ Tải bản mới nhất:
 (Linux x64; arm64: `...-linux-arm64.deb`, hoặc `curl -fsSL https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/install.sh | sh`)
 và <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-Setup-latest-amd64.exe> (Windows 10/11 x64). App đã cài sẽ tự cập nhật. Thường app chỉ
 tải phần thay đổi (delta), như ở cột cuối bảng trên.
+
+---
+
+## 0.9.0 · 04/11/2026
+
+### Tính năng mới
+
+**Stacks**
+- Trang **Stacks** mới trong sidebar của mỗi cluster: chọn một stack, bấm
+  **Run**, điền vài thông tin cấu hình, app tạo namespace (nếu chưa có) rồi
+  cài lần lượt từng thành phần, đợi thành phần trước chạy xong mới sang
+  thành phần sau.
+- Stack có sẵn:
+  - Log: Loki + Alloy + Grafana; Elastic Stack (Elasticsearch, Kibana,
+    Logstash, Filebeat, qua operator ECK, không cần Helm); OpenSearch +
+    Fluent Bit + Dashboards.
+  - Metrics: Prometheus + Grafana (kube-prometheus-stack).
+  - Database: PostgreSQL (CloudNativePG), Valkey (thay Redis, không cần
+    Helm).
+  - Kafka (Strimzi), Argo CD, Traefik + cert-manager (Let's Encrypt).
+- Mật khẩu để trống thì app tự sinh; mật khẩu được lưu trong Secret của
+  stack trên cluster.
+- Đóng dialog thì việc cài vẫn tiếp tục; trang Stacks hiện tiến độ, pod của
+  namespace và log; app báo khi xong.
+- Cài xong có nút mở trang web của stack (Grafana, Kibana, Argo CD…) qua
+  port forward và nút copy mật khẩu.
+- Chạy lại stack trên cùng namespace là cập nhật, giữ nguyên cấu hình và
+  mật khẩu cũ.
+- **Uninstall** gỡ ngược thứ tự; phần dùng chung với stack khác (như một
+  operator) và CRD được giữ lại; chỉ xoá namespace (cùng volume) khi chọn.
+- Cluster production phải gõ tên cluster; cluster read-only từ chối.
+
+**Tự định nghĩa stack**
+- Stack là một file YAML: các trường cấu hình (text, password, number,
+  bool, select) và các thành phần. Mỗi thành phần là một trong: Helm chart,
+  manifest tải từ URL, hoặc manifest viết ngay trong stack. Tất cả là
+  template Go của các trường (`{{ .field }}`, `{{ .Namespace }}`).
+- Chỉ Helm chart cần lệnh `helm`; manifest thì app tự apply (server-side
+  apply, CRD trước), không cần công cụ gì.
+- **New stack** soạn ngay trong app, kiểm tra lỗi khi gõ; **Duplicate as my
+  stack** để sửa từ stack có sẵn. File nằm trong thư mục `stacks` của dữ
+  liệu app. Định dạng ở `docs/stacks.md`.
+
+### Cải tiến
+- ⌘K có **Stacks** và lệnh **Run <stack>…** cho từng stack.
+
+### Giới hạn đã biết
+- Stack dùng Helm cần cài lệnh `helm` (`brew install helm`).
+- Gỡ stack không xoá CRD, vì xoá CRD sẽ xoá mọi object cùng loại trong
+  cluster.
+- Các stack Prometheus, Elastic Stack, OpenSearch và Kafka mới được kiểm tra
+  bằng `helm template`, chưa cài thử trên cluster thật.
 
 ---
 

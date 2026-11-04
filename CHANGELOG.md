@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0
+
+**Stacks.** A new Stacks page, in the sidebar of each cluster, lists ready-made stacks to run there: logs with Loki and Grafana, the Elastic Stack (Elasticsearch, Kibana, Logstash and Filebeat) or OpenSearch with Fluent Bit; metrics with Prometheus and Grafana; PostgreSQL with CloudNativePG, Valkey, Kafka with Strimzi, Argo CD, and Traefik with cert-manager. Press Run, fill in a few settings (passwords are made for you), and Kube Desk makes the namespace and installs the components in order, waiting for each to be ready. Closing the dialog leaves it running; the page shows its progress, its pods and its output. Once it runs, buttons open each web page, such as Grafana or Kibana, through a port forward, and copy its password. Running a stack again updates it with the settings it has; Uninstall removes it, last part first, keeping what another stack shares, and the namespace only if you ask. Production clusters ask you to type their name, and read-only ones refuse.
+
+**Your own stacks.** A stack is a YAML file: settings to ask for, and components that are Helm charts, manifests from URLs, or manifests written in the stack, all templates of the settings. Only Helm charts need the helm command; Kube Desk applies the others itself. Write one with New stack, checked as you type, or duplicate a built-in one and change it. They live in a folder of the app's data; docs/stacks.md describes the format.
+
 ## 0.8.0
 
 **Plugins.** Plugins add to Kube Desk: pages in the sidebar, tabs and sections in an object's details, items in its menu, columns in lists (custom resources' too), commands in ⌘K, buttons in the title bar, cards on the overview, and settings of their own. Find them in Plugins (⌘K → Plugins…) or on kubedesk.cloud/plugins.html, whose Install button opens Kube Desk. They come from Kube Desk's own registry, which signs its index; Kube Desk checks the signature and each archive before installing, and offers updates. A plugin can also be installed from a file or an address. An installed plugin is off until you turn it on, since it runs with the app's access; the changes it asks for go through Kube Desk's diff and confirmation, and read-only clusters refuse them. A plugin that crashes says so in its place and leaves the rest of the app alone.

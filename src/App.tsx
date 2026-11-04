@@ -21,6 +21,8 @@ import { ClusterOverview } from "./views/ClusterOverview";
 import { ChangesView } from "./views/ChangesView";
 import { ResourceMapPage } from "./views/ResourceMap";
 import { HelmView } from "./views/HelmView";
+import { StacksView } from "./views/StacksView";
+import { useStacks } from "./lib/stacks";
 import { RunbooksPage } from "./components/Runbooks";
 import { ResourceList } from "./views/ResourceList";
 import { DetailsPanel } from "./views/details/DetailsPanel";
@@ -38,6 +40,7 @@ export function App() {
         useAlerts.getState().init();
         useApprovals.getState().init();
         useHealth.getState().load();
+        useStacks.getState().init();
         // A snapshot opened from the Finder shows at once.
         events.snapshotOpened.on(async (c) => {
           await useApp.getState().refresh();
@@ -235,6 +238,7 @@ function Section({ cluster, section }: { cluster: string; section: string }) {
   if (section === "changes") return <ChangesView cluster={cluster} />;
   if (section === "map") return <ResourceMapPage cluster={cluster} />;
   if (section === "helm") return <HelmView cluster={cluster} />;
+  if (section === "stacks") return <StacksView cluster={cluster} />;
   if (section === "runbooks") return <RunbooksPage cluster={cluster} />;
   const def = byKey.get(section);
   if (def) return <ResourceList key={def.key} cluster={cluster} def={def} />;

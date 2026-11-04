@@ -62,6 +62,7 @@ func main() {
 	mygo.Bind(alerts)
 	mygo.Bind(agents)
 	mygo.Bind(newAssistant(agents, clusters))
+	mygo.Bind(newStacks(kube))
 	plugins := newPlugins(clusters)
 	mygo.Bind(plugins)
 	setupUpdates()

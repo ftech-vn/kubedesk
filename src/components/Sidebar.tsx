@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { BookOpen, ChevronDown, ChevronRight, Gauge, History, Network, Package, Puzzle } from "lucide-react";
+import { BookOpen, Boxes, ChevronDown, ChevronRight, Gauge, History, Network, Package, Puzzle } from "lucide-react";
 import { customResourceDef, resourceGroups, resources } from "../lib/resources";
 import { useActiveView, useApp } from "../lib/store";
 import { useWatch } from "../lib/watch";
@@ -58,6 +58,7 @@ export function Sidebar({ cluster }: { cluster: string }) {
         {item("changes", "Changes", History)}
         {item("map", "Map", Network)}
         {item("helm", "Helm", Package)}
+        {item("stacks", "Stacks", Boxes)}
         {item("runbooks", "Runbooks", BookOpen)}
         {pluginPages.length > 0 && (
           <div className="side-group">

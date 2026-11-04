@@ -18,6 +18,8 @@ import { SearchDialog } from "./SearchDialog";
 import { CompareDialog } from "./CompareDialog";
 import { DiffView } from "./DiffView";
 import { PluginsDialog } from "./PluginsDialog";
+import { StackDialog } from "./StackDialog";
+import { StackEditor } from "./StackEditor";
 
 export function Dialogs() {
   const dialog = useApp((s) => s.dialog);
@@ -48,6 +50,10 @@ export function Dialogs() {
       return <RunbookEditor id={dialog.id} target={dialog.target} onClose={close} />;
     case "search":
       return <SearchDialog initial={dialog.query} onClose={close} />;
+    case "stack":
+      return <StackDialog key={`${dialog.cluster}/${dialog.stack}/${dialog.namespace ?? ""}/${dialog.job ?? ""}`} cluster={dialog.cluster} stack={dialog.stack} namespace={dialog.namespace} job={dialog.job} onClose={close} />;
+    case "stack-editor":
+      return <StackEditor id={dialog.id} source={dialog.source} readOnly={dialog.readOnly} onClose={close} />;
     case "compare":
       return <CompareDialog gvr={dialog.gvr} kind={dialog.object} namespace={dialog.namespace} name={dialog.name} onClose={close} />;
     case "report":

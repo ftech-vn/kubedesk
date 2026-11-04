@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Bell, BookOpen, Bot, Box, Camera, Puzzle, Sparkles, Download, History, Globe, Gauge, HeartPulse, Home, Layers, LayoutGrid, Monitor, Moon, Network, Package, Plus, Search, Settings2, Sun, Waypoints } from "lucide-react";
+import { Bell, BookOpen, Bot, Box, Boxes, Camera, Puzzle, Sparkles, Download, History, Globe, Gauge, HeartPulse, Home, Layers, LayoutGrid, Monitor, Moon, Network, Package, Plus, Search, Settings2, Sun, Waypoints } from "lucide-react";
 import { AppInfo } from "../mygo";
 import { isWatched, toggleWatch, useAlerts } from "../lib/alerts";
 import { useAssistant } from "../lib/assistant";
 import { byKey, resources } from "../lib/resources";
 import { useApp } from "../lib/store";
+import { useStacks } from "../lib/stacks";
 import { useWatch } from "../lib/watch";
 import { ClusterTile } from "./ClusterRail";
 import { openSnapshots } from "./SnapshotDialog";
@@ -49,6 +50,10 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
   const deployments = useWatch(active, byKey.get("deployments")!.gvr, ns);
   const services = useWatch(active, byKey.get("services")!.gvr, ns);
   const pluginCommands = usePlugins((p) => p.commands);
+  const stackCatalog = useStacks((st) => st.catalog);
+  useEffect(() => {
+    if (!useStacks.getState().catalog) useStacks.getState().loadCatalog().catch(() => {});
+  }, []);
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(0);
   const list = useRef<HTMLDivElement>(null);
@@ -102,6 +107,10 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
       if (s.clusters.find((c) => c.id === active)?.sourceKind !== "snapshot")
         out.push({ id: "snapshot-take", group: "App", label: ns ? `Take a snapshot of ${ns}…` : "Take a snapshot of a namespace…", keywords: "export kubedesk file share offline", icon: <Camera size={16} />, run: () => s.openDialog({ kind: "snapshot", cluster: active, namespace: ns }) });
       out.push({ id: "sec:helm", group: "Go to", label: "Helm releases", keywords: "helm charts releases rollback", icon: <Package size={16} />, run: () => s.setSection("helm") });
+      out.push({ id: "sec:stacks", group: "Go to", label: "Stacks", keywords: "stacks install catalog logging monitoring database templates", icon: <Boxes size={16} />, run: () => s.setSection("stacks") });
+      if (s.clusters.find((c) => c.id === active)?.sourceKind !== "snapshot")
+        for (const st of stackCatalog?.stacks ?? [])
+          out.push({ id: `stack:${st.id}`, group: "Stacks", label: `Run ${st.name}…`, hint: st.category, keywords: `install stack ${st.category} ${(st.tags ?? []).join(" ")}`, icon: <Boxes size={16} />, run: () => s.openDialog({ kind: "stack", cluster: active, stack: st.id }) });
       for (const r of resources) {
         const Icon = r.icon;
         out.push({ id: `sec:${r.key}`, group: "Go to", label: r.title, hint: r.group, keywords: r.kind, icon: <Icon size={16} />, run: () => s.setSection(r.key) });
@@ -128,7 +137,7 @@ export function CommandPalette({ onClose }: { onClose(): void }) {
       objs(pods.items, "pods", "Pod", <Box size={16} />);
     }
     return out;
-  }, [s, active, ns, namespaces.items, pods.items, deployments.items, services.items, pluginCommands]);
+  }, [s, active, ns, namespaces.items, pods.items, deployments.items, services.items, pluginCommands, stackCatalog]);
 
   const query = q.trim().toLowerCase();
   const results = useMemo(() => {
