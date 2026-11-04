@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Activity, Boxes, Copy, Database, ExternalLink, FileCode2, FolderOpen, KeyRound, Layers, Loader2, MessagesSquare, MoreHorizontal, Network, Pencil, Play, Plus, RefreshCw, ScrollText, Search, Trash2, Workflow, X } from "lucide-react";
-import { Stacks, type InstalledStack, type Stack, type StackJob } from "../mygo";
+import { Activity, Boxes, Copy, Database, ExternalLink, FileCode2, FolderOpen, Globe, KeyRound, Layers, Loader2, MessagesSquare, MoreHorizontal, Network, Pencil, Play, Plus, RefreshCw, ScrollText, Search, Trash2, Workflow, X } from "lucide-react";
+import { Kube, Stacks, type InstalledStack, type Stack, type StackJob, type StackLink } from "../mygo";
 import { age, errorMessage, type Tone } from "../lib/k8s";
 import { readOnly, typeToConfirm } from "../lib/actions";
 import { ask, run, toast, useApp } from "../lib/store";
@@ -217,6 +217,7 @@ export function StacksView({ cluster }: { cluster: string }) {
                         <span className="faint small">{s.category}</span>
                         {s.source === "user" && <Badge tone="info">Yours</Badge>}
                         {s.needsHelm && <Badge tone="muted">Helm</Badge>}
+                        {s.fields?.some((f) => f.type === "domain") && <Badge tone="muted">Domain</Badge>}
                         {count > 0 && <Badge tone="ok">{count === 1 ? "Installed" : `Installed ×${count}`}</Badge>}
                       </div>
                     </div>
@@ -311,6 +312,7 @@ function InstalledRow({ cluster, is, now, category, onRun, onChanged }: { cluste
         <div className="faint small" title={is.error || is.components.map((c) => `${c.name}: ${c.source}`).join("\n")}>
           {is.error ? <span className="tc tone-bad">{is.error}</span> : `${is.components.length} components · updated ${age(is.updated, now)} ago`}
         </div>
+        {is.links.length > 0 && <DomainLinks links={is.links} />}
       </div>
       <div className="installed-actions">
         {is.access.map((a, i) => (
@@ -353,5 +355,18 @@ export function AccessButtons({ cluster, namespace, stack, index, label, hasPass
         </IconButton>
       )}
     </span>
+  );
+}
+
+/** DomainLinks open the pages of a stack at their domains. */
+export function DomainLinks({ links }: { links: StackLink[] }) {
+  return (
+    <div className="row gap wrap">
+      {links.map((l) => (
+        <Button key={l.url} size="sm" variant="ghost" icon={<Globe size={13} />} onClick={() => Kube.openURL(l.url)} title={`Open ${l.url} in the browser`}>
+          {l.url.replace(/^https?:\/\//, "")} <ExternalLink size={11} className="faint" />
+        </Button>
+      ))}
+    </div>
   );
 }

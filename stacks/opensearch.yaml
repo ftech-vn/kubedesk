@@ -12,17 +12,43 @@ fields:
     label: Admin password
     type: password
     generate: true
+    section: OpenSearch
     hint: At least 8 characters with upper and lower case letters, a digit and a symbol. Left empty, one is made for you.
   - key: storage
     label: OpenSearch volume size
     default: 20Gi
+    required: true
+    section: OpenSearch
+    pattern: '^[0-9]+(Mi|Gi|Ti)$'
   - key: heap
     label: OpenSearch heap
     default: 1g
+    required: true
+    section: OpenSearch
+    pattern: '^[0-9]+(m|g)$'
+    hint: Such as 1g; about half of the memory OpenSearch gets.
     advanced: true
+  - key: dashboardsDomain
+    label: Dashboards domain
+    type: domain
+    section: Domain
+    placeholder: logs.example.com
+    hint: Where people open OpenSearch Dashboards from outside the cluster. Empty keeps it inside; Kube Desk still opens it through a port forward.
+  - key: ingressClass
+    label: Ingress class
+    type: ingressClass
+    section: Domain
+    showIf: dashboardsDomain
+  - key: tlsIssuer
+    label: HTTPS certificate from
+    type: clusterIssuer
+    section: Domain
+    showIf: dashboardsDomain
+    hint: A cert-manager ClusterIssuer, such as letsencrypt. Empty serves plain HTTP.
   - key: storageClass
     label: Storage class
-    hint: Empty for the cluster's default.
+    type: storageClass
+    section: Storage
     advanced: true
 components:
   - name: account
@@ -68,6 +94,30 @@ components:
       values: |
         opensearchAccount:
           secret: opensearch-admin
+        {{- if .dashboardsDomain }}
+        ingress:
+          enabled: true
+          {{- if .ingressClass }}
+          ingressClassName: {{ .ingressClass }}
+          {{- end }}
+          {{- if .tlsIssuer }}
+          annotations:
+            cert-manager.io/cluster-issuer: {{ .tlsIssuer }}
+          {{- end }}
+          hosts:
+            - host: {{ .dashboardsDomain }}
+              paths:
+                - path: /
+                  backend:
+                    serviceName: ""
+                    servicePort: ""
+          {{- if .tlsIssuer }}
+          tls:
+            - secretName: dashboards-tls
+              hosts:
+                - {{ .dashboardsDomain }}
+          {{- end }}
+        {{- end }}
   - name: fluent-bit
     title: Fluent Bit (collects the logs)
     helm:
@@ -103,10 +153,17 @@ access:
     port: 5601
     user: admin
     password: adminPassword
+    domain: dashboardsDomain
+    tls: tlsIssuer
 notes: |
   Fluent Bit ships the logs of every pod to OpenSearch, into daily
   `logs-*` indices.
 
+  {{- if .dashboardsDomain }}
+  Dashboards is published at **{{ if .tlsIssuer }}https{{ else }}http{{ end }}://{{ .dashboardsDomain }}**: point the DNS
+  of `{{ .dashboardsDomain }}` at the address of the ingress controller.
+
+  {{ end -}}
   Open **OpenSearch Dashboards**, sign in as `admin`, create the index
   pattern `logs-*` with `@timestamp` under **Dashboards Management**, then
   search in **Discover**.

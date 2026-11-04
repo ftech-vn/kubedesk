@@ -12,24 +12,54 @@ fields:
   - key: version
     label: Elastic version
     default: 9.5.0
-  - key: storage
-    label: Elasticsearch volume size
-    default: 20Gi
-  - key: memory
-    label: Elasticsearch memory
-    default: 2Gi
+    required: true
+    section: Elastic
+    pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
   - key: logstash
     label: Route logs through Logstash
     type: bool
     default: "true"
+    section: Elastic
     hint: Off, Filebeat sends logs straight to Elasticsearch.
+  - key: storage
+    label: Elasticsearch volume size
+    default: 20Gi
+    required: true
+    section: Elasticsearch
+    pattern: '^[0-9]+(Mi|Gi|Ti)$'
+  - key: memory
+    label: Elasticsearch memory
+    default: 2Gi
+    required: true
+    section: Elasticsearch
+    pattern: '^[0-9]+(Mi|Gi)$'
+  - key: kibanaDomain
+    label: Kibana domain
+    type: domain
+    section: Domain
+    placeholder: kibana.example.com
+    hint: Where people open Kibana from outside the cluster. Empty keeps it inside; Kube Desk still opens it through a port forward.
+  - key: ingressClass
+    label: Ingress class
+    type: ingressClass
+    section: Domain
+    showIf: kibanaDomain
+  - key: tlsIssuer
+    label: HTTPS certificate from
+    type: clusterIssuer
+    section: Domain
+    showIf: kibanaDomain
+    hint: A cert-manager ClusterIssuer, such as letsencrypt. Empty serves plain HTTP.
   - key: eckVersion
     label: ECK operator version
     default: 3.5.0
+    required: true
+    section: Elastic
     advanced: true
   - key: storageClass
     label: Storage class
-    hint: Empty for the cluster's default.
+    type: storageClass
+    section: Storage
     advanced: true
 components:
   - name: eck-operator
@@ -85,6 +115,47 @@ components:
         count: 1
         elasticsearchRef:
           name: elasticsearch
+        {{- if .kibanaDomain }}
+        config:
+          server.publicBaseUrl: {{ if .tlsIssuer }}https{{ else }}http{{ end }}://{{ .kibanaDomain }}
+        # The ingress in front speaks HTTPS; Kibana itself speaks HTTP.
+        http:
+          tls:
+            selfSignedCertificate:
+              disabled: true
+        {{- end }}
+      {{- if .kibanaDomain }}
+      ---
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: kibana
+        {{- if .tlsIssuer }}
+        annotations:
+          cert-manager.io/cluster-issuer: {{ .tlsIssuer }}
+        {{- end }}
+      spec:
+        {{- if .ingressClass }}
+        ingressClassName: {{ .ingressClass }}
+        {{- end }}
+        rules:
+          - host: {{ .kibanaDomain }}
+            http:
+              paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: kibana-kb-http
+                      port:
+                        number: 5601
+        {{- if .tlsIssuer }}
+        tls:
+          - hosts:
+              - {{ .kibanaDomain }}
+            secretName: kibana-tls
+        {{- end }}
+      {{- end }}
   - name: logstash
     title: Logstash
     when: logstash
@@ -228,7 +299,9 @@ access:
   - label: Kibana
     service: kibana-kb-http
     port: 5601
-    scheme: https
+    scheme: '{{ if .kibanaDomain }}http{{ else }}https{{ end }}'
+    domain: kibanaDomain
+    tls: tlsIssuer
     user: elastic
     passwordSecret: elasticsearch-es-elastic-user/elastic
   - label: Elasticsearch
@@ -240,7 +313,14 @@ access:
 notes: |
   Filebeat ships the logs of every pod{{ if .logstash }} through Logstash{{ end }} to Elasticsearch.
 
+  {{- if .kibanaDomain }}
+  Kibana is published at **{{ if .tlsIssuer }}https{{ else }}http{{ end }}://{{ .kibanaDomain }}**: point the DNS of
+  `{{ .kibanaDomain }}` at the address of the ingress controller.
+
+  Open **Kibana**,
+  {{- else }}
   Open **Kibana** (its certificate is self-signed: let the browser go on),
+  {{- end }}
   sign in as `elastic` with the password from **Copy password**, then go to
   **Discover** and pick the `logs-*` data view{{ if not .logstash }} or `filebeat-*`{{ end }}.
 

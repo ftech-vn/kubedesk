@@ -12,27 +12,68 @@ fields:
   - key: retention
     label: Keep metrics for
     default: 15d
+    required: true
+    section: Metrics
+    pattern: '^[0-9]+(h|d|w|y)$'
     hint: A duration such as 15d or 12h.
   - key: storage
     label: Metrics volume size
     default: 20Gi
-  - key: grafanaPassword
-    label: Grafana admin password
-    type: password
-    generate: true
-    hint: Left empty, a password is made for you.
+    required: true
+    section: Metrics
+    pattern: '^[0-9]+(Mi|Gi|Ti)$'
   - key: alertmanager
     label: Alertmanager
     type: bool
     default: "true"
+    section: Metrics
+    hint: Sends the alerts on, to Slack, email or PagerDuty, once configured.
+  - key: grafanaPassword
+    label: Grafana admin password
+    type: password
+    generate: true
+    section: Grafana
+    hint: Left empty, a password is made for you.
+  - key: grafanaDomain
+    label: Grafana domain
+    type: domain
+    section: Domain
+    placeholder: grafana.example.com
+    hint: Where people open Grafana from outside the cluster. Empty keeps it inside; Kube Desk still opens it through a port forward.
+  - key: prometheusDomain
+    label: Prometheus domain
+    type: domain
+    section: Domain
+    placeholder: prometheus.example.com
+    advanced: true
+    hint: Prometheus has no sign-in. Publish it only on a private network, or behind an authenticating proxy.
+  - key: alertmanagerDomain
+    label: Alertmanager domain
+    type: domain
+    section: Domain
+    placeholder: alertmanager.example.com
+    advanced: true
+    showIf: alertmanager
+    hint: Alertmanager has no sign-in. Publish it only on a private network, or behind an authenticating proxy.
+  - key: ingressClass
+    label: Ingress class
+    type: ingressClass
+    section: Domain
+  - key: tlsIssuer
+    label: HTTPS certificate from
+    type: clusterIssuer
+    section: Domain
+    hint: A cert-manager ClusterIssuer, such as letsencrypt. Empty serves plain HTTP.
   - key: controlPlane
     label: Watch the control plane (etcd, scheduler, controller manager)
     type: bool
+    section: Cluster
     hint: Off for managed clusters such as GKE, EKS and AKS, where it cannot be reached.
     advanced: true
   - key: storageClass
     label: Storage class
-    hint: Empty for the cluster's default.
+    type: storageClass
+    section: Storage
     advanced: true
 components:
   - name: kube-prometheus-stack
@@ -46,6 +87,30 @@ components:
         grafana:
           adminUser: admin
           adminPassword: {{ quote .grafanaPassword }}
+          {{- if .grafanaDomain }}
+          ingress:
+            enabled: true
+            {{- if .ingressClass }}
+            ingressClassName: {{ .ingressClass }}
+            {{- end }}
+            {{- if .tlsIssuer }}
+            annotations:
+              cert-manager.io/cluster-issuer: {{ .tlsIssuer }}
+            {{- end }}
+            hosts:
+              - {{ .grafanaDomain }}
+            {{- if .tlsIssuer }}
+            tls:
+              - secretName: grafana-tls
+                hosts:
+                  - {{ .grafanaDomain }}
+            {{- end }}
+          {{- end }}
+          {{- if .grafanaDomain }}
+          grafana.ini:
+            server:
+              root_url: {{ if .tlsIssuer }}https{{ else }}http{{ end }}://{{ .grafanaDomain }}
+          {{- end }}
           persistence:
             enabled: true
             size: 2Gi
@@ -54,8 +119,53 @@ components:
             {{- end }}
         alertmanager:
           enabled: {{ .alertmanager }}
+          {{- if .alertmanagerDomain }}
+          ingress:
+            enabled: true
+            {{- if .ingressClass }}
+            ingressClassName: {{ .ingressClass }}
+            {{- end }}
+            {{- if .tlsIssuer }}
+            annotations:
+              cert-manager.io/cluster-issuer: {{ .tlsIssuer }}
+            {{- end }}
+            hosts:
+              - {{ .alertmanagerDomain }}
+            {{- if .tlsIssuer }}
+            tls:
+              - secretName: alertmanager-tls
+                hosts:
+                  - {{ .alertmanagerDomain }}
+            {{- end }}
+          {{- end }}
+          {{- if .alertmanagerDomain }}
+          alertmanagerSpec:
+            externalUrl: {{ if .tlsIssuer }}https{{ else }}http{{ end }}://{{ .alertmanagerDomain }}
+          {{- end }}
         prometheus:
+          {{- if .prometheusDomain }}
+          ingress:
+            enabled: true
+            {{- if .ingressClass }}
+            ingressClassName: {{ .ingressClass }}
+            {{- end }}
+            {{- if .tlsIssuer }}
+            annotations:
+              cert-manager.io/cluster-issuer: {{ .tlsIssuer }}
+            {{- end }}
+            hosts:
+              - {{ .prometheusDomain }}
+            {{- if .tlsIssuer }}
+            tls:
+              - secretName: prometheus-tls
+                hosts:
+                  - {{ .prometheusDomain }}
+            {{- end }}
+          {{- end }}
           prometheusSpec:
+            {{- if .prometheusDomain }}
+            externalUrl: {{ if .tlsIssuer }}https{{ else }}http{{ end }}://{{ .prometheusDomain }}
+            {{- end }}
             retention: {{ .retention }}
             # Rules and monitors of every release, not only this one.
             ruleSelectorNilUsesHelmValues: false
@@ -85,14 +195,25 @@ access:
     port: 80
     user: admin
     password: grafanaPassword
+    domain: grafanaDomain
+    tls: tlsIssuer
   - label: Prometheus
     service: kube-prometheus-stack-prometheus
     port: 9090
+    domain: prometheusDomain
+    tls: tlsIssuer
   - label: Alertmanager
     service: kube-prometheus-stack-alertmanager
     port: 9093
+    domain: alertmanagerDomain
+    tls: tlsIssuer
 notes: |
   Prometheus keeps metrics for {{ .retention }}.
+  {{- if or .grafanaDomain .prometheusDomain .alertmanagerDomain }}
+
+  Published{{ if .grafanaDomain }} · Grafana at `{{ .grafanaDomain }}`{{ end }}{{ if .prometheusDomain }} · Prometheus at `{{ .prometheusDomain }}`{{ end }}{{ if .alertmanagerDomain }} · Alertmanager at `{{ .alertmanagerDomain }}`{{ end }}.
+  Point the DNS of each at the address of the ingress controller.
+  {{- end }}
 
   Open **Grafana**, sign in as `admin`, and look under **Dashboards →
   Kubernetes** for the cluster, its nodes, namespaces and pods.

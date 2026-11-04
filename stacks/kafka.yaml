@@ -11,22 +11,35 @@ fields:
   - key: name
     label: Cluster name
     default: kafka
+    required: true
+    section: Kafka
+    pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
   - key: replicas
     label: Nodes
     type: number
     default: "1"
+    required: true
+    section: Kafka
+    pattern: '^[1-9][0-9]?$'
     hint: Three or more for replication.
   - key: replication
     label: Replication factor
     type: number
     default: "1"
+    required: true
+    section: Kafka
+    pattern: '^[1-9]$'
     hint: At most the number of nodes.
   - key: storage
     label: Volume size per node
     default: 20Gi
+    required: true
+    section: Storage
+    pattern: '^[0-9]+(Mi|Gi|Ti)$'
   - key: storageClass
     label: Storage class
-    hint: Empty for the cluster's default.
+    type: storageClass
+    section: Storage
     advanced: true
 components:
   - name: strimzi

@@ -8,9 +8,27 @@ namespace: argocd
 requires: About 1 GB of memory.
 tags: [gitops, argocd, cd]
 fields:
+  - key: domain
+    label: Argo CD domain
+    type: domain
+    section: Domain
+    placeholder: argocd.example.com
+    hint: Where people open Argo CD from outside the cluster, and where Git webhooks reach it. Empty keeps it inside; Kube Desk still opens it through a port forward.
+  - key: ingressClass
+    label: Ingress class
+    type: ingressClass
+    section: Domain
+    showIf: domain
+  - key: tlsIssuer
+    label: HTTPS certificate from
+    type: clusterIssuer
+    section: Domain
+    showIf: domain
+    hint: A cert-manager ClusterIssuer, such as letsencrypt. Empty serves plain HTTP.
   - key: ha
     label: Redis with high availability
     type: bool
+    section: Argo CD
     hint: Needs three nodes or more.
     advanced: true
 components:
@@ -21,6 +39,21 @@ components:
       chart: argo-cd
       version: 10.11.7
       values: |
+        {{- if .domain }}
+        global:
+          domain: {{ .domain }}
+        server:
+          ingress:
+            enabled: true
+            {{- if .ingressClass }}
+            ingressClassName: {{ .ingressClass }}
+            {{- end }}
+            {{- if .tlsIssuer }}
+            annotations:
+              cert-manager.io/cluster-issuer: {{ .tlsIssuer }}
+            tls: true
+            {{- end }}
+        {{- end }}
         configs:
           params:
             # The app reaches the server through a port forward.
@@ -33,7 +66,14 @@ access:
     port: 80
     user: admin
     passwordSecret: argocd-initial-admin-secret/password
+    domain: domain
+    tls: tlsIssuer
 notes: |
+  {{- if .domain }}
+  Argo CD is published at **{{ if .tlsIssuer }}https{{ else }}http{{ end }}://{{ .domain }}**: point the DNS of
+  `{{ .domain }}` at the address of the ingress controller.
+
+  {{ end -}}
   Open **Argo CD** and sign in as `admin` with the password from **Copy
   password**. Change it under **User Info**, then delete the secret
   `argocd-initial-admin-secret`.

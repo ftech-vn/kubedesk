@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Channel } from "mygo-runtime";
-import { CheckCircle2, ChevronDown, ChevronRight, Circle, Dices, Eye, EyeOff, Info, Loader2, MinusCircle, Play, RotateCcw, TriangleAlert, XCircle } from "lucide-react";
-import { Stacks, type PlannedComponent, type Stack, type StackField, type StackJob, type StackPlan } from "../mygo";
+import { CheckCircle2, ChevronDown, ChevronRight, Circle, Dices, Eye, EyeOff, Globe, Info, Loader2, MinusCircle, Play, RotateCcw, TriangleAlert, XCircle } from "lucide-react";
+import { Stacks, type PlannedComponent, type Stack, type StackClusterOptions, type StackField, type StackJob, type StackLink, type StackPlan } from "../mygo";
 import { age, errorMessage, podStatus } from "../lib/k8s";
 import { typeToConfirm } from "../lib/actions";
 import { byKey } from "../lib/resources";
 import { ask, useApp } from "../lib/store";
 import { useStacks } from "../lib/stacks";
 import { useNow, useWatch } from "../lib/watch";
-import { AccessButtons, stackIcon } from "../views/StacksView";
+import { AccessButtons, DomainLinks, stackIcon } from "../views/StacksView";
 import { Badge, Button, ErrorBox, Field, Modal, Spinner } from "./ui";
 import { ClusterTile } from "./ClusterRail";
 import { Markdown } from "./Markdown";
@@ -95,11 +95,32 @@ function Configure({ cluster, st, initialNamespace, onStarted, onClose }: { clus
     }
   }, [plan]);
 
+  const [options, setOptions] = useState<StackClusterOptions | null>(null);
+  useEffect(() => {
+    Stacks.clusterOptions(cluster).then(setOptions, () => setOptions(null));
+  }, [cluster]);
+
   const set = (k: string, v: string) => setValues((cur) => ({ ...(cur ?? {}), [k]: v }));
   const fieldErrors = plan?.fieldErrors ?? {};
   const blocking = !plan || Object.keys(fieldErrors).length > 0 || plan.helmMissing || plan.components.some((c) => c.error);
-  const basic = st.fields?.filter((f) => !f.advanced) ?? [];
-  const extra = st.fields?.filter((f) => f.advanced) ?? [];
+  const fields = (st.fields ?? []).filter((f) => values && fieldShown(st.fields ?? [], f, values));
+  const basic = fields.filter((f) => !f.advanced);
+  const extra = (st.fields ?? []).filter((f) => f.advanced);
+  const shownExtra = fields.filter((f) => f.advanced);
+  const input = (f: StackField) => <FieldInput key={f.key} f={f} value={values?.[f.key] ?? ""} error={fieldErrors[f.key]} options={options} onChange={(v) => set(f.key, v)} />;
+  const renderSections = (list: StackField[]) =>
+    sections(list).map(([name, group]) =>
+      group.some((f) => f.type === "domain") && !group[0]!.advanced ? (
+        <DomainSection key={name} st={st} values={values ?? {}} errors={fieldErrors} options={options}>
+          {group.map(input)}
+        </DomainSection>
+      ) : (
+        <div key={name} className="stack-section">
+          {name && <div className="section-title">{name}</div>}
+          <div className="stack-form">{group.map(input)}</div>
+        </div>
+      ),
+    );
 
   const start = async () => {
     if (!plan || blocking || !cl) return;
@@ -166,23 +187,18 @@ function Configure({ cluster, st, initialNamespace, onStarted, onClose }: { clus
         {error && <ErrorBox message={error} />}
 
         <div className="stack-form">
-          <Field label="Namespace" hint={fieldErrors.namespace ?? "Made if it is missing."}>
+          <Field label={<FieldLabel label="Namespace" required />} hint={fieldErrors.namespace ? <span className="tc tone-bad">{fieldErrors.namespace}</span> : "Made if it is missing."}>
             <input className={`mono ${fieldErrors.namespace ? "invalid" : ""}`} value={namespace} onChange={(e) => setNamespace(e.target.value.trim())} spellCheck={false} />
           </Field>
-          {values && basic.map((f) => <FieldInput key={f.key} f={f} value={values[f.key] ?? ""} error={fieldErrors[f.key]} onChange={(v) => set(f.key, v)} />)}
         </div>
+        {values && renderSections(basic)}
         {extra.length > 0 && values && (
           <>
             <button className="disclosure" onClick={() => setAdvanced(!advanced)}>
               {advanced ? <ChevronDown size={13} /> : <ChevronRight size={13} />} More settings
+              {!advanced && extra.some((f) => fieldErrors[f.key]) && <span className="tc tone-bad"> · needs a look</span>}
             </button>
-            {advanced && (
-              <div className="stack-form">
-                {extra.map((f) => (
-                  <FieldInput key={f.key} f={f} value={values[f.key] ?? ""} error={fieldErrors[f.key]} onChange={(v) => set(f.key, v)} />
-                ))}
-              </div>
-            )}
+            {advanced && renderSections(shownExtra)}
           </>
         )}
 
@@ -213,9 +229,140 @@ function Configure({ cluster, st, initialNamespace, onStarted, onClose }: { clus
   );
 }
 
-function FieldInput({ f, value, error, onChange }: { f: StackField; value: string; error?: string; onChange(v: string): void }) {
+/** fieldShown follows a field's showIf chain: each must be on or filled in. */
+function fieldShown(all: StackField[], f: StackField, values: Record<string, string>): boolean {
+  for (let seen = 0; f.showIf && seen < all.length; seen++) {
+    const v = values[f.showIf] ?? "";
+    if (v === "" || v === "false") return false;
+    const next = all.find((g) => g.key === f.showIf);
+    if (!next) break;
+    f = next;
+  }
+  return true;
+}
+
+/** sections groups fields by their section, in the order they come. */
+function sections(list: StackField[]): [string, StackField[]][] {
+  const out: [string, StackField[]][] = [];
+  for (const f of list) {
+    const name = f.section ?? "";
+    const group = out.find(([n]) => n === name);
+    if (group) group[1].push(f);
+    else out.push([name, [f]]);
+  }
+  return out;
+}
+
+function FieldLabel({ label, required, optional }: { label: string; required?: boolean; optional?: boolean }) {
+  return (
+    <>
+      {label}
+      {required && <span className="field-req" title="Required"> *</span>}
+      {optional && <span className="field-optional">optional</span>}
+    </>
+  );
+}
+
+/** linksOf previews where a stack's pages will be published. */
+function linksOf(st: Stack, values: Record<string, string>, errors: Record<string, string>): StackLink[] {
+  const out: StackLink[] = [];
+  for (const a of st.access ?? []) {
+    const domain = a.domain ? values[a.domain] : "";
+    if (!domain || errors[a.domain!]) continue;
+    const scheme = a.tls && values[a.tls] ? "https" : "http";
+    out.push({ label: a.label, url: `${scheme}://${domain.toLowerCase()}${a.path && !a.path.includes("{{") ? a.path : ""}` });
+  }
+  return out;
+}
+
+/**
+ * DomainSection asks where the stack's pages are published, and says what
+ * the cluster needs for that: an ingress controller, DNS pointing at it,
+ * and an issuer for HTTPS.
+ */
+function DomainSection({ st, values, errors, options, children }: { st: Stack; values: Record<string, string>; errors: Record<string, string>; options: StackClusterOptions | null; children: React.ReactNode }) {
+  const openDialog = useApp((s) => s.openDialog);
+  const cluster = useApp((s) => s.active);
+  const hasIngressStack = useStacks((s) => s.catalog?.stacks.some((x) => x.id === "ingress"));
+  const links = linksOf(st, values, errors);
+  const wantsTLS = (st.fields ?? []).some((f) => f.type === "clusterIssuer");
+  const noController = options !== null && options.ingressClasses.length === 0;
+  const noIssuer = options !== null && wantsTLS && options.clusterIssuers.length === 0;
+  const addresses = options?.ingressAddresses ?? [];
+  return (
+    <div className="stack-domain">
+      <div className="stack-domain-head">
+        <Globe size={16} />
+        <div>
+          <b>Reach it from outside the cluster</b>
+          <div className="muted small">Give a domain to publish a page through the cluster's ingress controller. Leave it empty to keep the page inside the cluster; Kube Desk opens it through a port forward.</div>
+        </div>
+      </div>
+      {noController && (
+        <div className="hint-bar inline warn">
+          <TriangleAlert size={15} />
+          <span>This cluster has no ingress controller, so a domain would lead nowhere. Install one first.</span>
+          {hasIngressStack && cluster && (
+            <Button size="sm" onClick={() => openDialog({ kind: "stack", cluster, stack: "ingress" })}>
+              Run Traefik + cert-manager
+            </Button>
+          )}
+        </div>
+      )}
+      <div className="stack-form">{children}</div>
+      {links.length > 0 && (
+        <div className="stack-domain-links">
+          {links.map((l) => (
+            <div key={l.url} className="small">
+              <span className="muted">{l.label} will be at</span> <span className="mono">{l.url}</span>
+            </div>
+          ))}
+          <div className="small muted">
+            {addresses.length > 0 ? (
+              <>
+                Point the DNS of {links.length === 1 ? "this domain" : "these domains"} (an A record, or a CNAME for a host name) at{" "}
+                {addresses.map((a, i) => (
+                  <span key={a.service + a.address}>
+                    {i > 0 && ", "}
+                    <span className="mono">{a.address}</span> <span className="faint">({a.service})</span>
+                  </span>
+                ))}
+                .
+              </>
+            ) : (
+              "Point the DNS of " + (links.length === 1 ? "this domain" : "these domains") + " at the external address of the cluster's ingress controller, or of its nodes."
+            )}
+          </div>
+          {noIssuer && <div className="small tc tone-warn">No cert-manager issuer in this cluster: pages are served over plain HTTP. Traefik + cert-manager adds one.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FieldInput({ f, value, error, options, onChange }: { f: StackField; value: string; error?: string; options: StackClusterOptions | null; onChange(v: string): void }) {
   const [shown, setShown] = useState(false);
   const hint = error ? <span className="tc tone-bad">{error}</span> : f.hint;
+  const label = <FieldLabel label={f.label} required={f.required} optional={!f.required && !(f.type === "password" && f.generate)} />;
+  const fromCluster: Record<string, { list: string[]; none: string } | undefined> = {
+    ingressClass: options ? { list: options.ingressClasses, none: options.defaultIngressClass ? `Cluster default (${options.defaultIngressClass})` : "Cluster default" } : undefined,
+    storageClass: options ? { list: options.storageClasses, none: options.defaultStorageClass ? `Cluster default (${options.defaultStorageClass})` : "Cluster default" } : undefined,
+    clusterIssuer: options ? { list: options.clusterIssuers, none: "None: plain HTTP" } : undefined,
+  };
+  const choices = fromCluster[f.type ?? ""];
+  if (choices) {
+    const list = value && !choices.list.includes(value) ? [...choices.list, value] : choices.list;
+    return (
+      <Field label={label} hint={hint}>
+        <select value={value} onChange={(e) => onChange(e.target.value)}>
+          <option value="">{choices.none}</option>
+          {list.map((o) => (
+            <option key={o}>{o}</option>
+          ))}
+        </select>
+      </Field>
+    );
+  }
   if (f.type === "bool")
     return (
       <label className="check field-check" title={f.hint}>
@@ -228,7 +375,7 @@ function FieldInput({ f, value, error, onChange }: { f: StackField; value: strin
     );
   if (f.type === "select")
     return (
-      <Field label={f.label} hint={hint}>
+      <Field label={label} hint={hint}>
         <select value={value} onChange={(e) => onChange(e.target.value)}>
           {f.options?.map((o) => (
             <option key={o}>{o}</option>
@@ -238,7 +385,7 @@ function FieldInput({ f, value, error, onChange }: { f: StackField; value: strin
     );
   if (f.type === "password")
     return (
-      <Field label={f.label} hint={hint}>
+      <Field label={label} hint={hint}>
         <div className="input-with-buttons">
           <input className={`mono ${error ? "invalid" : ""}`} type={shown ? "text" : "password"} value={value} onChange={(e) => onChange(e.target.value)} spellCheck={false} autoComplete="off" />
           <button type="button" className="icon-btn" title={shown ? "Hide" : "Show"} onClick={() => setShown(!shown)}>
@@ -253,8 +400,16 @@ function FieldInput({ f, value, error, onChange }: { f: StackField; value: strin
       </Field>
     );
   return (
-    <Field label={f.label} hint={hint}>
-      <input className={error ? "invalid" : ""} type={f.type === "number" ? "number" : "text"} value={value} onChange={(e) => onChange(e.target.value)} spellCheck={false} />
+    <Field label={label} hint={hint}>
+      <input
+        className={`${error ? "invalid" : ""} ${f.type === "domain" ? "mono" : ""}`}
+        type={f.type === "number" ? "number" : f.type === "email" ? "email" : "text"}
+        value={value}
+        placeholder={f.placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        spellCheck={false}
+        autoCapitalize="off"
+      />
     </Field>
   );
 }
@@ -420,6 +575,7 @@ function JobView({ cluster, stack, id, onClose }: { cluster: string; stack?: Sta
 
           {job.state === "done" && job.action === "install" && stack && (
             <div className="stack-done">
+              {job.links && job.links.length > 0 && <DomainLinks links={job.links} />}
               {stack.access && stack.access.length > 0 && (
                 <div className="row gap wrap">
                   {stack.access.map((a, i) => (
@@ -444,3 +600,4 @@ function JobView({ cluster, stack, id, onClose }: { cluster: string; stack?: Sta
     </Modal>
   );
 }
+

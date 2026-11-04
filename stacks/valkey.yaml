@@ -12,16 +12,30 @@ fields:
     label: Password
     type: password
     generate: true
+    section: Valkey
     hint: Left empty, a password is made for you.
   - key: maxMemory
     label: Memory limit
     default: 256Mi
+    required: true
+    section: Valkey
+    pattern: '^[0-9]+(Mi|Gi)$'
   - key: storage
     label: Volume size
     default: 2Gi
+    required: true
+    section: Storage
+    pattern: '^[0-9]+(Mi|Gi|Ti)$'
   - key: version
     label: Valkey version
     default: 9.0-alpine
+    required: true
+    section: Valkey
+    advanced: true
+  - key: storageClass
+    label: Storage class
+    type: storageClass
+    section: Storage
     advanced: true
 components:
   - name: valkey
@@ -96,6 +110,9 @@ components:
               resources:
                 requests:
                   storage: {{ .storage }}
+              {{- if .storageClass }}
+              storageClassName: {{ quote .storageClass }}
+              {{- end }}
 notes: |
   Apps connect to `valkey.{{ .Namespace }}.svc:6379` with the password in
   the Secret `valkey`, under `password`: for example

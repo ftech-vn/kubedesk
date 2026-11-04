@@ -12,17 +12,42 @@ fields:
     label: Keep logs for (days)
     type: number
     default: "7"
+    required: true
+    section: Logs
   - key: lokiStorage
     label: Log volume size
     default: 10Gi
+    required: true
+    section: Logs
+    pattern: '^[0-9]+(Mi|Gi|Ti)$'
+    hint: Such as 10Gi.
   - key: grafanaPassword
     label: Grafana admin password
     type: password
     generate: true
+    section: Grafana
     hint: Left empty, a password is made for you.
+  - key: grafanaDomain
+    label: Grafana domain
+    type: domain
+    section: Domain
+    placeholder: grafana.example.com
+    hint: Where people open Grafana from outside the cluster. Empty keeps it inside; Kube Desk still opens it through a port forward.
+  - key: ingressClass
+    label: Ingress class
+    type: ingressClass
+    section: Domain
+    showIf: grafanaDomain
+  - key: tlsIssuer
+    label: HTTPS certificate from
+    type: clusterIssuer
+    section: Domain
+    showIf: grafanaDomain
+    hint: A cert-manager ClusterIssuer, such as letsencrypt. Empty serves plain HTTP.
   - key: storageClass
     label: Storage class
-    hint: Empty for the cluster's default.
+    type: storageClass
+    section: Storage
     advanced: true
 components:
   - name: loki
@@ -152,14 +177,43 @@ components:
                 url: http://loki.{{ .Namespace }}.svc:3100
                 access: proxy
                 isDefault: true
+        {{- if .grafanaDomain }}
+        ingress:
+          enabled: true
+          {{- if .ingressClass }}
+          ingressClassName: {{ .ingressClass }}
+          {{- end }}
+          {{- if .tlsIssuer }}
+          annotations:
+            cert-manager.io/cluster-issuer: {{ .tlsIssuer }}
+          {{- end }}
+          hosts:
+            - {{ .grafanaDomain }}
+          {{- if .tlsIssuer }}
+          tls:
+            - secretName: grafana-tls
+              hosts:
+                - {{ .grafanaDomain }}
+          {{- end }}
+        grafana.ini:
+          server:
+            root_url: {{ if .tlsIssuer }}https{{ else }}http{{ end }}://{{ .grafanaDomain }}
+        {{- end }}
 access:
   - label: Grafana
     service: grafana
     port: 80
     user: admin
     password: grafanaPassword
+    domain: grafanaDomain
+    tls: tlsIssuer
 notes: |
   Logs of every pod go to Loki, kept for {{ .retentionDays }} days.
+  {{- if .grafanaDomain }}
+
+  Grafana is published at **{{ if .tlsIssuer }}https{{ else }}http{{ end }}://{{ .grafanaDomain }}**: point the
+  DNS of `{{ .grafanaDomain }}` at the address of the ingress controller.
+  {{- end }}
 
   Open **Grafana**, sign in as `admin`, then go to **Explore** or
   **Drilldown → Logs** and pick the Loki data source. Try

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.1
+
+**Domains for stacks.** Stacks with web pages (Grafana, Kibana, OpenSearch Dashboards, Argo CD, Prometheus, Alertmanager) now ask for a domain, in a section of its own. Fill one in to publish the page through the cluster's ingress controller: pick the ingress class and the cert-manager issuer for HTTPS from what the cluster has. The dialog shows where each page will be, the address to point their DNS at, and warns when the cluster has no ingress controller (with a button to install Traefik and cert-manager) or no issuer. Once the stack runs, its pages open at their domains.
+
+**Clearer settings.** Settings are grouped into sections, required ones are marked, and values are checked as you type: sizes, durations, domains, emails. Ingress classes, issuers and storage classes are picked from the cluster. Settings that depend on another show only when it is filled in. Your own stacks can use all of this: section, showIf, pattern, placeholder, and the new domain, email, ingressClass, clusterIssuer and storageClass types (docs/stacks.md).
+
+- Running a stack again removes what it no longer has, such as the Ingress of a domain taken away, or Logstash turned off.
+
 ## 0.9.0
 
 **Stacks.** A new Stacks page, in the sidebar of each cluster, lists ready-made stacks to run there: logs with Loki and Grafana, the Elastic Stack (Elasticsearch, Kibana, Logstash and Filebeat) or OpenSearch with Fluent Bit; metrics with Prometheus and Grafana; PostgreSQL with CloudNativePG, Valkey, Kafka with Strimzi, Argo CD, and Traefik with cert-manager. Press Run, fill in a few settings (passwords are made for you), and Kube Desk makes the namespace and installs the components in order, waiting for each to be ready. Closing the dialog leaves it running; the page shows its progress, its pods and its output. Once it runs, buttons open each web page, such as Grafana or Kibana, through a port forward, and copy its password. Running a stack again updates it with the settings it has; Uninstall removes it, last part first, keeping what another stack shares, and the namespace only if you ask. Production clusters ask you to type their name, and read-only ones refuse.

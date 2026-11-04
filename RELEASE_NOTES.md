@@ -9,6 +9,7 @@ biết.
 
 | Bản | Ngày | Điểm chính | Tải về (delta) |
 |---|---|---|---|
+| [0.9.1](#091--04112026) | 04/11/2026 | Stack hỏi domain cho các trang web (Grafana, Kibana, Argo CD…), gợi ý trỏ DNS; tham số chia nhóm, đánh dấu bắt buộc, chọn ingress class / issuer / storage class từ cluster | xem trang Releases |
 | [0.9.0](#090--04112026) | 04/11/2026 | Stacks: cài sẵn cả bộ (log, metrics, database, Kafka, Argo CD, ingress) vào một namespace chỉ bằng nút Run; tự định nghĩa stack của mình bằng YAML | xem trang Releases |
 | [0.8.0](#080--26102026) | 26/10/2026 | Plugin và marketplace (registry riêng trên R2, có chữ ký): thêm trang, tab, action, cột, lệnh ⌘K; bộ SDK và 2 plugin mẫu | xem trang Releases |
 | [0.7.1](#071--26102026) | 26/10/2026 | Có bản cho Linux (x64, arm64: gói .deb hoặc install.sh) và Windows (x64, bộ cài .exe) | 0.7.0 → 0.7.1 trên macOS: 1 MB |
@@ -27,6 +28,41 @@ Tải bản mới nhất:
 (Linux x64; arm64: `...-linux-arm64.deb`, hoặc `curl -fsSL https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/install.sh | sh`)
 và <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-Setup-latest-amd64.exe> (Windows 10/11 x64). App đã cài sẽ tự cập nhật. Thường app chỉ
 tải phần thay đổi (delta), như ở cột cuối bảng trên.
+
+---
+
+## 0.9.1 · 04/11/2026
+
+### Tính năng mới
+
+**Domain cho stack**
+- Stack có trang web (Grafana, Kibana, OpenSearch Dashboards, Argo CD,
+  Prometheus, Alertmanager) có thêm nhóm **Domain** trong dialog Run. Nhập
+  domain thì trang được public qua ingress controller của cluster; để trống
+  thì trang chỉ chạy trong cluster, app vẫn mở qua port forward.
+- Nhập domain mới hiện thêm ô chọn **Ingress class** và **chứng chỉ HTTPS**
+  (cert-manager ClusterIssuer), lấy từ chính cluster.
+- Dialog cho xem trước địa chỉ trang (`https://grafana.example.com`), địa chỉ
+  cần trỏ DNS tới (IP/hostname của ingress controller), cảnh báo khi cluster
+  chưa có ingress controller (có nút cài Traefik + cert-manager) hoặc chưa có
+  issuer (trang chạy HTTP thường).
+- Cài xong có nút mở trang theo domain; thẻ stack có badge **Domain**.
+- Prometheus và Alertmanager không có đăng nhập: domain của chúng nằm trong
+  "More settings", kèm cảnh báo chỉ public trong mạng riêng.
+
+**Tham số rõ ràng hơn**
+- Tham số chia theo nhóm, đánh dấu bắt buộc (*) hoặc tuỳ chọn, kiểm tra ngay
+  khi gõ (dung lượng, thời gian, domain, email).
+- Ingress class, issuer, storage class chọn từ những gì cluster có.
+- Tham số phụ thuộc chỉ hiện khi tham số kia đã điền hoặc bật.
+- Stack tự định nghĩa dùng được hết: `section`, `showIf`, `pattern`,
+  `placeholder`, và các loại `domain`, `email`, `ingressClass`,
+  `clusterIssuer`, `storageClass` (xem `docs/stacks.md`).
+
+### Sửa lỗi
+- Chạy lại stack giờ gỡ những gì nó không còn có: Ingress của domain đã bỏ,
+  thành phần đã tắt (như Logstash trong ELK). Trước đây chúng còn lại, trang
+  vẫn bị public.
 
 ---
 

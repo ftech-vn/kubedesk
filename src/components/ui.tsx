@@ -97,7 +97,7 @@ export function Modal({ title, onClose, children, footer, width = 560, className
   );
 }
 
-export function Field({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
+export function Field({ label, hint, children }: { label: ReactNode; hint?: ReactNode; children: ReactNode }) {
   return (
     <label className="field">
       <span className="field-label">{label}</span>

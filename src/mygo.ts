@@ -489,6 +489,12 @@ export interface ImpactRequest {
 /** ImpactSeverity says how much an effect matters. */
 export type ImpactSeverity = "danger" | "warning" | "info";
 
+/** IngressAddress is where an ingress controller is reached from outside. */
+export interface IngressAddress {
+  service: string;
+  address: string;
+}
+
 /** InstalledComponent is a component of an installed stack. */
 export interface InstalledComponent {
   name: string;
@@ -512,6 +518,8 @@ export interface InstalledStack {
   /** InCatalog is false when the stack's definition is gone. */
   inCatalog: boolean;
   access: StackAccess[];
+  /** Links are its pages at the domains it was given. */
+  links: StackLink[];
 }
 
 /**
@@ -815,6 +823,12 @@ export interface StackAccess {
   port: number;
   scheme?: string;
   path?: string;
+  /**
+   * Domain is the domain field it is published at, when filled in; TLS
+   * is the clusterIssuer field whose certificate makes it https.
+   */
+  domain?: string;
+  tls?: string;
   user?: string;
   /**
    * Password is the password field that signs in; PasswordSecret is
@@ -832,6 +846,23 @@ export interface StackCatalog {
   folder: string;
   /** HelmInstalled says the helm command was found. */
   helmInstalled: boolean;
+}
+
+/**
+ * StackClusterOptions are the choices a cluster gives the fields whose
+ * options come from it, and where its ingress controllers are reached.
+ */
+export interface StackClusterOptions {
+  ingressClasses: string[];
+  defaultIngressClass: string;
+  clusterIssuers: string[];
+  storageClasses: string[];
+  defaultStorageClass: string;
+  /**
+   * IngressAddresses are the external addresses of the load balancers
+   * of ingress controllers, where domains should point.
+   */
+  ingressAddresses: IngressAddress[];
 }
 
 /**
@@ -865,11 +896,25 @@ export interface StackComponent {
 export interface StackField {
   key: string;
   label: string;
-  /** Type is text, password, number, bool or select. */
+  /**
+   * Type is text, password, number, bool, select, domain or email, or
+   * one whose options come from the cluster: ingressClass,
+   * clusterIssuer or storageClass.
+   */
   type?: string;
   default?: string;
   hint?: string;
+  placeholder?: string;
   options?: string[];
+  /** Section groups fields under a heading, in the order they come. */
+  section?: string;
+  /**
+   * ShowIf is a field that must be on, or not empty, for this one to
+   * be asked; a field not asked is not checked either.
+   */
+  showIf?: string;
+  /** Pattern is a regular expression the value must match. */
+  pattern?: string;
   /** Required refuses an empty value. */
   required?: boolean;
   /** Generate makes a random password when the value is left empty. */
@@ -901,11 +946,18 @@ export interface StackJob {
   state: string;
   error?: string;
   notes?: string;
+  links?: StackLink[];
   started: string;
   finished?: string;
   steps: StackStep[];
   /** Output is what the steps printed; only Follow sends it. */
   output?: string[];
+}
+
+/** StackLink is a web page of a stack at its domain. */
+export interface StackLink {
+  label: string;
+  url: string;
 }
 
 /** StackPlan is what running a stack does, without doing it. */
@@ -1573,6 +1625,14 @@ export const Stacks = {
   /** Check reads a stack's YAML, as Save would, without saving it. */
   check(source: string): Promise<Stack> {
     return call("Stacks.Check", source);
+  },
+  /**
+   * ClusterOptions returns the ingress classes, certificate issuers and
+   * storage classes of a cluster, and the addresses of its ingress
+   * controllers. What cannot be read is left empty.
+   */
+  clusterOptions(cluster: string): Promise<StackClusterOptions> {
+    return call("Stacks.ClusterOptions", cluster);
   },
   /**
    * Delete deletes one of the user's stacks; a built-in one it replaced

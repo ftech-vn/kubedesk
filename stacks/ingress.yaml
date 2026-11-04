@@ -11,17 +11,25 @@ tags: [ingress, traefik, cert-manager, tls, letsencrypt]
 fields:
   - key: email
     label: Email for Let's Encrypt
-    hint: Leave empty to make only a self-signed issuer.
+    type: email
+    section: Certificates
+    placeholder: ops@example.com
+    hint: Let's Encrypt writes here before a certificate expires. Empty makes only a self-signed issuer.
   - key: serviceType
     label: Traefik service
     type: select
     options: [LoadBalancer, NodePort]
     default: LoadBalancer
+    required: true
+    section: Traefik
+    hint: LoadBalancer gets an address from the cloud; point your domains at it. NodePort opens a port on every node instead.
   - key: ingressClass
-    label: Ingress class
+    label: Ingress class name
     default: traefik
-    hint: k3s already has one named traefik; pick another name there.
-    advanced: true
+    required: true
+    section: Traefik
+    pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+    hint: The name other stacks pick to publish their pages. k3s already has one named traefik; pick another there.
 components:
   - name: cert-manager
     title: cert-manager

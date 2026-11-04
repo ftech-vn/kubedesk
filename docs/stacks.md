@@ -28,8 +28,11 @@ requires: About 1 GB of memory.
 fields:                      # the settings asked before running
   - key: replicas
     label: Replicas
-    type: number             # text (default), password, number, bool, select
+    type: number             # see the types below
     default: "1"
+    required: true           # marked *; the others are marked optional
+    section: App             # fields are grouped under their section
+    pattern: '^[1-9]$'       # a regular expression the value must match
   - key: password
     label: Password
     type: password
@@ -41,8 +44,24 @@ fields:                      # the settings asked before running
   - key: withUI
     label: Add the web UI
     type: bool
+  - key: domain
+    label: App domain
+    type: domain
+    section: Domain
+    placeholder: app.example.com
+  - key: ingressClass
+    label: Ingress class
+    type: ingressClass       # picked from the cluster's ingress classes
+    section: Domain
+    showIf: domain           # asked only once the domain is filled in
+  - key: tlsIssuer
+    label: HTTPS certificate from
+    type: clusterIssuer      # picked from the cluster's cert-manager issuers
+    section: Domain
+    showIf: domain
   - key: storageClass
     label: Storage class
+    type: storageClass       # picked from the cluster's storage classes
     advanced: true           # folded under "More settings"
 components:                  # installed in this order
   - name: app                # also the Helm release's name
@@ -72,9 +91,59 @@ access:                      # web pages, opened through a port forward
     user: admin
     password: password       # a password field, or:
     # passwordSecret: secret-name/key
+    domain: domain           # the domain field it is published at
+    tls: tlsIssuer           # the issuer field that makes it https
 notes: |
   Markdown shown once the stack runs. {{ .Namespace }} works here too.
 ```
+
+### Fields
+
+| Type | |
+|---|---|
+| `text` | The default |
+| `password` | Hidden, kept in the stack's Secret; `generate: true` makes one when left empty |
+| `number`, `bool`, `select` (with `options`) | |
+| `domain` | A host name, such as `grafana.example.com`, lower-cased and checked |
+| `email` | An email address, checked |
+| `ingressClass`, `clusterIssuer`, `storageClass` | Picked from what the cluster has; empty means the cluster's default, or no certificate |
+
+`required: true` refuses an empty value; `pattern` checks the value against a
+regular expression; `showIf` names a field that must be on, or filled in, for
+this one to be asked; a field that is not asked is not checked either.
+`section` groups fields under a heading, `placeholder` shows an example, and
+`advanced: true` folds a field under "More settings".
+
+### Domains
+
+A page that people should reach from outside the cluster takes a `domain`
+field, usually in a section of its own with an `ingressClass` and a
+`clusterIssuer` field that only show once the domain is filled in. The stack's
+values or manifest then make the Ingress, for example:
+
+```yaml
+{{- if .domain }}
+ingress:
+  enabled: true
+  {{- if .ingressClass }}
+  ingressClassName: {{ .ingressClass }}
+  {{- end }}
+  {{- if .tlsIssuer }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .tlsIssuer }}
+  tls:
+    - secretName: app-tls
+      hosts: [{{ .domain }}]
+  {{- end }}
+  hosts: [{{ .domain }}]
+{{- end }}
+```
+
+In the Run dialog, the section of the domain fields says where each page will
+be, and where to point their DNS: the external addresses of the cluster's
+ingress controllers. It warns when the cluster has no ingress controller, or
+no issuer for HTTPS. An access entry with `domain` (and `tls`) links to its
+page at the domain once the stack runs.
 
 ### Components
 
@@ -122,7 +191,9 @@ and its settings, and a Secret of the same name with its password fields.
 The objects it applied carry the label `kubedesk.cloud/stack`.
 
 Running a stack again in the same namespace updates it, with the settings it
-has. **Uninstall** removes its components, last first: Helm releases with
+has. Objects a component applied before and no longer has, such as the
+Ingress of a domain taken away, are deleted, and so are components turned
+off or gone from the stack. **Uninstall** removes its components, last first: Helm releases with
 `helm uninstall`, and the objects it applied. Parts that another installed
 stack also has stay, such as a shared operator, and so do custom resource
 definitions, since deleting one deletes every object of its kind. The

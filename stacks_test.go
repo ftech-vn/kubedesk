@@ -32,12 +32,9 @@ func TestBuiltinStacks(t *testing.T) {
 		if len(errs) > 0 {
 			t.Errorf("%s: defaults are wrong: %v", st.ID, errs)
 		}
-		// Every component runs, the optional ones too.
-		for _, f := range st.Fields {
-			if f.Type == "bool" {
-				values[f.Key] = "true"
-			}
-		}
+		// Every component runs, the optional ones too, with every
+		// optional part filled in.
+		fillAll(st, values)
 		for _, c := range planStack(st, st.Namespace, values, nil) {
 			if c.Error != "" {
 				t.Errorf("%s/%s: %s", st.ID, c.Name, c.Error)
@@ -67,11 +64,7 @@ func TestBuiltinStackCharts(t *testing.T) {
 			continue
 		}
 		values, _ := resolveValues(st, nil, nil)
-		for _, f := range st.Fields {
-			if f.Type == "bool" {
-				values[f.Key] = "true"
-			}
-		}
+		fillAll(st, values)
 		for i, c := range planStack(st, st.Namespace, values, nil) {
 			if c.Kind != "helm" {
 				continue
@@ -243,6 +236,72 @@ func TestReadiness(t *testing.T) {
 	for i, c := range cases {
 		if ok, why := readiness(c.u, c.waited); ok != c.ready {
 			t.Errorf("case %d (%s): ready=%v (%s)", i, c.u.GetKind(), ok, why)
+		}
+	}
+}
+
+func TestDomainFields(t *testing.T) {
+	st, err := parseStack([]byte(`id: a
+name: A
+fields:
+  - {key: domain, type: domain}
+  - {key: issuer, type: clusterIssuer, showIf: domain}
+  - {key: email, type: email, required: true, showIf: issuer}
+  - {key: code, pattern: '^[A-Z]{3}$'}
+components: [{name: a, manifest: 'kind: X'}]
+access:
+  - {label: Web, service: web, port: 80, domain: domain, tls: issuer, path: /ui}
+`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Without a domain, nothing below it is asked or checked.
+	if _, errs := resolveValues(st, map[string]string{}, nil); len(errs) != 0 {
+		t.Errorf("hidden fields checked: %v", errs)
+	}
+	_, errs := resolveValues(st, map[string]string{"domain": "not a domain", "code": "abc"}, nil)
+	if errs["domain"] == "" || errs["code"] == "" {
+		t.Errorf("errors: %v", errs)
+	}
+	v, errs := resolveValues(st, map[string]string{"domain": "Grafana.Example.com", "issuer": "letsencrypt"}, nil)
+	if errs["email"] != "required" || v["domain"] != "grafana.example.com" {
+		t.Errorf("%v %v", v, errs)
+	}
+	if links := stackLinks(st, v); len(links) != 1 || links[0].URL != "https://grafana.example.com/ui" {
+		t.Errorf("links %+v", links)
+	}
+	v["issuer"] = ""
+	if links := stackLinks(st, v); links[0].URL != "http://grafana.example.com/ui" {
+		t.Errorf("links without tls %+v", links)
+	}
+	for _, bad := range []string{
+		"id: a\nname: x\nfields: [{key: d}]\ncomponents: [{name: a, manifest: 'kind: X'}]\naccess: [{label: A, service: s, port: 80, domain: d}]",
+		"id: a\nname: x\nfields: [{key: d, showIf: nope}]\ncomponents: [{name: a, manifest: 'kind: X'}]",
+		"id: a\nname: x\nfields: [{key: d, type: url}]\ncomponents: [{name: a, manifest: 'kind: X'}]",
+	} {
+		if _, err := parseStack([]byte(bad)); err == nil {
+			t.Errorf("accepted: %s", bad)
+		}
+	}
+}
+
+// fillAll turns every bool on and fills in the optional fields, so that
+// templates render all their parts.
+func fillAll(st Stack, values map[string]string) {
+	for _, f := range st.Fields {
+		switch f.Type {
+		case "bool":
+			values[f.Key] = "true"
+		case "domain":
+			values[f.Key] = strings.ToLower(f.Key) + ".example.com"
+		case "email":
+			values[f.Key] = "ops@example.com"
+		case "ingressClass":
+			values[f.Key] = "nginx"
+		case "clusterIssuer":
+			values[f.Key] = "letsencrypt"
+		case "storageClass":
+			values[f.Key] = "fast"
 		}
 	}
 }

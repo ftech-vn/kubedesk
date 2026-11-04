@@ -73,11 +73,21 @@ type Stack struct {
 type StackField struct {
 	Key   string `json:"key"`
 	Label string `json:"label"`
-	// Type is text, password, number, bool or select.
-	Type    string   `json:"type,omitempty"`
-	Default string   `json:"default,omitempty"`
-	Hint    string   `json:"hint,omitempty"`
-	Options []string `json:"options,omitempty"`
+	// Type is text, password, number, bool, select, domain or email, or
+	// one whose options come from the cluster: ingressClass,
+	// clusterIssuer or storageClass.
+	Type        string   `json:"type,omitempty"`
+	Default     string   `json:"default,omitempty"`
+	Hint        string   `json:"hint,omitempty"`
+	Placeholder string   `json:"placeholder,omitempty"`
+	Options     []string `json:"options,omitempty"`
+	// Section groups fields under a heading, in the order they come.
+	Section string `json:"section,omitempty"`
+	// ShowIf is a field that must be on, or not empty, for this one to
+	// be asked; a field not asked is not checked either.
+	ShowIf string `json:"showIf,omitempty"`
+	// Pattern is a regular expression the value must match.
+	Pattern string `json:"pattern,omitempty"`
 	// Required refuses an empty value.
 	Required bool `json:"required,omitempty"`
 	// Generate makes a random password when the value is left empty.
@@ -85,6 +95,15 @@ type StackField struct {
 	// Advanced fields are folded away until asked for.
 	Advanced bool `json:"advanced,omitempty"`
 }
+
+// fieldTypes are the types of fields, with whether the cluster gives the
+// options.
+var fieldTypes = map[string]bool{"text": false, "password": false, "number": false, "bool": false, "select": false, "domain": false, "email": false, "ingressClass": true, "clusterIssuer": true, "storageClass": true}
+
+var (
+	domainPattern = regexp.MustCompile(`^(\*\.)?([a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?\.)+[a-z0-9][-a-z0-9]{0,61}[a-z0-9]$`)
+	emailPattern  = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
+)
 
 // StackComponent is a part of a stack: a Helm chart, manifests at URLs or
 // manifests written in the stack, all templates of the fields.
@@ -125,7 +144,11 @@ type StackAccess struct {
 	Port    int    `json:"port"`
 	Scheme  string `json:"scheme,omitempty"`
 	Path    string `json:"path,omitempty"`
-	User    string `json:"user,omitempty"`
+	// Domain is the domain field it is published at, when filled in; TLS
+	// is the clusterIssuer field whose certificate makes it https.
+	Domain string `json:"domain,omitempty"`
+	TLS    string `json:"tls,omitempty"`
+	User   string `json:"user,omitempty"`
 	// Password is the password field that signs in; PasswordSecret is
 	// "secret/key", for passwords made by what the stack runs.
 	Password       string `json:"password,omitempty"`
@@ -196,6 +219,8 @@ type InstalledStack struct {
 	// InCatalog is false when the stack's definition is gone.
 	InCatalog bool          `json:"inCatalog"`
 	Access    []StackAccess `json:"access"`
+	// Links are its pages at the domains it was given.
+	Links []StackLink `json:"links"`
 }
 
 // InstalledComponent is a component of an installed stack.
@@ -227,6 +252,7 @@ type StackJob struct {
 	State     string      `json:"state"`
 	Error     string      `json:"error,omitempty"`
 	Notes     string      `json:"notes,omitempty"`
+	Links     []StackLink `json:"links,omitempty"`
 	Started   string      `json:"started"`
 	Finished  string      `json:"finished,omitempty"`
 	Steps     []StackStep `json:"steps"`
@@ -320,19 +346,26 @@ func checkStack(st *Stack) error {
 		if f.Type == "" {
 			f.Type = "text"
 		}
-		switch f.Type {
-		case "text", "password", "number", "bool":
-		case "select":
-			if len(f.Options) == 0 {
-				return fmt.Errorf("field %q: a select needs options", f.Key)
+		if _, ok := fieldTypes[f.Type]; !ok {
+			return fmt.Errorf("field %q: type %q is not text, password, number, bool, select, domain, email, ingressClass, clusterIssuer or storageClass", f.Key, f.Type)
+		}
+		if f.Type == "select" && len(f.Options) == 0 {
+			return fmt.Errorf("field %q: a select needs options", f.Key)
+		}
+		if f.Pattern != "" {
+			if _, err := regexp.Compile(f.Pattern); err != nil {
+				return fmt.Errorf("field %q: pattern: %v", f.Key, err)
 			}
-		default:
-			return fmt.Errorf("field %q: type %q is not text, password, number, bool or select", f.Key, f.Type)
 		}
 		if f.Label == "" {
 			f.Label = f.Key
 		}
 		fields[f.Key] = *f
+	}
+	for _, f := range st.Fields {
+		if _, ok := fields[f.ShowIf]; f.ShowIf != "" && (!ok || f.ShowIf == f.Key) {
+			return fmt.Errorf("field %q: showIf must name another field", f.Key)
+		}
 	}
 	if len(st.Components) == 0 {
 		return errors.New("a stack needs components")
@@ -393,6 +426,17 @@ func checkStack(st *Stack) error {
 		}
 		if a.PasswordSecret != "" && !strings.Contains(a.PasswordSecret, "/") {
 			return fmt.Errorf("access %q: passwordSecret is secret/key", a.Label)
+		}
+		if a.Domain != "" && fields[a.Domain].Type != "domain" {
+			return fmt.Errorf("access %q: domain must name a domain field", a.Label)
+		}
+		if a.TLS != "" && fields[a.TLS].Type != "clusterIssuer" {
+			return fmt.Errorf("access %q: tls must name a clusterIssuer field", a.Label)
+		}
+		for _, t := range []string{a.Scheme, a.Path} {
+			if _, err := parseStackTemplate("access", t); err != nil {
+				return fmt.Errorf("access %q: %w", a.Label, err)
+			}
 		}
 	}
 	if _, err := parseStackTemplate("notes", st.Notes); err != nil {
@@ -624,6 +668,7 @@ func resolveValues(st Stack, given, previous map[string]string) (map[string]stri
 	errs := map[string]string{}
 	for _, f := range st.Fields {
 		v, ok := given[f.Key]
+
 		if !ok {
 			if v, ok = previous[f.Key]; !ok {
 				v = f.Default
@@ -631,6 +676,9 @@ func resolveValues(st Stack, given, previous map[string]string) (map[string]stri
 		}
 		if f.Type != "password" {
 			v = strings.TrimSpace(v)
+		}
+		if f.Type == "domain" || f.Type == "email" {
+			v = strings.ToLower(v)
 		}
 		if v == "" && f.Type == "password" && f.Generate {
 			v = generatePassword()
@@ -649,10 +697,63 @@ func resolveValues(st Stack, given, previous map[string]string) (map[string]stri
 			errs[f.Key] = "true or false"
 		case f.Type == "select" && !contains(f.Options, v):
 			errs[f.Key] = "not one of the options"
+		case f.Type == "domain" && !domainPattern.MatchString(v):
+			errs[f.Key] = "not a domain such as grafana.example.com"
+		case f.Type == "email" && !emailPattern.MatchString(v):
+			errs[f.Key] = "not an email address"
+		case f.Pattern != "" && !regexp.MustCompile(f.Pattern).MatchString(v):
+			errs[f.Key] = "not in the expected form"
 		}
 		values[f.Key] = v
 	}
+	// Fields not asked, as what they depend on is off, are not checked.
+	for _, f := range st.Fields {
+		if !fieldShown(st, f, values) {
+			delete(errs, f.Key)
+		}
+	}
 	return values, errs
+}
+
+// fieldShown says whether a field is asked, following its showIf chain.
+func fieldShown(st Stack, f StackField, values map[string]string) bool {
+	for seen := 0; f.ShowIf != "" && seen < len(st.Fields); seen++ {
+		if v := values[f.ShowIf]; v == "" || v == "false" {
+			return false
+		}
+		for _, g := range st.Fields {
+			if g.Key == f.ShowIf {
+				f = g
+				break
+			}
+		}
+	}
+	return true
+}
+
+// StackLink is a web page of a stack at its domain.
+type StackLink struct {
+	Label string `json:"label"`
+	URL   string `json:"url"`
+}
+
+// stackLinks are the pages of a stack published at the domains given.
+func stackLinks(st Stack, values map[string]string) []StackLink {
+	out := []StackLink{}
+	data := stackData(st, "", values)
+	for _, a := range st.Access {
+		domain := values[a.Domain]
+		if a.Domain == "" || domain == "" {
+			continue
+		}
+		scheme := "http"
+		if a.TLS != "" && values[a.TLS] != "" {
+			scheme = "https"
+		}
+		path, _ := renderStackTemplate("path", a.Path, data)
+		out = append(out, StackLink{Label: a.Label, URL: scheme + "://" + domain + path})
+	}
+	return out
 }
 
 func contains(list []string, v string) bool {
@@ -861,13 +962,14 @@ func applyTyped(ctx context.Context, cn *conn, obj any) error {
 }
 
 func installedOf(r stackRecord, namespace string, cat map[string]Stack) InstalledStack {
-	is := InstalledStack{ID: r.Stack, Name: r.Name, Namespace: namespace, Status: r.Status, Error: r.Error, Installed: r.Installed, Updated: r.Updated, Values: r.Values, Components: []InstalledComponent{}, Access: []StackAccess{}}
+	is := InstalledStack{ID: r.Stack, Name: r.Name, Namespace: namespace, Status: r.Status, Error: r.Error, Installed: r.Installed, Updated: r.Updated, Values: r.Values, Components: []InstalledComponent{}, Access: []StackAccess{}, Links: []StackLink{}}
 	for _, c := range r.Components {
 		is.Components = append(is.Components, InstalledComponent{Name: c.Name, Kind: c.Kind, Source: c.Source, Objects: len(c.Objects)})
 	}
 	if st, ok := cat[r.Stack]; ok {
 		is.InCatalog = true
 		is.Access = st.Access
+		is.Links = stackLinks(st, r.Values)
 	}
 	if is.Values == nil {
 		is.Values = map[string]string{}
@@ -1105,13 +1207,14 @@ func (s *Stacks) step(j *stackJob, i int, status, detail string) {
 	})
 }
 
-func (s *Stacks) finish(j *stackJob, err error, notes string) {
+func (s *Stacks) finish(j *stackJob, err error, notes string, links []StackLink) {
 	s.update(j, true, func(sj *StackJob) {
 		sj.Finished = time.Now().UTC().Format(time.RFC3339)
 		switch {
 		case err == nil:
 			sj.State = "done"
 			sj.Notes = notes
+			sj.Links = links
 		case errors.Is(err, context.Canceled):
 			sj.State = "cancelled"
 			sj.Error = "Cancelled"
@@ -1185,7 +1288,7 @@ func (s *Stacks) Install(ctx context.Context, cluster string, req StackRequest) 
 		if err == nil {
 			notes, _ = renderStackTemplate("notes", st.Notes, stackData(st, ns, plan.Values))
 		}
-		s.finish(j, err, notes)
+		s.finish(j, err, notes, stackLinks(st, plan.Values))
 	}()
 	return j.ID, nil
 }
@@ -1265,10 +1368,14 @@ func (s *Stacks) install(ctx context.Context, j *stackJob, cn *conn, st Stack, n
 				rc.Objects, err = s.applyManifest(ctx, j, cn, p.Content, cns, st.ID, !c.NoWait, timeout)
 			}
 		}
-		if rc.Objects == nil {
-			rc.Objects = comps[c.Name].Objects
-		} else {
-			rc.Objects = mergeRefs(comps[c.Name].Objects, rc.Objects)
+		// What the component made before and no longer has goes, as
+		// Helm does; until then, both stay on record for uninstalling.
+		prev := comps[c.Name].Objects
+		if err == nil && p.Kind != "helm" {
+			err = s.prune(ctx, j, cn, ns, st.ID, prev, rc.Objects)
+		}
+		if err != nil {
+			rc.Objects = mergeRefs(prev, rc.Objects)
 		}
 		comps[c.Name] = rc
 		rec.Components = orderedComponents(st, comps)
@@ -1278,6 +1385,22 @@ func (s *Stacks) install(ctx context.Context, j *stackJob, cn *conn, st Stack, n
 		_ = saveRecord(ctx, cn, ns, rec, secrets)
 		s.step(j, step, "done", "")
 	}
+	// Components turned off, or gone from the stack, are removed.
+	running := map[string]bool{}
+	for _, p := range plan.Components {
+		running[p.Name] = !p.Skipped
+	}
+	for name, rc := range comps {
+		if running[name] {
+			continue
+		}
+		s.logf(j, "Removing %s, which this run leaves out", name)
+		if err := s.removeComponent(ctx, j, cn, ns, st.ID, rc); err != nil {
+			return fail(len(plan.Components), err)
+		}
+		delete(comps, name)
+	}
+	rec.Components = orderedComponents(st, comps)
 	rec.Status, rec.Error = "installed", ""
 	rec.Updated = time.Now().UTC().Format(time.RFC3339)
 	if err := saveRecord(ctx, cn, ns, rec, secrets); err != nil {
@@ -1285,6 +1408,64 @@ func (s *Stacks) install(ctx context.Context, j *stackJob, cn *conn, st Stack, n
 	}
 	s.logf(j, "✓ %s is running in %s", st.Name, ns)
 	return nil
+}
+
+// prune deletes the objects a component applied before and no longer has,
+// keeping those another installed stack has.
+func (s *Stacks) prune(ctx context.Context, j *stackJob, cn *conn, ns, id string, before, now []objectRef) error {
+	keep := map[objectRef]bool{}
+	for _, o := range now {
+		keep[o] = true
+	}
+	var stale []objectRef
+	for _, o := range before {
+		if !keep[o] {
+			stale = append(stale, o)
+		}
+	}
+	if len(stale) == 0 {
+		return nil
+	}
+	shared, err := sharedParts(ctx, cn, ns, id)
+	if err != nil {
+		return err
+	}
+	var mine []objectRef
+	for _, o := range stale {
+		if shared[o.String()] == "" {
+			mine = append(mine, o)
+		}
+	}
+	return s.deleteObjects(ctx, j, cn, mine)
+}
+
+// removeComponent removes a component of a stack: its Helm release or
+// the objects it applied, keeping what another installed stack has.
+func (s *Stacks) removeComponent(ctx context.Context, j *stackJob, cn *conn, ns, id string, c recordComponent) error {
+	cns := c.Namespace
+	if cns == "" {
+		cns = ns
+	}
+	shared, err := sharedParts(ctx, cn, ns, id)
+	if err != nil {
+		return err
+	}
+	if c.Kind == "helm" {
+		if by := shared["helm/"+cns+"/"+c.Name]; by != "" {
+			s.logf(j, "Keeping the Helm release %s/%s: %s has it too", cns, c.Name, by)
+			return nil
+		}
+		return s.helmRun(ctx, j, cn, "uninstall", c.Name, "--namespace", cns, "--ignore-not-found")
+	}
+	var mine []objectRef
+	for _, o := range c.Objects {
+		if by := shared[o.String()]; by != "" {
+			s.logf(j, "Keeping %s: %s has it too", o, by)
+		} else {
+			mine = append(mine, o)
+		}
+	}
+	return s.deleteObjects(ctx, j, cn, mine)
 }
 
 // mergeRefs keeps the objects a component made before as well as now, so
@@ -1748,42 +1929,17 @@ func (s *Stacks) Uninstall(ctx context.Context, cluster, namespace, id string, d
 		return "", err
 	}
 	go func() {
-		s.finish(j, s.uninstall(jctx, j, cn, namespace, *rec, deleteNamespace), "")
+		s.finish(j, s.uninstall(jctx, j, cn, namespace, *rec, deleteNamespace), "", nil)
 	}()
 	return j.ID, nil
 }
 
 func (s *Stacks) uninstall(ctx context.Context, j *stackJob, cn *conn, ns string, rec stackRecord, deleteNamespace bool) error {
-	shared, err := sharedParts(ctx, cn, ns, rec.Stack)
-	if err != nil {
-		return err
-	}
 	step := 0
 	for i := len(rec.Components) - 1; i >= 0; i-- {
 		c := rec.Components[i]
-		cns := c.Namespace
-		if cns == "" {
-			cns = ns
-		}
 		s.step(j, step, "running", "")
-		var err error
-		switch {
-		case c.Kind == "helm" && shared["helm/"+cns+"/"+c.Name] != "":
-			s.logf(j, "Keeping the Helm release %s/%s: %s has it too", cns, c.Name, shared["helm/"+cns+"/"+c.Name])
-		case c.Kind == "helm":
-			err = s.helmRun(ctx, j, cn, "uninstall", c.Name, "--namespace", cns, "--ignore-not-found")
-		default:
-			var mine []objectRef
-			for _, o := range c.Objects {
-				if by := shared[o.String()]; by != "" {
-					s.logf(j, "Keeping %s: %s has it too", o, by)
-				} else {
-					mine = append(mine, o)
-				}
-			}
-			err = s.deleteObjects(ctx, j, cn, mine)
-		}
-		if err != nil {
+		if err := s.removeComponent(ctx, j, cn, ns, rec.Stack, c); err != nil {
 			s.step(j, step, "failed", err.Error())
 			return err
 		}
@@ -1791,6 +1947,7 @@ func (s *Stacks) uninstall(ctx context.Context, j *stackJob, cn *conn, ns string
 		step++
 	}
 	s.step(j, step, "running", "")
+	var err error
 	if deleteNamespace {
 		s.logf(j, "Deleting namespace %s", ns)
 		err = cn.cs.CoreV1().Namespaces().Delete(ctx, ns, metav1.DeleteOptions{})
@@ -1938,11 +2095,20 @@ func (s *Stacks) Open(ctx context.Context, cluster, namespace, id string, index 
 		}
 		local = pf.LocalPort
 	}
-	scheme := a.Scheme
-	if scheme == "" {
+	// Scheme and path may depend on the settings the stack has.
+	st, _ := s.find(id)
+	var values map[string]string
+	if rec, _, err := loadRecord(ctx, cn, namespace, id); err == nil && rec != nil {
+		values = rec.Values
+	}
+	resolved, _ := resolveValues(st, values, nil)
+	data := stackData(st, namespace, resolved)
+	scheme, _ := renderStackTemplate("scheme", a.Scheme, data)
+	path, _ := renderStackTemplate("path", a.Path, data)
+	if scheme = strings.TrimSpace(scheme); scheme == "" {
 		scheme = "http"
 	}
-	u := fmt.Sprintf("%s://localhost:%d%s", scheme, local, a.Path)
+	u := fmt.Sprintf("%s://localhost:%d%s", scheme, local, strings.TrimSpace(path))
 	return u, s.kube.OpenURL(u)
 }
 
@@ -1999,4 +2165,80 @@ func servicePod(ctx context.Context, cn *conn, namespace, service string, port i
 		}
 	}
 	return "", 0, fmt.Errorf("no pod of %s is ready yet", service)
+}
+
+// ---- What the cluster offers ----
+
+// StackClusterOptions are the choices a cluster gives the fields whose
+// options come from it, and where its ingress controllers are reached.
+type StackClusterOptions struct {
+	IngressClasses      []string `json:"ingressClasses"`
+	DefaultIngressClass string   `json:"defaultIngressClass"`
+	ClusterIssuers      []string `json:"clusterIssuers"`
+	StorageClasses      []string `json:"storageClasses"`
+	DefaultStorageClass string   `json:"defaultStorageClass"`
+	// IngressAddresses are the external addresses of the load balancers
+	// of ingress controllers, where domains should point.
+	IngressAddresses []IngressAddress `json:"ingressAddresses"`
+}
+
+// IngressAddress is where an ingress controller is reached from outside.
+type IngressAddress struct {
+	Service string `json:"service"`
+	Address string `json:"address"`
+}
+
+var ingressControllerName = regexp.MustCompile(`ingress|traefik|nginx|gateway|envoy|haproxy|contour|kong|istio`)
+
+// ClusterOptions returns the ingress classes, certificate issuers and
+// storage classes of a cluster, and the addresses of its ingress
+// controllers. What cannot be read is left empty.
+func (s *Stacks) ClusterOptions(ctx context.Context, cluster string) (StackClusterOptions, error) {
+	out := StackClusterOptions{IngressClasses: []string{}, ClusterIssuers: []string{}, StorageClasses: []string{}, IngressAddresses: []IngressAddress{}}
+	cn, err := s.kube.clusters.conn(cluster)
+	if err != nil {
+		return out, err
+	}
+	if list, err := cn.cs.NetworkingV1().IngressClasses().List(ctx, metav1.ListOptions{}); err == nil {
+		for _, c := range list.Items {
+			out.IngressClasses = append(out.IngressClasses, c.Name)
+			if c.Annotations["ingressclass.kubernetes.io/is-default-class"] == "true" {
+				out.DefaultIngressClass = c.Name
+			}
+		}
+	}
+	if list, err := cn.cs.StorageV1().StorageClasses().List(ctx, metav1.ListOptions{}); err == nil {
+		for _, c := range list.Items {
+			out.StorageClasses = append(out.StorageClasses, c.Name)
+			if c.Annotations["storageclass.kubernetes.io/is-default-class"] == "true" {
+				out.DefaultStorageClass = c.Name
+			}
+		}
+	}
+	issuers := schema.GroupVersionResource{Group: "cert-manager.io", Version: "v1", Resource: "clusterissuers"}
+	if list, err := cn.dyn.Resource(issuers).List(ctx, metav1.ListOptions{}); err == nil {
+		for _, c := range list.Items {
+			out.ClusterIssuers = append(out.ClusterIssuers, c.GetName())
+		}
+	}
+	if list, err := cn.cs.CoreV1().Services("").List(ctx, metav1.ListOptions{}); err == nil {
+		for _, svc := range list.Items {
+			if svc.Spec.Type != corev1.ServiceTypeLoadBalancer || !ingressControllerName.MatchString(svc.Name+" "+svc.Namespace) {
+				continue
+			}
+			for _, in := range svc.Status.LoadBalancer.Ingress {
+				addr := in.IP
+				if in.Hostname != "" {
+					addr = in.Hostname
+				}
+				if addr != "" {
+					out.IngressAddresses = append(out.IngressAddresses, IngressAddress{Service: svc.Namespace + "/" + svc.Name, Address: addr})
+				}
+			}
+		}
+	}
+	sort.Strings(out.IngressClasses)
+	sort.Strings(out.ClusterIssuers)
+	sort.Strings(out.StorageClasses)
+	return out, nil
 }

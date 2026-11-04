@@ -6,6 +6,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // TestDemoStacks installs the stacks of KD_STACKS (ids, comma separated)
@@ -93,6 +96,113 @@ func TestDemoStacks(t *testing.T) {
 			}
 			if j := wait(job); j.State != "done" {
 				t.Errorf("%s uninstall: %s\n%s", sid, j.Error, strings.Join(j.Output, "\n"))
+			}
+		}
+	}
+}
+
+// TestDemoStackPrune runs a stack of the user's with a domain, then again
+// without it, and checks that its Ingress goes. Run it with K8S_DEMO=1.
+func TestDemoStackPrune(t *testing.T) {
+	if os.Getenv("K8S_DEMO") == "" {
+		t.Skip("set K8S_DEMO=1, and KUBECONFIG to a throwaway cluster")
+	}
+	c := newClusters()
+	c.dir = t.TempDir()
+	c.store.Prefs = map[string]ClusterPrefs{}
+	c.store.Namespaces = map[string]string{}
+	_ = os.MkdirAll(c.storedDir(), 0o700)
+	var id string
+	for _, cl := range c.List().Clusters {
+		if cl.Current {
+			id = cl.ID
+		}
+	}
+	s := newStacks(&Kube{clusters: c, timeline: newTimeline()})
+	if _, err := s.Save(`id: prune-demo
+name: Prune demo
+fields:
+  - {key: domain, type: domain}
+  - {key: extra, type: bool, default: "true"}
+components:
+  - name: web
+    manifest: |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata: {name: web}
+      data: {domain: {{ quote .domain }}}
+      {{- if .domain }}
+      ---
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata: {name: web}
+      spec:
+        rules:
+          - host: {{ .domain }}
+            http:
+              paths:
+                - {path: /, pathType: Prefix, backend: {service: {name: web, port: {number: 80}}}}
+      {{- end }}
+  - name: extra
+    when: extra
+    manifest: |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata: {name: extra}
+access:
+  - {label: Web, service: web, port: 80, domain: domain}
+`, ""); err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	cn := mustConn(t, c, id)
+	run := func(values map[string]string) {
+		job, err := s.Install(ctx, id, StackRequest{Stack: "prune-demo", Namespace: "prune-demo", Values: values})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for {
+			var j *StackJob
+			for _, x := range s.Jobs() {
+				if x.ID == job && x.State != "running" {
+					j = &x
+				}
+			}
+			if j != nil {
+				if j.State != "done" {
+					t.Fatalf("%s: %s", j.State, j.Error)
+				}
+				return
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+	}
+	run(map[string]string{"domain": "web.example.com"})
+	if _, err := cn.cs.NetworkingV1().Ingresses("prune-demo").Get(ctx, "web", metav1.GetOptions{}); err != nil {
+		t.Fatalf("no ingress after the first run: %v", err)
+	}
+	list, _ := s.Installed(ctx, id)
+	if len(list) != 1 || len(list[0].Links) != 1 || list[0].Links[0].URL != "http://web.example.com" {
+		t.Errorf("links: %+v", list)
+	}
+	run(map[string]string{"domain": "", "extra": "false"})
+	if _, err := cn.cs.NetworkingV1().Ingresses("prune-demo").Get(ctx, "web", metav1.GetOptions{}); !apierrors.IsNotFound(err) {
+		t.Errorf("the ingress stayed: %v", err)
+	}
+	if _, err := cn.cs.CoreV1().ConfigMaps("prune-demo").Get(ctx, "extra", metav1.GetOptions{}); !apierrors.IsNotFound(err) {
+		t.Errorf("the component turned off stayed: %v", err)
+	}
+	if _, err := cn.cs.CoreV1().ConfigMaps("prune-demo").Get(ctx, "web", metav1.GetOptions{}); err != nil {
+		t.Errorf("the config map went: %v", err)
+	}
+	job, err := s.Uninstall(ctx, id, "prune-demo", "prune-demo", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for done := false; !done; time.Sleep(500 * time.Millisecond) {
+		for _, x := range s.Jobs() {
+			if x.ID == job && x.State != "running" {
+				done = true
 			}
 		}
 	}

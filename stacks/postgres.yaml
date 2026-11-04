@@ -12,27 +12,46 @@ fields:
   - key: name
     label: Cluster name
     default: postgres
+    required: true
+    section: PostgreSQL
+    pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
   - key: instances
     label: Instances
     type: number
     default: "1"
+    required: true
+    section: PostgreSQL
+    pattern: '^[1-9]$'
     hint: Three gives a primary and two replicas that take over.
   - key: database
     label: Database
     default: app
+    required: true
+    section: Database
+    pattern: '^[a-z_][a-z0-9_]*$'
   - key: owner
     label: Database user
     default: app
+    required: true
+    section: Database
+    pattern: '^[a-z_][a-z0-9_]*$'
+    hint: Its password is made by the operator, in the Secret <cluster>-app.
   - key: storage
     label: Volume size
     default: 10Gi
+    required: true
+    section: Storage
+    pattern: '^[0-9]+(Mi|Gi|Ti)$'
   - key: image
     label: PostgreSQL image
+    section: PostgreSQL
+    placeholder: ghcr.io/cloudnative-pg/postgresql:17
     hint: Empty for the operator's default version.
     advanced: true
   - key: storageClass
     label: Storage class
-    hint: Empty for the cluster's default.
+    type: storageClass
+    section: Storage
     advanced: true
 components:
   - name: cnpg
