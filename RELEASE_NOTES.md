@@ -9,6 +9,7 @@ biết.
 
 | Bản | Ngày | Điểm chính | Tải về (delta) |
 |---|---|---|---|
+| [0.9.5](#095--08112026) | 08/11/2026 | Sửa lỗi editor YAML không cuộn được (trình soạn stack, YAML component trong Run); config Alloy cho pm2 tách log theo từng app | xem trang Releases |
 | [0.9.4](#094--04112026) | 04/11/2026 | Stack Loki nhận log từ server ngoài cluster (pm2, systemd, Docker) qua domain có mật khẩu; có sẵn config Alloy | xem trang Releases |
 | [0.9.3](#093--04112026) | 04/11/2026 | Sửa lỗi cài stack dùng Helm báo "no cached repo found" khi cache repo Helm trên máy bị thiếu | xem trang Releases |
 | [0.9.2](#092--04112026) | 04/11/2026 | Gợi ý trỏ DNS đúng khi ingress controller chỉ có IP private (k3s ServiceLB): gợi ý IP public của node | xem trang Releases |
@@ -31,6 +32,22 @@ Tải bản mới nhất:
 (Linux x64; arm64: `...-linux-arm64.deb`, hoặc `curl -fsSL https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/install.sh | sh`)
 và <https://pub-e3b2030c705649ef87d35925ea3331eb.r2.dev/Kube-Desk-Setup-latest-amd64.exe> (Windows 10/11 x64). App đã cài sẽ tự cập nhật. Thường app chỉ
 tải phần thay đổi (delta), như ở cột cuối bảng trên.
+
+---
+
+## 0.9.5 · 08/11/2026
+
+### Sửa lỗi
+- Editor YAML cuộn được trở lại ở những chỗ có khung cao cố định: trình soạn
+  stack (New stack, Edit, View definition) và ô YAML của từng component trong
+  dialog Run. Trước đây chỉ thấy vài chục dòng đầu, không cuộn xuống được.
+
+### Cải tiến
+- Config Grafana Alloy cho pm2 trong ghi chú của stack **Loki + Grafana** gắn
+  nhãn `app`, `stream` (out/error) và `instance` (chế độ cluster) theo tên
+  file log, nên nhiều app pm2 trên cùng server tách riêng được; bỏ qua các
+  file đã xoay vòng bởi pm2-logrotate. Ví dụ truy vấn:
+  `{job="pm2", app="api", stream="error"}`.
 
 ---
 

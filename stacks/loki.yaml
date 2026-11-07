@@ -287,16 +287,41 @@ notes: |
   the password with the key button of **Log push**):
 
   ```alloy
+  // Every app pm2 runs writes <app>-out.log and <app>-error.log, and
+  // <app>-out-<n>.log in cluster mode; their names become labels.
   local.file_match "pm2" {
     path_targets = [{
-      __path__ = "/home/USER/.pm2/logs/*.log",
-      job      = "pm2",
-      host     = constants.hostname,
+      __path__         = "/home/USER/.pm2/logs/*.log",
+      __path_exclude__ = "/home/USER/.pm2/logs/*__*.log", // rotated by pm2-logrotate
+      job              = "pm2",
+      host             = constants.hostname,
     }]
   }
 
+  discovery.relabel "pm2" {
+    targets = local.file_match.pm2.targets
+    rule {
+      source_labels = ["__path__"]
+      regex         = ".*/(.+?)-(out|error)(?:-([0-9]+))?\\.log"
+      target_label  = "app"
+      replacement   = "$1"
+    }
+    rule {
+      source_labels = ["__path__"]
+      regex         = ".*/(.+?)-(out|error)(?:-([0-9]+))?\\.log"
+      target_label  = "stream"
+      replacement   = "$2"
+    }
+    rule {
+      source_labels = ["__path__"]
+      regex         = ".*/(.+?)-(out|error)-([0-9]+)\\.log"
+      target_label  = "instance"
+      replacement   = "$3"
+    }
+  }
+
   loki.source.file "pm2" {
-    targets    = local.file_match.pm2.targets
+    targets    = discovery.relabel.pm2.output
     forward_to = [loki.write.default.receiver]
   }
 
@@ -311,5 +336,8 @@ notes: |
   }
   ```
 
-  In Grafana, `{job="pm2"}` shows them; `filename` tells the apps apart.
+  In Grafana, `{job="pm2", app="api"}` shows one app, `stream="error"` its
+  errors, `host` tells the servers apart, and
+  `sum by (app) (count_over_time({job="pm2"} |= "error" [5m]))` counts
+  errors per app.
   {{- end }}

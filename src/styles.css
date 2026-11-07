@@ -1473,8 +1473,11 @@ h2:hover .copy-btn {
   flex-wrap: wrap;
   flex-shrink: 0;
 }
+/* Fills a flex parent, or a block one of fixed height; either way the
+   editor scrolls inside instead of growing past it. */
 .yaml-editor {
   flex: 1;
+  height: 100%;
   min-height: 0;
   overflow: hidden;
 }

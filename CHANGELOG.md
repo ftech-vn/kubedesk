@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.5
+
+- YAML editors scroll again where they sit in a box of fixed height: the stack editor (New stack, Edit, View definition) and the YAML of a component in the Run dialog showed only their first lines.
+- The pm2 config in the notes of the Loki + Grafana stack labels each line with the app, the stream (out or error) and, in cluster mode, the instance, from the name of its log file; it skips the files pm2-logrotate rotated.
+
 ## 0.9.4
 
 **Logs from other servers.** The Loki + Grafana stack takes a domain for servers outside the cluster, such as apps run by pm2, systemd or Docker, to send their logs, with a user and a password made for you. Only the path that receives logs is published, through Loki's gateway, which asks for them; reading the logs stays in Grafana. Once it runs, the stack's notes give a Grafana Alloy config for pm2 with the address filled in, and the stack offers to copy the address and the password.
